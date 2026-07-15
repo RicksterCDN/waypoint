@@ -1,0 +1,76 @@
+name: Fabric capacity scheduler
+
+# Cost control for the F64 Fabric capacity that backs Waypoint's OneLake corpus + Fabric IQ.
+#
+# F64 bills while Active, so this workflow is the "turn it off when idle" automation:
+#   - schedule (cron): auto-suspends the capacity every night, stopping compute billing.
+#   - workflow_dispatch: on-demand suspend | resume | scale | status before/after a demo.
+#
+# It calls the idempotent infra/scripts/fabric-capacity-control.sh over OIDC, so every run is safe
+# to repeat and is a no-op when the capacity is already in the requested state. Resume is deliberately
+# manual (never on a schedule) so the capacity is only ever turned back on intentionally.
+#
+# Required repo configuration:
+#   secrets: AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID, AZURE_RESOURCE_GROUP
+#   vars:    WAYPOINT_FABRIC_CAPACITY_NAME  (the capacity to control; scheduling is skipped if unset)
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Capacity action to perform.
+        type: choice
+        required: true
+        default: status
+        options:
+          - status
+          - suspend
+          - resume
+          - scale
+      sku:
+        description: Target SKU for the "scale" action (e.g. F64, F32, F2). Ignored otherwise.
+        type: string
+        required: false
+        default: ''
+  schedule:
+    # 01:00 UTC daily — auto-suspend so an idle F64 never bills overnight. Adjust to taste.
+    - cron: '0 1 * * *'
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: fabric-capacity-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  control:
+    name: ${{ github.event_name == 'schedule' && 'Auto-suspend' || inputs.action }} Fabric capacity
+    runs-on: ubuntu-latest
+    # Skip entirely when no capacity is configured, so the cron is a safe no-op in repos/forks
+    # that don't run the OneLake corpus lake.
+    if: ${{ vars.WAYPOINT_FABRIC_CAPACITY_NAME != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Control Fabric capacity
+        env:
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          WAYPOINT_FABRIC_CAPACITY_NAME: ${{ vars.WAYPOINT_FABRIC_CAPACITY_NAME }}
+        run: |
+          set -euo pipefail
+          # A scheduled run always suspends; a manual run performs the chosen action.
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            ./infra/scripts/fabric-capacity-control.sh suspend
+          else
+            ./infra/scripts/fabric-capacity-control.sh "${{ inputs.action }}" "${{ inputs.sku }}"
+          fi

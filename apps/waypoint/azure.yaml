@@ -1,0 +1,30 @@
+# azd configuration for the Waypoint Aspire application.
+#
+# The Aspire AppHost (apphost.cs) defines the resources and Bicep templates; azd orchestrates
+# provisioning and deployment. The postprovision hook creates the Microsoft Fabric workspace and
+# lakehouse (which are not ARM/Bicep-provisionable) via the Fabric REST API after the Fabric
+# capacity Bicep has been deployed, then provisions the Fabric IQ AI layer (Direct Lake semantic
+# model + published Data Agent) over the lakehouse Tables. Both hooks are no-ops unless their gate
+# (WAYPOINT_FABRIC_PROVISION_ENABLED / WAYPOINT_FABRIC_IQ_ENABLED) is "true", so they are safe in
+# environments that do not use the OneLake corpus lake.
+name: waypoint
+metadata:
+  template: waypoint-aspire
+
+hooks:
+  postprovision:
+    posix:
+      shell: sh
+      continueOnError: false
+      run: |
+        set -e
+        ./infra/scripts/provision-fabric.sh
+        ./infra/scripts/provision-fabric-mirror.sh
+        ./infra/scripts/provision-fabric-iq.sh
+    windows:
+      shell: pwsh
+      continueOnError: false
+      run: |
+        Write-Host "Fabric provisioning runs from infra/scripts/provision-fabric.sh, provision-fabric-mirror.sh and provision-fabric-iq.sh."
+        Write-Host "On Windows, run them via WSL/Git Bash, or run the equivalent az rest calls manually."
+        Write-Host "See docs/onelake-corpus.md and docs/fabric-iq.md for the manual steps."

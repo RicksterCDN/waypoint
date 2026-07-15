@@ -1,0 +1,72 @@
+[project]
+name = "api"
+version = "0.1.1"
+description = "FastAPI backend with OpenTelemetry tracing"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.32.0,<0.49.0",
+  "pydantic>=2.10.0",
+  "pydantic-settings>=2.6.0",
+  "pyjwt[crypto]>=2.13.0",
+  "psycopg[binary]>=3.2.0",
+  "psycopg-pool>=3.2.0",
+  # OpenTelemetry
+  "opentelemetry-api>=1.28.0",
+  "opentelemetry-sdk>=1.28.0",
+  "opentelemetry-exporter-otlp-proto-grpc>=1.28.0",
+  "opentelemetry-instrumentation-fastapi>=0.49b0",
+  # Azure storage/identity are required at runtime for OneLake corpus reads and
+  # Azure Blob seed delivery, so they ship in the base dependency set.
+  "azure-identity>=1.19.0",
+  "azure-storage-blob>=12.24.0",
+  "azure-storage-file-datalake>=12.18.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.0",
+  "pytest-asyncio>=0.24.0",
+  "mypy>=1.13.0",
+  "ruff>=0.8.0",
+  "httpx>=0.28.0",
+]
+
+# Retained as an alias for back-compat; the Azure packages are now base
+# dependencies, so `uv sync --extra azure` is no longer required.
+azure = [
+    "azure-identity>=1.19.0",
+    "azure-storage-blob>=12.24.0",
+    "azure-storage-file-datalake>=12.18.0",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3.0",
+  "pytest-asyncio>=0.24.0",
+  "mypy>=1.13.0",
+  "ruff>=0.8.0",
+  "httpx>=0.28.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+ignore_missing_imports = true
+# Disable no-any-return because the @trace decorator erases return types
+# This is a known limitation when using decorators that return Callable[..., Any]
+warn_return_any = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+# B008: Allow Depends() in function defaults - this is the standard FastAPI pattern
+ignore = ["B008"]

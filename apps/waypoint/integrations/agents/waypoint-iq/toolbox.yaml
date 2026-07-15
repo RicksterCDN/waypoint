@@ -1,0 +1,27 @@
+name: waypoint-iq
+description: Governed Caldova Waypoint read/write/admin capability surface.
+endpointEnv: WAYPOINT_IQ_ENDPOINT
+
+# Draft source payload for the real Foundry toolbox resource named waypoint-iq.
+# The actual platform construct is a project-scoped toolbox with immutable
+# versions and an MCP endpoint:
+#   {project_endpoint}/toolboxes/waypoint-iq/mcp?api-version=v1
+#
+# The checked-in OpenAPI document is generated from a docs-enabled Waypoint
+# endpoint and pins its server URL at export time. A hosted toolbox version must
+# regenerate or rewrite that server URL for a Waypoint endpoint reachable from
+# Foundry before publication. Do not publish localhost as the hosted target.
+tools:
+  - type: toolbox_search_preview
+  - type: openapi
+    openapi:
+      name: waypoint_iq
+      spec: ./openapi.json
+      auth:
+        type: managed_identity
+        security_scheme:
+          audience: api://<waypoint-api-client-id>
+
+# Use managed_identity only after Waypoint grants app roles to the Foundry
+# project or agent identity. If Waypoint requires delegated user context, use an
+# explicit delegated-token bridge instead.

@@ -1,0 +1,167 @@
+[
+  {
+    "id": "sup-001",
+    "name": "Aster Ridge Biomanufacturing",
+    "supplier_type": "contract_manufacturer",
+    "region": "North America",
+    "specialty": "high-volume tablet compression and coating",
+    "contract_model": "hybrid",
+    "invoice_categories": ["unit production", "batch release", "materials pass-through", "packaging"],
+    "reconciliation_focus": ["released batch volume", "tiered unit price", "material unit cost", "packaging authorization"],
+    "risk_examples": ["billed above released quantity", "missed volume discount tier", "unapproved blister packaging charge"]
+  },
+  {
+    "id": "sup-002",
+    "name": "Northstar Fill Finish",
+    "supplier_type": "contract_manufacturer",
+    "region": "North America",
+    "specialty": "sterile fill-finish and final inspection",
+    "contract_model": "batch",
+    "invoice_categories": ["batch fee", "QA release testing", "line clearance", "deviation investigation"],
+    "reconciliation_focus": ["batch release status", "quality agreement", "release testing evidence", "deviation approval"],
+    "risk_examples": ["QA release fee billed twice", "rejected batch invoiced as released", "deviation investigation billed without approval"]
+  },
+  {
+    "id": "sup-003",
+    "name": "HelioPack Pharma Services",
+    "supplier_type": "packaging_partner",
+    "region": "Europe",
+    "specialty": "secondary packaging, serialization, and labeling",
+    "contract_model": "unit",
+    "invoice_categories": ["serialization", "labeling", "cartoning", "logistics"],
+    "reconciliation_focus": ["SKU authorization", "shipment reference", "approved label change", "contracted logistics terms"],
+    "risk_examples": ["off-contract relabeling fee", "shipping surcharge not allowed by contract", "serialized unit count exceeds receipt"]
+  },
+  {
+    "id": "sup-004",
+    "name": "Meridian API Works",
+    "supplier_type": "api_supplier",
+    "region": "Asia Pacific",
+    "specialty": "active pharmaceutical ingredient synthesis",
+    "contract_model": "materials",
+    "invoice_categories": ["API lot", "raw materials", "yield adjustment", "expedited release"],
+    "reconciliation_focus": ["lot traceability", "yield calculation", "material pass-through", "certificate of analysis"],
+    "risk_examples": ["yield true-up calculated from forecast instead of actuals", "raw material uplift exceeds escalation clause", "expedited release fee without trigger event"]
+  },
+  {
+    "id": "sup-005",
+    "name": "Crescent GMP Labs",
+    "supplier_type": "quality_lab",
+    "region": "North America",
+    "specialty": "release testing and stability studies",
+    "contract_model": "milestone",
+    "invoice_categories": ["release testing", "stability pull", "method validation", "certificate of analysis"],
+    "reconciliation_focus": ["approved milestone", "testing protocol", "quality release evidence", "billable study schedule"],
+    "risk_examples": ["stability pull billed before scheduled window", "method validation billed without approved milestone", "duplicate certificate charge"]
+  },
+  {
+    "id": "sup-006",
+    "name": "Summit Dose Manufacturing",
+    "supplier_type": "contract_manufacturer",
+    "region": "Europe",
+    "specialty": "capsule filling and oral solid dose manufacturing",
+    "contract_model": "unit",
+    "invoice_categories": ["unit production", "minimum order quantity", "changeover", "cleaning validation"],
+    "reconciliation_focus": ["MOQ", "actual quantity", "contracted changeover rules", "cleaning validation approval"],
+    "risk_examples": ["MOQ fee applied despite qualifying volume", "changeover billed for same-family SKU", "cleaning validation charged outside approved protocol"]
+  },
+  {
+    "id": "sup-007",
+    "name": "Orchid Clinical Supply",
+    "supplier_type": "clinical_supply_partner",
+    "region": "North America",
+    "specialty": "clinical trial packaging and comparator sourcing",
+    "contract_model": "milestone",
+    "invoice_categories": ["kit assembly", "comparator sourcing", "temperature-controlled storage", "study milestone"],
+    "reconciliation_focus": ["milestone approval", "storage days", "study protocol", "authorized comparator material"],
+    "risk_examples": ["temperature storage billed after study close", "comparator pass-through lacks receipt", "milestone billed before approval"]
+  },
+  {
+    "id": "sup-008",
+    "name": "Valence Cold Chain Logistics",
+    "supplier_type": "logistics_partner",
+    "region": "Global",
+    "specialty": "temperature-controlled pharmaceutical logistics",
+    "contract_model": "unit",
+    "invoice_categories": ["cold chain shipment", "lane surcharge", "excursion handling", "customs brokerage"],
+    "reconciliation_focus": ["shipment ID", "temperature excursion record", "approved lane", "contracted surcharge"],
+    "risk_examples": ["lane surcharge outside approved route", "excursion handling billed without excursion record", "customs brokerage duplicated across shipments"]
+  },
+  {
+    "id": "sup-009",
+    "name": "BluePeak Biologics",
+    "supplier_type": "contract_manufacturer",
+    "region": "North America",
+    "specialty": "biologic drug substance manufacturing",
+    "contract_model": "capacity",
+    "invoice_categories": ["reserved capacity", "utilized capacity", "cell culture run", "contamination investigation"],
+    "reconciliation_focus": ["reserved capacity", "utilized capacity", "minimum fee", "quality deviation"],
+    "risk_examples": ["unused-capacity fee exceeds minimum rule", "contamination investigation billed despite supplier-caused deviation", "capacity true-up omits prior credit"]
+  },
+  {
+    "id": "sup-010",
+    "name": "Keystone Device Assembly",
+    "supplier_type": "combination_device_partner",
+    "region": "North America",
+    "specialty": "combination device assembly and final packaging",
+    "contract_model": "hybrid",
+    "invoice_categories": ["device assembly", "component scrap", "final inspection", "engineering change order"],
+    "reconciliation_focus": ["approved ECO", "scrap allowance", "inspection result", "component receipt"],
+    "risk_examples": ["scrap billed above contract allowance", "engineering change billed before approval", "failed inspection units invoiced as accepted"]
+  },
+  {
+    "id": "sup-011",
+    "name": "LumaSterile Services",
+    "supplier_type": "sterilization_partner",
+    "region": "Europe",
+    "specialty": "sterilization, environmental monitoring, and release documentation",
+    "contract_model": "batch",
+    "invoice_categories": ["sterilization cycle", "bioburden testing", "environmental monitoring", "release packet"],
+    "reconciliation_focus": ["cycle record", "release packet", "test result", "batch acceptance criteria"],
+    "risk_examples": ["release packet billed before QA acceptance", "bioburden retest charged without retest trigger", "sterilization cycle count exceeds batch record"]
+  },
+  {
+    "id": "sup-012",
+    "name": "Pioneer Process Development",
+    "supplier_type": "process_development_partner",
+    "region": "North America",
+    "specialty": "tech transfer, scale-up, and process validation",
+    "contract_model": "milestone",
+    "invoice_categories": ["tech transfer", "process validation", "engineering batch", "protocol authoring"],
+    "reconciliation_focus": ["approved milestone", "validation protocol", "engineering batch status", "deliverable acceptance"],
+    "risk_examples": ["protocol authoring billed without deliverable acceptance", "engineering batch billed as GMP batch", "process validation milestone billed early"]
+  },
+  {
+    "id": "sup-013",
+    "name": "Evergreen Excipients",
+    "supplier_type": "materials_supplier",
+    "region": "North America",
+    "specialty": "regulated excipients and specialty ingredients",
+    "contract_model": "materials",
+    "invoice_categories": ["excipient lot", "material surcharge", "rush order", "quality documentation"],
+    "reconciliation_focus": ["material lot", "unit cost", "escalation rate", "approved rush order"],
+    "risk_examples": ["material surcharge exceeds escalation cap", "rush order fee lacks approval", "quality documentation charged despite included term"]
+  },
+  {
+    "id": "sup-014",
+    "name": "Atlas Regional Manufacturing",
+    "supplier_type": "contract_manufacturer",
+    "region": "Latin America",
+    "specialty": "regional OTC manufacturing and packaging",
+    "contract_model": "hybrid",
+    "invoice_categories": ["unit production", "capacity reservation", "regional packaging", "volume true-up"],
+    "reconciliation_focus": ["forecast volume", "actual volume", "capacity minimum", "regional price tier"],
+    "risk_examples": ["true-up uses outdated forecast", "capacity reservation billed after cancellation window", "regional packaging tier applied incorrectly"]
+  },
+  {
+    "id": "sup-015",
+    "name": "Signal Ridge Regulatory Services",
+    "supplier_type": "regulatory_services_partner",
+    "region": "Global",
+    "specialty": "site addition support, variation packets, and regulatory documentation",
+    "contract_model": "milestone",
+    "invoice_categories": ["site addition packet", "variation submission", "regulatory response", "document translation"],
+    "reconciliation_focus": ["milestone approval", "submission evidence", "country scope", "contracted translation rate"],
+    "risk_examples": ["variation submission billed for unapproved country", "translation charged above contracted rate", "response milestone billed before authority acknowledgement"]
+  }
+]

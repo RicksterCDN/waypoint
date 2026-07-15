@@ -1,0 +1,1106 @@
+{
+  "metadata_version": "1.0",
+  "purpose": "Fictional supplier invoices for the Waypoint invoice assurance demo. Approximately 25% of invoice lines intentionally break a contract or policy rule and are linked to scenario metadata.",
+  "currency": "USD",
+  "document_generation": {
+    "source_of_truth": "This JSON is the canonical invoice data. Supplier-specific HTML invoices should be generated from this file, then rendered to PDF so each supplier can have a distinct visual layout without changing the underlying reconciliation facts.",
+    "planned_html_output_folder": "data/invoices/html",
+    "planned_pdf_output_folder": "data/invoices/pdf",
+    "profiles": [
+      {
+        "supplier_id": "sup-001",
+        "profile_id": "tablet-production-summary",
+        "style_notes": "Production-summary invoice with batch and packaging sections; Aster Ridge uses a blue manufacturing summary layout.",
+        "billing_profile": {
+          "address_lines": ["250 Aster Ridge Way", "Research Triangle Park, NC 27709", "United States"],
+          "billing_contact": "Aster Ridge Receivables",
+          "billing_email": "receivables@asterridge.example",
+          "tax_id": "US EIN 82-4109284",
+          "customer_account": "WT-ARB-1042",
+          "remittance_reference": "ARB-WT-USD"
+        }
+      },
+      {
+        "supplier_id": "sup-002",
+        "profile_id": "sterile-fill-finish-quality",
+        "style_notes": "Quality-agreement invoice emphasizing release status, line clearance, and QA records; Northstar uses a certificate-style serif layout.",
+        "billing_profile": {
+          "address_lines": ["18 Meridian Biopark", "Morrisville, NC 27560", "United States"],
+          "billing_contact": "Northstar Billing Operations",
+          "billing_email": "billing@northstarfill.example",
+          "tax_id": "US EIN 47-3882106",
+          "customer_account": "WT-NFF-2170",
+          "remittance_reference": "NFF-WAYPOINT"
+        }
+      },
+      {
+        "supplier_id": "sup-003",
+        "profile_id": "packaging-serialization-logistics",
+        "style_notes": "European packaging invoice with SKU, label version, serialized count, and shipment reference columns; HelioPack uses a cyan operations layout.",
+        "billing_profile": {
+          "address_lines": ["Havenstraat 42", "3011 Rotterdam", "Netherlands"],
+          "billing_contact": "HelioPack Accounts Receivable",
+          "billing_email": "ar@heliopack.example",
+          "tax_id": "NL VAT NL824719356B01",
+          "customer_account": "WT-HP-3308",
+          "remittance_reference": "HP-EUR-USD-3308"
+        }
+      },
+      {
+        "supplier_id": "sup-004",
+        "profile_id": "api-lot-materials",
+        "style_notes": "API supply invoice with lot yield, raw material pass-through, and certificate references; Meridian uses a green materials-ledger layout.",
+        "billing_profile": {
+          "address_lines": ["9 Tuas Biomedical Grove", "Singapore 637609", "Singapore"],
+          "billing_contact": "Meridian API Finance",
+          "billing_email": "finance@meridianapi.example",
+          "tax_id": "SG GST M90374215X",
+          "customer_account": "WT-MAW-4421",
+          "remittance_reference": "MAW-API-WT"
+        }
+      },
+      {
+        "supplier_id": "sup-005",
+        "profile_id": "gmp-lab-milestones",
+        "style_notes": "Lab services invoice grouped by release testing, stability, validation, and documentation; Crescent uses a gold milestone layout.",
+        "billing_profile": {
+          "address_lines": ["7800 Quality Center Drive", "Rockville, MD 20850", "United States"],
+          "billing_contact": "Crescent GMP Labs Billing",
+          "billing_email": "lab.billing@crescentgmp.example",
+          "tax_id": "US EIN 13-7098842",
+          "customer_account": "WT-CGL-1186",
+          "remittance_reference": "CGL-REL-1186"
+        }
+      },
+      {
+        "supplier_id": "sup-006",
+        "profile_id": "oral-dose-campaign",
+        "style_notes": "Capsule campaign invoice with SKU family, campaign week, cleaning, and changeover detail; Summit uses a clean campaign worksheet layout.",
+        "billing_profile": {
+          "address_lines": ["Industriestrasse 18", "4056 Basel", "Switzerland"],
+          "billing_contact": "Summit Dose Finance",
+          "billing_email": "invoices@summitdose.example",
+          "tax_id": "CH VAT CHE-219.884.731",
+          "customer_account": "WT-SDM-6204",
+          "remittance_reference": "SDM-CAPS-WT"
+        }
+      },
+      {
+        "supplier_id": "sup-007",
+        "profile_id": "clinical-supply-study",
+        "style_notes": "Clinical study invoice with protocol, comparator, kit, storage, and milestone references; Orchid uses a warm protocol-ledger layout.",
+        "billing_profile": {
+          "address_lines": ["410 Trial Supply Lane", "Princeton, NJ 08540", "United States"],
+          "billing_contact": "Orchid Clinical Supply AR",
+          "billing_email": "receivables@orchidclinical.example",
+          "tax_id": "US EIN 66-5027194",
+          "customer_account": "WT-OCS-7741",
+          "remittance_reference": "OCS-STUDY-WT"
+        }
+      },
+      {
+        "supplier_id": "sup-008",
+        "profile_id": "cold-chain-shipment",
+        "style_notes": "Logistics invoice centered on shipment IDs, lanes, temperature events, and customs entries; Valence uses a cold-chain operations layout.",
+        "billing_profile": {
+          "address_lines": ["55 Global Cold Chain Plaza", "Memphis, TN 38118", "United States"],
+          "billing_contact": "Valence Logistics Billing",
+          "billing_email": "billing@valencecoldchain.example",
+          "tax_id": "US EIN 91-4482051",
+          "customer_account": "WT-VCL-9027",
+          "remittance_reference": "VCL-LANE-9027"
+        }
+      },
+      {
+        "supplier_id": "sup-009",
+        "profile_id": "biologics-capacity-quarterly",
+        "style_notes": "Quarterly capacity invoice with reserved hours, utilized hours, run logs, and deviation charges; BluePeak uses a rose capacity statement layout.",
+        "billing_profile": {
+          "address_lines": ["1 Biologics Park", "Worcester, MA 01605", "United States"],
+          "billing_contact": "BluePeak Biologics Finance",
+          "billing_email": "capacity.billing@bluepeakbio.example",
+          "tax_id": "US EIN 30-7742918",
+          "customer_account": "WT-BPB-4509",
+          "remittance_reference": "BPB-QCAP-WT"
+        }
+      },
+      {
+        "supplier_id": "sup-010",
+        "profile_id": "combination-device-build",
+        "style_notes": "Device assembly invoice with build lots, accepted units, inspection, scrap, and ECO sections; Keystone uses a graphite device-build layout.",
+        "billing_profile": {
+          "address_lines": ["3400 Assembly Road", "Minneapolis, MN 55413", "United States"],
+          "billing_contact": "Keystone Device AR",
+          "billing_email": "ar@keystonedevice.example",
+          "tax_id": "US EIN 38-6104927",
+          "customer_account": "WT-KDA-5813",
+          "remittance_reference": "KDA-DEVICE-WT"
+        }
+      },
+      {
+        "supplier_id": "sup-011",
+        "profile_id": "sterilization-release-packet",
+        "style_notes": "Sterilization services invoice with lot, cycle, monitoring, testing, and release packet rows; LumaSterile uses a formal release-packet layout.",
+        "billing_profile": {
+          "address_lines": ["Unit 6 Sterile Services Park", "Cork T12 K7F2", "Ireland"],
+          "billing_contact": "LumaSterile Accounts",
+          "billing_email": "accounts@lumasterile.example",
+          "tax_id": "IE VAT IE6384927W",
+          "customer_account": "WT-LSS-7360",
+          "remittance_reference": "LSS-STER-WT"
+        }
+      },
+      {
+        "supplier_id": "sup-012",
+        "profile_id": "process-development-milestone",
+        "style_notes": "Process development invoice grouped by deliverables, protocols, engineering batches, and milestones; Pioneer uses a dashed milestone worksheet layout.",
+        "billing_profile": {
+          "address_lines": ["600 Innovation Campus Drive", "Durham, NC 27703", "United States"],
+          "billing_contact": "Pioneer Process Billing",
+          "billing_email": "billing@pioneerprocess.example",
+          "tax_id": "US EIN 55-8041937",
+          "customer_account": "WT-PPD-8832",
+          "remittance_reference": "PPD-MILE-WT"
+        }
+      },
+      {
+        "supplier_id": "sup-013",
+        "profile_id": "regulated-materials-supply",
+        "style_notes": "Materials invoice with lot quantities, escalation, rush order, and quality documentation lines; Evergreen uses a green regulated-materials layout.",
+        "billing_profile": {
+          "address_lines": ["12 Excipient Quay", "Dublin D02 X285", "Ireland"],
+          "billing_contact": "Evergreen Excipient AR",
+          "billing_email": "receivables@evergreenexcipient.example",
+          "tax_id": "IE VAT IE9726413Q",
+          "customer_account": "WT-EE-9134",
+          "remittance_reference": "EE-MATL-WT"
+        }
+      },
+      {
+        "supplier_id": "sup-014",
+        "profile_id": "regional-manufacturing-trueup",
+        "style_notes": "Regional manufacturing invoice with forecast, actual volume, capacity, packaging, and true-up rows; Atlas uses an amber regional true-up layout.",
+        "billing_profile": {
+          "address_lines": ["Av. Industrial 1450", "Campinas, SP 13069-901", "Brazil"],
+          "billing_contact": "Atlas Regional Manufacturing Finance",
+          "billing_email": "finance@atlasregional.example",
+          "tax_id": "BR CNPJ 42.781.993/0001-64",
+          "customer_account": "WT-ARM-2577",
+          "remittance_reference": "ARM-LATAM-WT"
+        }
+      },
+      {
+        "supplier_id": "sup-015",
+        "profile_id": "regulatory-services-country",
+        "style_notes": "Regulatory services invoice organized by country scope, submission type, response, and translation; Signal Ridge uses an indigo country-scope layout.",
+        "billing_profile": {
+          "address_lines": ["200 Regulatory Row", "Bethesda, MD 20814", "United States"],
+          "billing_contact": "Signal Ridge Regulatory Billing",
+          "billing_email": "billing@signalridgereg.example",
+          "tax_id": "US EIN 71-3492068",
+          "customer_account": "WT-SRR-6091",
+          "remittance_reference": "SRR-REG-WT"
+        }
+      }
+    ]
+  },
+  "invoices": [
+    {
+      "invoice_id": "INV-SUP-001-2026-10",
+      "supplier_id": "sup-001",
+      "supplier_name": "Aster Ridge Biomanufacturing",
+      "invoice_date": "2026-10-31",
+      "purchase_order_id": "PO-SUP-001-2026-10",
+      "total_amount": 1418200.0,
+      "document_metadata": {
+        "due_date": "2026-12-15",
+        "service_period": "2026-10-01 to 2026-10-31",
+        "tax_treatment": "Customer tax exemption certificate on file.",
+        "tax_display": "Exempt",
+        "support_references": ["BPR-AR-1026-A10/A20", "QA release packet QA-AR-REL-1026", "Packaging order PKG-AR-BLISTER-1026"]
+      },
+      "lines": [
+        {
+          "line_id": "INV-SUP-001-2026-10-L001",
+          "line_type": "unit production",
+          "description": "ALLER-10 released tablet production, October campaign",
+          "reference_id": "BATCH-AR-1026-A10",
+          "quantity": 1800000,
+          "unit_price": 0.42,
+          "amount": 756000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-001-2026-10-L002",
+          "line_type": "unit production",
+          "description": "ALLER-20 released tablet production above monthly discount threshold",
+          "reference_id": "BATCH-AR-1026-A20",
+          "quantity": 1400000,
+          "unit_price": 0.3948,
+          "amount": 552720.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-001-2026-10-L003",
+          "line_type": "batch release",
+          "description": "Batch release administration fees for two sponsor-accepted batches",
+          "reference_id": "QA-AR-REL-1026",
+          "quantity": 2,
+          "unit_price": 4800.0,
+          "amount": 9600.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-001-2026-10-L004",
+          "line_type": "packaging",
+          "description": "Blister packaging surcharge for ALLER-20 monthly production",
+          "reference_id": "PKG-AR-BLISTER-1026",
+          "quantity": 1,
+          "unit_price": 99880.0,
+          "amount": 99880.0,
+          "expected_decision_state": "disputed",
+          "scenario_id": "scn-sup-001-packaging-authorization",
+          "issue_category": "off_contract_packaging"
+        }
+      ]
+    },
+    {
+      "invoice_id": "INV-SUP-002-2026-10",
+      "supplier_id": "sup-002",
+      "supplier_name": "Northstar Fill Finish",
+      "invoice_date": "2026-10-28",
+      "purchase_order_id": "PO-SUP-002-2026-10",
+      "total_amount": 698250.0,
+      "document_metadata": {
+        "due_date": "2026-12-12",
+        "service_period": "2026-10-01 to 2026-10-28",
+        "tax_treatment": "Customer tax exemption certificate on file.",
+        "tax_display": "Exempt",
+        "support_references": ["Batch release certificate NFF-REL-1026", "Line clearance log LC-NFF-1026", "Deviation record DEV-NFF-1026-07"]
+      },
+      "lines": [
+        {
+          "line_id": "INV-SUP-002-2026-10-L001",
+          "line_type": "batch fee",
+          "description": "Sterile fill-finish batch fee for released lot NS-1026-01",
+          "reference_id": "BATCH-NS-1026-01",
+          "quantity": 1,
+          "unit_price": 325000.0,
+          "amount": 325000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-002-2026-10-L002",
+          "line_type": "QA release testing",
+          "description": "QA release testing for released lot NS-1026-01",
+          "reference_id": "QA-NS-REL-1026-01",
+          "quantity": 1,
+          "unit_price": 7250.0,
+          "amount": 7250.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-002-2026-10-L003",
+          "line_type": "line clearance",
+          "description": "Line clearance record LC-NS-1026-01",
+          "reference_id": "LC-NS-1026-01",
+          "quantity": 1,
+          "unit_price": 18000.0,
+          "amount": 18000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-002-2026-10-L004",
+          "line_type": "batch fee",
+          "description": "Batch manufacturing and QA release fee for lot NS-1026-02 with pending QA status",
+          "reference_id": "BATCH-NS-1026-02",
+          "quantity": 1,
+          "unit_price": 348000.0,
+          "amount": 348000.0,
+          "expected_decision_state": "disputed",
+          "scenario_id": "scn-sup-002-pending-batch",
+          "issue_category": "unreleased_batch_billing"
+        }
+      ]
+    },
+    {
+      "invoice_id": "INV-SUP-003-2026-10",
+      "supplier_id": "sup-003",
+      "supplier_name": "HelioPack Pharma Services",
+      "invoice_date": "2026-10-27",
+      "purchase_order_id": "PO-SUP-003-2026-10",
+      "total_amount": 307650.0,
+      "document_metadata": {
+        "due_date": "2026-12-11",
+        "service_period": "2026-10-01 to 2026-10-27",
+        "tax_treatment": "Reverse charge or exempt supply per customer tax documentation.",
+        "tax_display": "Reverse charge",
+        "support_references": ["Serialization report SER-HP-1026", "Shipment confirmation SHP-HP-1026", "Label version approval LV-HP-4.2"]
+      },
+      "lines": [
+        {
+          "line_id": "INV-SUP-003-2026-10-L001",
+          "line_type": "serialization",
+          "description": "Serialization for ALLER-10 EU carton accepted units",
+          "reference_id": "SHIP-HP-1026-01",
+          "quantity": 420000,
+          "unit_price": 0.18,
+          "amount": 75600.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-003-2026-10-L002",
+          "line_type": "labeling",
+          "description": "Approved French and German label version application",
+          "reference_id": "LBL-HP-EU-1026",
+          "quantity": 420000,
+          "unit_price": 0.11,
+          "amount": 46200.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-003-2026-10-L003",
+          "line_type": "cartoning",
+          "description": "Cartoning for EU distribution lane shipment",
+          "reference_id": "PKG-HP-1026-01",
+          "quantity": 420000,
+          "unit_price": 0.39,
+          "amount": 163800.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-003-2026-10-L004",
+          "line_type": "logistics",
+          "description": "Premium freight surcharge for EU lane shipment without lane exception approval",
+          "reference_id": "SHIP-HP-1026-ALT",
+          "quantity": 1,
+          "unit_price": 22050.0,
+          "amount": 22050.0,
+          "expected_decision_state": "variance",
+          "scenario_id": "scn-sup-003-premium-logistics",
+          "issue_category": "unsupported_logistics_surcharge"
+        }
+      ]
+    },
+    {
+      "invoice_id": "INV-SUP-004-2026-10",
+      "supplier_id": "sup-004",
+      "supplier_name": "Meridian API Works",
+      "invoice_date": "2026-10-25",
+      "purchase_order_id": "PO-SUP-004-2026-10",
+      "total_amount": 1808400.0,
+      "document_metadata": {
+        "due_date": "2026-12-09",
+        "service_period": "2026-09-26 to 2026-10-25",
+        "tax_treatment": "Import duties and local taxes billed separately when applicable.",
+        "tax_display": "Duties billed separately",
+        "support_references": ["CoA MAW-API-1026", "Lot yield worksheet YLD-MAW-1026", "Raw material invoice packet RM-MAW-1026"]
+      },
+      "lines": [
+        {
+          "line_id": "INV-SUP-004-2026-10-L001",
+          "line_type": "API lot",
+          "description": "Released AUR-API-7 lot quantity per certificate of analysis",
+          "reference_id": "LOT-MD-1026-A",
+          "quantity": 7200,
+          "unit_price": 184.0,
+          "amount": 1324800.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-004-2026-10-L002",
+          "line_type": "raw materials",
+          "description": "Approved raw material pass-through for consumed precursor RM-72",
+          "reference_id": "MAT-MD-RM72-1026",
+          "quantity": 1,
+          "unit_price": 346000.0,
+          "amount": 346000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-004-2026-10-L003",
+          "line_type": "expedited release",
+          "description": "Sponsor-approved expedited certificate of analysis delivery",
+          "reference_id": "COA-MD-1026-A",
+          "quantity": 1,
+          "unit_price": 12000.0,
+          "amount": 12000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-004-2026-10-L004",
+          "line_type": "yield adjustment",
+          "description": "Yield adjustment calculated from forecast API volume instead of actual lot yield",
+          "reference_id": "YIELD-MD-Q4-FORECAST",
+          "quantity": 1,
+          "unit_price": 125600.0,
+          "amount": 125600.0,
+          "expected_decision_state": "variance",
+          "scenario_id": "scn-sup-004-yield-true-up",
+          "issue_category": "invalid_true_up"
+        }
+      ]
+    },
+    {
+      "invoice_id": "INV-SUP-005-2026-10",
+      "supplier_id": "sup-005",
+      "supplier_name": "Crescent GMP Labs",
+      "invoice_date": "2026-10-24",
+      "purchase_order_id": "PO-SUP-005-2026-10",
+      "total_amount": 241900.0,
+      "document_metadata": {
+        "due_date": "2026-12-08",
+        "service_period": "2026-10-01 to 2026-10-24",
+        "tax_treatment": "Customer tax exemption certificate on file.",
+        "tax_display": "Exempt",
+        "support_references": ["Sample receipt log CGL-SRL-1026", "Stability pull schedule STAB-CGL-Q4", "CoA packet CGL-COA-1026"]
+      },
+      "lines": [
+        {
+          "line_id": "INV-SUP-005-2026-10-L001",
+          "line_type": "release testing",
+          "description": "Release testing package for batch AR-1026-A10",
+          "reference_id": "TEST-CG-1026-A10",
+          "quantity": 1,
+          "unit_price": 64200.0,
+          "amount": 64200.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-005-2026-10-L002",
+          "line_type": "method validation",
+          "description": "Sponsor-accepted validation report deliverable MV-CG-1026",
+          "reference_id": "MV-CG-1026",
+          "quantity": 1,
+          "unit_price": 93500.0,
+          "amount": 93500.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-005-2026-10-L003",
+          "line_type": "certificate of analysis",
+          "description": "Non-standard certificate package requested after final issuance",
+          "reference_id": "COA-CG-1026-SUPP",
+          "quantity": 1,
+          "unit_price": 4200.0,
+          "amount": 4200.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-005-2026-10-L004",
+          "line_type": "stability pull",
+          "description": "Stability pull billed before the approved study schedule window",
+          "reference_id": "STAB-CG-1026-EARLY",
+          "quantity": 1,
+          "unit_price": 80000.0,
+          "amount": 80000.0,
+          "expected_decision_state": "disputed",
+          "scenario_id": "scn-sup-005-early-stability-pull",
+          "issue_category": "early_milestone_billing"
+        }
+      ]
+    },
+    {
+      "invoice_id": "INV-SUP-006-2026-10",
+      "supplier_id": "sup-006",
+      "supplier_name": "Summit Dose Manufacturing",
+      "invoice_date": "2026-10-29",
+      "purchase_order_id": "PO-SUP-006-2026-10",
+      "total_amount": 781950.0,
+      "document_metadata": {
+        "due_date": "2026-12-13",
+        "service_period": "2026-10-01 to 2026-10-29",
+        "tax_treatment": "Reverse charge or exempt supply per customer tax documentation.",
+        "tax_display": "Reverse charge",
+        "support_references": ["Campaign worksheet SDM-CW-1026", "Cleaning validation CV-SDM-1026", "Released quantity report RQ-SDM-1026"]
+      },
+      "lines": [
+        {
+          "line_id": "INV-SUP-006-2026-10-L001",
+          "line_type": "unit production",
+          "description": "ALLER-CAP 25 mg released capsule production",
+          "reference_id": "BATCH-SD-1026-C25",
+          "quantity": 980000,
+          "unit_price": 0.31,
+          "amount": 303800.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-006-2026-10-L002",
+          "line_type": "unit production",
+          "description": "ALLER-CAP 50 mg released capsule production",
+          "reference_id": "BATCH-SD-1026-C50",
+          "quantity": 1080000,
+          "unit_price": 0.31,
+          "amount": 334800.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-006-2026-10-L003",
+          "line_type": "cleaning validation",
+          "description": "Approved non-routine cleaning validation protocol CV-SD-1026",
+          "reference_id": "CV-SD-1026",
+          "quantity": 1,
+          "unit_price": 96300.0,
+          "amount": 96300.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-006-2026-10-L004",
+          "line_type": "changeover",
+          "description": "Changeover fee between ALLER-CAP 25 mg and ALLER-CAP 50 mg in the same campaign week",
+          "reference_id": "CHG-SD-C25-C50-1026",
+          "quantity": 1,
+          "unit_price": 47050.0,
+          "amount": 47050.0,
+          "expected_decision_state": "disputed",
+          "scenario_id": "scn-sup-006-same-family-changeover",
+          "issue_category": "included_service_billed"
+        }
+      ]
+    },
+    {
+      "invoice_id": "INV-SUP-007-2026-10",
+      "supplier_id": "sup-007",
+      "supplier_name": "Orchid Clinical Supply",
+      "invoice_date": "2026-10-23",
+      "purchase_order_id": "PO-SUP-007-2026-10",
+      "total_amount": 536300.0,
+      "document_metadata": {
+        "due_date": "2026-12-07",
+        "service_period": "2026-09-29 to 2026-10-23",
+        "tax_treatment": "Customer tax exemption certificate on file.",
+        "tax_display": "Exempt",
+        "statement_summary": {
+          "previous_balance": 0.0,
+          "payments_received": 0.0,
+          "current_charges": 536300.0,
+          "balance_due": 536300.0
+        },
+        "support_references": ["Protocol OCS-244 supply plan", "Comparator receipt packet CMP-OCS-1026", "Storage ledger STL-OCS-1026"]
+      },
+      "lines": [
+        {
+          "line_id": "INV-SUP-007-2026-10-L001",
+          "line_type": "kit assembly",
+          "description": "Released Phase II clinical kit assembly under approved protocol",
+          "reference_id": "KIT-OC-1026-P2",
+          "quantity": 18000,
+          "unit_price": 8.75,
+          "amount": 157500.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-007-2026-10-L002",
+          "line_type": "comparator sourcing",
+          "description": "Comparator material pass-through with supplier receipt and lot evidence",
+          "reference_id": "CMP-OC-1026-LOT7",
+          "quantity": 1,
+          "unit_price": 221000.0,
+          "amount": 221000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-007-2026-10-L003",
+          "line_type": "study milestone",
+          "description": "First-patient shipment readiness milestone approved by sponsor",
+          "reference_id": "MS-OC-FPSR-1026",
+          "quantity": 1,
+          "unit_price": 92500.0,
+          "amount": 92500.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-007-2026-10-L004",
+          "line_type": "temperature-controlled storage",
+          "description": "Temperature-controlled storage days after the study close date without extension approval",
+          "reference_id": "STOR-OC-POSTCLOSE-1026",
+          "quantity": 1,
+          "unit_price": 65300.0,
+          "amount": 65300.0,
+          "expected_decision_state": "variance",
+          "scenario_id": "scn-sup-007-storage-after-close",
+          "issue_category": "invalid_storage_period"
+        }
+      ]
+    },
+    {
+      "invoice_id": "INV-SUP-008-2026-10",
+      "supplier_id": "sup-008",
+      "supplier_name": "Valence Cold Chain Logistics",
+      "invoice_date": "2026-10-22",
+      "purchase_order_id": "PO-SUP-008-2026-10",
+      "total_amount": 319740.0,
+      "document_metadata": {
+        "due_date": "2026-12-06",
+        "service_period": "2026-10-01 to 2026-10-22",
+        "tax_treatment": "Freight taxes included only where required by lane jurisdiction.",
+        "tax_display": "Included where applicable",
+        "support_references": ["POD VCL-1026-8841", "Temperature log TL-VCL-1026", "Lane authorization LA-VCL-1026"]
+      },
+      "lines": [
+        {
+          "line_id": "INV-SUP-008-2026-10-L001",
+          "line_type": "cold chain shipment",
+          "description": "Validated 2-8C shipment on approved Boston to Frankfurt lane",
+          "reference_id": "SHIP-VC-1026-BOS-FRA",
+          "quantity": 8,
+          "unit_price": 18250.0,
+          "amount": 146000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-008-2026-10-L002",
+          "line_type": "lane surcharge",
+          "description": "Sponsor-approved remote-area surcharge for Reykjavik final mile",
+          "reference_id": "LANE-VC-1026-REK",
+          "quantity": 1,
+          "unit_price": 38200.0,
+          "amount": 38200.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-008-2026-10-L003",
+          "line_type": "excursion handling",
+          "description": "Excursion investigation with temperature record and disposition",
+          "reference_id": "EXC-VC-1026-04",
+          "quantity": 1,
+          "unit_price": 29100.0,
+          "amount": 29100.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-008-2026-10-L004",
+          "line_type": "customs brokerage",
+          "description": "Customs brokerage billed on both master and child shipment records",
+          "reference_id": "CUST-VC-1026-DUP",
+          "quantity": 1,
+          "unit_price": 106440.0,
+          "amount": 106440.0,
+          "expected_decision_state": "disputed",
+          "scenario_id": "scn-sup-008-duplicate-brokerage",
+          "issue_category": "duplicate_billing"
+        }
+      ]
+    },
+    {
+      "invoice_id": "INV-SUP-009-2026-Q4",
+      "supplier_id": "sup-009",
+      "supplier_name": "BluePeak Biologics",
+      "invoice_date": "2026-10-31",
+      "purchase_order_id": "PO-SUP-009-2026-Q4",
+      "total_amount": 3403400.0,
+      "document_metadata": {
+        "due_date": "2026-12-15",
+        "service_period": "2026-10-01 to 2026-12-31",
+        "tax_treatment": "Customer tax exemption certificate on file.",
+        "tax_display": "Exempt",
+        "statement_summary": {
+          "previous_balance": 0.0,
+          "payments_received": 0.0,
+          "current_charges": 3403400.0,
+          "balance_due": 3403400.0
+        },
+        "support_references": ["Q4 capacity reservation BPB-QCAP-2026", "Utilization log UTL-BPB-1026", "Deviation cost packet DEV-BPB-1026"]
+      },
+      "lines": [
+        {
+          "line_id": "INV-SUP-009-2026-Q4-L001",
+          "line_type": "reserved capacity",
+          "description": "Quarterly minimum capacity fee covering reserved bioreactor hours",
+          "reference_id": "CAP-BP-2026-Q4",
+          "quantity": 1,
+          "unit_price": 1250000.0,
+          "amount": 1250000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-009-2026-Q4-L002",
+          "line_type": "utilized capacity",
+          "description": "Utilized capacity above included 12,000 quarterly hours",
+          "reference_id": "RUN-BP-2026-Q4",
+          "quantity": 4800,
+          "unit_price": 118.0,
+          "amount": 566400.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-009-2026-Q4-L003",
+          "line_type": "cell culture run",
+          "description": "Cell culture run logs for sponsor-accepted campaign BP-1026",
+          "reference_id": "BATCH-BP-1026",
+          "quantity": 3,
+          "unit_price": 492000.0,
+          "amount": 1476000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-009-2026-Q4-L004",
+          "line_type": "contamination investigation",
+          "description": "Contamination investigation billed where deviation record indicates supplier-caused contamination",
+          "reference_id": "DEV-BP-1026-SUPPLIER",
+          "quantity": 1,
+          "unit_price": 111000.0,
+          "amount": 111000.0,
+          "expected_decision_state": "escalated",
+          "scenario_id": "scn-sup-009-supplier-caused-investigation",
+          "issue_category": "quality_deviation_charge"
+        }
+      ]
+    },
+    {
+      "invoice_id": "INV-SUP-010-2026-10",
+      "supplier_id": "sup-010",
+      "supplier_name": "Keystone Device Assembly",
+      "invoice_date": "2026-10-30",
+      "purchase_order_id": "PO-SUP-010-2026-10",
+      "total_amount": 1209750.0,
+      "document_metadata": {
+        "due_date": "2026-12-14",
+        "service_period": "2026-10-01 to 2026-10-30",
+        "tax_treatment": "Customer tax exemption certificate on file.",
+        "tax_display": "Exempt",
+        "support_references": ["Build traveler KDA-BT-1026", "Final inspection report FIR-KDA-1026", "ECO packet ECO-KDA-771"]
+      },
+      "lines": [
+        {
+          "line_id": "INV-SUP-010-2026-10-L001",
+          "line_type": "device assembly",
+          "description": "Accepted ALLER auto-injector assembly units",
+          "reference_id": "BUILD-KD-1026-AI",
+          "quantity": 310000,
+          "unit_price": 2.75,
+          "amount": 852500.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-010-2026-10-L002",
+          "line_type": "final inspection",
+          "description": "Final inspection for accepted build lots KD-1026-A and KD-1026-B",
+          "reference_id": "INSP-KD-1026",
+          "quantity": 310000,
+          "unit_price": 0.48,
+          "amount": 148800.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-010-2026-10-L003",
+          "line_type": "engineering change order",
+          "description": "Sponsor-approved ECO-447 implementation labor",
+          "reference_id": "ECO-KD-447",
+          "quantity": 1,
+          "unit_price": 122000.0,
+          "amount": 122000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-010-2026-10-L004",
+          "line_type": "component scrap",
+          "description": "Component scrap above 1.5% billed without sponsor-caused defect evidence",
+          "reference_id": "SCRAP-KD-1026-EXCESS",
+          "quantity": 1,
+          "unit_price": 86450.0,
+          "amount": 86450.0,
+          "expected_decision_state": "variance",
+          "scenario_id": "scn-sup-010-scrap-allowance",
+          "issue_category": "scrap_above_allowance"
+        }
+      ]
+    },
+    {
+      "invoice_id": "INV-SUP-011-2026-10",
+      "supplier_id": "sup-011",
+      "supplier_name": "LumaSterile Services",
+      "invoice_date": "2026-10-26",
+      "purchase_order_id": "PO-SUP-011-2026-10",
+      "total_amount": 431200.0,
+      "document_metadata": {
+        "due_date": "2026-12-10",
+        "service_period": "2026-10-01 to 2026-10-26",
+        "tax_treatment": "Reverse charge or exempt supply per customer tax documentation.",
+        "tax_display": "Reverse charge",
+        "support_references": ["Sterilization cycle record LSS-CYC-1026", "Bioburden report BIO-LSS-1026", "Release packet RP-LSS-1026"]
+      },
+      "lines": [
+        {
+          "line_id": "INV-SUP-011-2026-10-L001",
+          "line_type": "sterilization cycle",
+          "description": "Documented sterilization cycles tied to sponsor lots",
+          "reference_id": "CYCLE-LS-1026",
+          "quantity": 6,
+          "unit_price": 42500.0,
+          "amount": 255000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-011-2026-10-L002",
+          "line_type": "bioburden testing",
+          "description": "Routine bioburden testing once per lot",
+          "reference_id": "BIO-LS-1026",
+          "quantity": 6,
+          "unit_price": 12200.0,
+          "amount": 73200.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-011-2026-10-L003",
+          "line_type": "environmental monitoring",
+          "description": "Environmental monitoring package for October cycles",
+          "reference_id": "EM-LS-1026",
+          "quantity": 1,
+          "unit_price": 41000.0,
+          "amount": 41000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-011-2026-10-L004",
+          "line_type": "release packet",
+          "description": "Release packet fee billed before sponsor QA acceptance of sterilization documentation",
+          "reference_id": "REL-LS-1026-PENDING",
+          "quantity": 1,
+          "unit_price": 62000.0,
+          "amount": 62000.0,
+          "expected_decision_state": "disputed",
+          "scenario_id": "scn-sup-011-release-packet-before-qa",
+          "issue_category": "premature_release_documentation"
+        }
+      ]
+    },
+    {
+      "invoice_id": "INV-SUP-012-2026-10",
+      "supplier_id": "sup-012",
+      "supplier_name": "Pioneer Process Development",
+      "invoice_date": "2026-10-21",
+      "purchase_order_id": "PO-SUP-012-2026-10",
+      "total_amount": 904000.0,
+      "document_metadata": {
+        "due_date": "2026-12-05",
+        "service_period": "2026-09-15 to 2026-10-21",
+        "tax_treatment": "Customer tax exemption certificate on file.",
+        "tax_display": "Exempt",
+        "support_references": ["Protocol deliverable PPD-PROT-1026", "Engineering batch report EBR-PPD-1026", "Milestone acceptance MA-PPD-1026"]
+      },
+      "lines": [
+        {
+          "line_id": "INV-SUP-012-2026-10-L001",
+          "line_type": "tech transfer",
+          "description": "Sponsor-accepted tech transfer deliverable package",
+          "reference_id": "TT-PD-1026",
+          "quantity": 1,
+          "unit_price": 235000.0,
+          "amount": 235000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-012-2026-10-L002",
+          "line_type": "protocol authoring",
+          "description": "Accepted validation protocol authoring deliverable",
+          "reference_id": "PROT-PD-VAL-1026",
+          "quantity": 1,
+          "unit_price": 146000.0,
+          "amount": 146000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-012-2026-10-L003",
+          "line_type": "process validation",
+          "description": "Approved process validation readiness milestone",
+          "reference_id": "MS-PD-PV-READY",
+          "quantity": 1,
+          "unit_price": 312000.0,
+          "amount": 312000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-012-2026-10-L004",
+          "line_type": "engineering batch",
+          "description": "Engineering batch invoiced at GMP validation batch rate",
+          "reference_id": "ENG-PD-1026-RATED-GMP",
+          "quantity": 1,
+          "unit_price": 211000.0,
+          "amount": 211000.0,
+          "expected_decision_state": "variance",
+          "scenario_id": "scn-sup-012-engineering-as-gmp",
+          "issue_category": "wrong_rate"
+        }
+      ]
+    },
+    {
+      "invoice_id": "INV-SUP-013-2026-10",
+      "supplier_id": "sup-013",
+      "supplier_name": "Evergreen Excipients",
+      "invoice_date": "2026-10-20",
+      "purchase_order_id": "PO-SUP-013-2026-10",
+      "total_amount": 658500.0,
+      "document_metadata": {
+        "due_date": "2026-12-04",
+        "service_period": "2026-10-01 to 2026-10-20",
+        "tax_treatment": "Reverse charge or exempt supply per customer tax documentation.",
+        "tax_display": "Reverse charge",
+        "support_references": ["Excipient CoA packet EE-COA-1026", "Lot receipt LR-EE-1026", "Rush order approval RO-EE-1026"]
+      },
+      "lines": [
+        {
+          "line_id": "INV-SUP-013-2026-10-L001",
+          "line_type": "excipient lot",
+          "description": "Regulated excipient lot EX-1026-A at contract unit cost",
+          "reference_id": "LOT-EG-1026-A",
+          "quantity": 9000,
+          "unit_price": 42.0,
+          "amount": 378000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-013-2026-10-L002",
+          "line_type": "rush order",
+          "description": "Sponsor-approved rush order fee for lot EX-1026-B",
+          "reference_id": "RUSH-EG-1026-B",
+          "quantity": 1,
+          "unit_price": 42500.0,
+          "amount": 42500.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-013-2026-10-L003",
+          "line_type": "quality documentation",
+          "description": "Non-standard allergen traceability package requested by sponsor",
+          "reference_id": "QDOC-EG-1026-ALLER",
+          "quantity": 1,
+          "unit_price": 18000.0,
+          "amount": 18000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-013-2026-10-L004",
+          "line_type": "material surcharge",
+          "description": "Material price escalation above 2.5% without procurement approval",
+          "reference_id": "SUR-EG-1026-ESC",
+          "quantity": 1,
+          "unit_price": 220000.0,
+          "amount": 220000.0,
+          "expected_decision_state": "disputed",
+          "scenario_id": "scn-sup-013-escalation-cap",
+          "issue_category": "price_escalation_cap"
+        }
+      ]
+    },
+    {
+      "invoice_id": "INV-SUP-014-2026-10",
+      "supplier_id": "sup-014",
+      "supplier_name": "Atlas Regional Manufacturing",
+      "invoice_date": "2026-10-31",
+      "purchase_order_id": "PO-SUP-014-2026-10",
+      "total_amount": 1151800.0,
+      "document_metadata": {
+        "due_date": "2026-12-15",
+        "service_period": "2026-10-01 to 2026-10-31",
+        "tax_treatment": "Brazil indirect taxes excluded from USD sponsor invoice unless separately itemized.",
+        "tax_display": "Excluded",
+        "support_references": ["LATAM production report ARM-PR-1026", "Capacity true-up worksheet CTU-ARM-1026", "Forecast snapshot FS-ARM-1026"]
+      },
+      "lines": [
+        {
+          "line_id": "INV-SUP-014-2026-10-L001",
+          "line_type": "unit production",
+          "description": "Regional high-volume ALLER tablet production at contracted tier",
+          "reference_id": "BATCH-AT-1026-LATAM",
+          "quantity": 2100000,
+          "unit_price": 0.36,
+          "amount": 756000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-014-2026-10-L002",
+          "line_type": "capacity reservation",
+          "description": "Active October capacity reservation listed in purchase order",
+          "reference_id": "CAP-AT-2026-10",
+          "quantity": 1,
+          "unit_price": 185000.0,
+          "amount": 185000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-014-2026-10-L003",
+          "line_type": "regional packaging",
+          "description": "Approved LATAM carton format and artwork revision",
+          "reference_id": "PKG-AT-LATAM-1026",
+          "quantity": 2100000,
+          "unit_price": 0.06,
+          "amount": 126000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-014-2026-10-L004",
+          "line_type": "volume true-up",
+          "description": "Volume true-up calculated from outdated forecast rather than current actual volume",
+          "reference_id": "TRUEUP-AT-1026-OLD-FCST",
+          "quantity": 1,
+          "unit_price": 84800.0,
+          "amount": 84800.0,
+          "expected_decision_state": "variance",
+          "scenario_id": "scn-sup-014-outdated-forecast",
+          "issue_category": "invalid_true_up"
+        }
+      ]
+    },
+    {
+      "invoice_id": "INV-SUP-015-2026-10",
+      "supplier_id": "sup-015",
+      "supplier_name": "Signal Ridge Regulatory Services",
+      "invoice_date": "2026-10-19",
+      "purchase_order_id": "PO-SUP-015-2026-10",
+      "total_amount": 491250.0,
+      "document_metadata": {
+        "due_date": "2026-12-03",
+        "service_period": "2026-09-20 to 2026-10-19",
+        "tax_treatment": "Customer tax exemption certificate on file.",
+        "tax_display": "Exempt",
+        "support_references": ["Country scope matrix SRR-CSM-1026", "Submission acknowledgement ACK-SRR-1026", "Translation certificate TR-SRR-1026"]
+      },
+      "lines": [
+        {
+          "line_id": "INV-SUP-015-2026-10-L001",
+          "line_type": "site addition packet",
+          "description": "Approved site addition packet for Germany and France",
+          "reference_id": "SITE-SR-EU-1026",
+          "quantity": 2,
+          "unit_price": 72000.0,
+          "amount": 144000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-015-2026-10-L002",
+          "line_type": "regulatory response",
+          "description": "Authority response package accepted after acknowledgement letter",
+          "reference_id": "RESP-SR-DE-1026",
+          "quantity": 1,
+          "unit_price": 118000.0,
+          "amount": 118000.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-015-2026-10-L003",
+          "line_type": "document translation",
+          "description": "Approved English to German regulatory document translation",
+          "reference_id": "TRANS-SR-DE-1026",
+          "quantity": 12500,
+          "unit_price": 0.58,
+          "amount": 7250.0,
+          "expected_decision_state": "matched"
+        },
+        {
+          "line_id": "INV-SUP-015-2026-10-L004",
+          "line_type": "variation submission",
+          "description": "Variation submission fee for a country not listed in the approved regulatory work order",
+          "reference_id": "VAR-SR-BR-UNAPPROVED",
+          "quantity": 1,
+          "unit_price": 222000.0,
+          "amount": 222000.0,
+          "expected_decision_state": "disputed",
+          "scenario_id": "scn-sup-015-unapproved-country",
+          "issue_category": "unapproved_country_scope"
+        }
+      ]
+    }
+  ]
+}

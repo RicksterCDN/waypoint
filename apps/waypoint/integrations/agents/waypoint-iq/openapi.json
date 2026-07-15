@@ -1,0 +1,4952 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "waypoint-iq",
+    "version": "0.1.0",
+    "description": "Curated Caldova Waypoint API surface for Forge agents. Read, write, and admin operations are tagged with x-waypoint-iq-authority."
+  },
+  "servers": [
+    {
+      "url": "https://localhost:62595",
+      "description": "Waypoint API endpoint selected at export time"
+    }
+  ],
+  "paths": {
+    "/api/work": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "List Work Queue",
+        "operationId": "waypointiq_get_work",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WorkQueueItem"
+                  },
+                  "type": "array",
+                  "title": "Response List Work Queue Api Work Get"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      }
+    },
+    "/api/actions/types": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "List Action Types",
+        "operationId": "waypointiq_get_action_types",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ActionType"
+                  },
+                  "type": "array",
+                  "title": "Response List Action Types Api Actions Types Get"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      }
+    },
+    "/api/runs": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "List Agent Runs",
+        "operationId": "waypointiq_get_runs",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgentRun"
+                  },
+                  "title": "Response List Agent Runs Api Runs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      },
+      "post": {
+        "tags": [
+          "waypoint-iq-write"
+        ],
+        "summary": "Create Agent Run",
+        "operationId": "waypointiq_create_run",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentRunCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentRun"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "write",
+        "description": "WaypointIQ authority: write."
+      }
+    },
+    "/api/cases": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "List Cases",
+        "operationId": "waypointiq_get_cases",
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Invoice Id"
+            }
+          },
+          {
+            "name": "finding_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Finding Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssuranceCase"
+                  },
+                  "title": "Response List Cases Api Cases Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      },
+      "post": {
+        "tags": [
+          "waypoint-iq-write"
+        ],
+        "summary": "Create Case",
+        "operationId": "waypointiq_create_case",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssuranceCaseCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssuranceCase"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "write",
+        "description": "WaypointIQ authority: write."
+      }
+    },
+    "/api/cases/{case_id}": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "Get Case",
+        "operationId": "waypointiq_get_case",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssuranceCase"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      }
+    },
+    "/api/cases/{case_id}/recommendations": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "List Case Recommendations",
+        "operationId": "waypointiq_get_case_recommendations",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CaseRecommendation"
+                  },
+                  "title": "Response List Case Recommendations Api Cases  Case Id  Recommendations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      },
+      "post": {
+        "tags": [
+          "waypoint-iq-write"
+        ],
+        "summary": "Create Case Recommendation",
+        "operationId": "waypointiq_create_case_recommendation",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseRecommendationCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseRecommendation"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "write",
+        "description": "WaypointIQ authority: write."
+      }
+    },
+    "/api/cases/{case_id}/drafts": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "List Case Drafts",
+        "operationId": "waypointiq_get_case_drafts",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CaseDraft"
+                  },
+                  "title": "Response List Case Drafts Api Cases  Case Id  Drafts Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      },
+      "post": {
+        "tags": [
+          "waypoint-iq-write"
+        ],
+        "summary": "Create Case Draft",
+        "operationId": "waypointiq_create_case_draft",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseDraftCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseDraft"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "write",
+        "description": "WaypointIQ authority: write."
+      }
+    },
+    "/api/cases/{case_id}/actions": {
+      "post": {
+        "tags": [
+          "waypoint-iq-write"
+        ],
+        "summary": "Create Proposed Action",
+        "operationId": "waypointiq_create_proposed_action",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposedActionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposedAction"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "write",
+        "description": "WaypointIQ authority: write."
+      }
+    },
+    "/api/cases/{case_id}/approvals": {
+      "post": {
+        "tags": [
+          "waypoint-iq-admin"
+        ],
+        "summary": "Create Case Approval",
+        "operationId": "waypointiq_create_case_approval",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseApprovalCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseApproval"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "admin",
+        "description": "WaypointIQ authority: admin."
+      }
+    },
+    "/api/actions/{action_id}/authorize": {
+      "post": {
+        "tags": [
+          "waypoint-iq-admin"
+        ],
+        "summary": "Authorize Proposed Action",
+        "operationId": "waypointiq_authorize_action",
+        "parameters": [
+          {
+            "name": "action_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Action Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizeIntentCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizedIntent"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "admin",
+        "description": "WaypointIQ authority: admin."
+      }
+    },
+    "/api/invoices": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "List Invoices",
+        "operationId": "waypointiq_get_invoices",
+        "parameters": [
+          {
+            "name": "supplier_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Supplier Id"
+            }
+          },
+          {
+            "name": "invoice_number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact invoice-number lookup; combine with supplier_id for a stable business key.",
+              "title": "Invoice Number"
+            },
+            "description": "Exact invoice-number lookup; combine with supplier_id for a stable business key."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Invoice"
+                  },
+                  "title": "Response List Invoices Api Invoices Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      }
+    },
+    "/api/invoices/{invoice_id}": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "Get Invoice",
+        "operationId": "waypointiq_get_invoice",
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Invoice Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDetail-Output"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      }
+    },
+    "/api/invoices/{invoice_id}/context": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "Get Invoice Context",
+        "operationId": "waypointiq_get_invoice_context",
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Invoice Id"
+            }
+          },
+          {
+            "name": "include_sensitive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Sensitive"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceContextBundle"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      }
+    },
+    "/api/invoices/{invoice_id}/assurance": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "Get Invoice Assurance",
+        "operationId": "waypointiq_get_invoice_assurance",
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Invoice Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceAssurance"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      }
+    },
+    "/api/invoice-decisions": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "List Invoice Decisions",
+        "operationId": "waypointiq_get_invoice_decisions",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InvoiceDecision"
+                  },
+                  "type": "array",
+                  "title": "Response List Invoice Decisions Api Invoice Decisions Get"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      }
+    },
+    "/api/findings": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "List Findings",
+        "operationId": "waypointiq_get_findings",
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Invoice Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReconciliationFinding-Output"
+                  },
+                  "title": "Response List Findings Api Findings Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      }
+    },
+    "/api/findings/{finding_id}/validations": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "List Finding Validations",
+        "operationId": "waypointiq_get_finding_validations",
+        "parameters": [
+          {
+            "name": "finding_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Finding Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FindingValidation"
+                  },
+                  "title": "Response List Finding Validations Api Findings  Finding Id  Validations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      },
+      "post": {
+        "tags": [
+          "waypoint-iq-write"
+        ],
+        "summary": "Create Finding Validation",
+        "operationId": "waypointiq_create_finding_validation",
+        "parameters": [
+          {
+            "name": "finding_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Finding Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FindingValidationCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindingValidation"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "write",
+        "description": "WaypointIQ authority: write."
+      }
+    },
+    "/api/evidence": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "List Evidence",
+        "operationId": "waypointiq_get_evidence",
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Invoice Id"
+            }
+          },
+          {
+            "name": "finding_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Finding Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EvidenceReference"
+                  },
+                  "title": "Response List Evidence Api Evidence Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      }
+    },
+    "/api/contract-documents/{document_id}": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "Get Contract Document",
+        "operationId": "waypointiq_get_contract_document",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          },
+          {
+            "name": "include_content",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Resolve and include the full document text from the corpus lake",
+              "default": false,
+              "title": "Include Content"
+            },
+            "description": "Resolve and include the full document text from the corpus lake"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractDocumentDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      }
+    },
+    "/api/policies/{policy_id}": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "Get Policy",
+        "operationId": "waypointiq_get_policy",
+        "parameters": [
+          {
+            "name": "policy_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Policy Id"
+            }
+          },
+          {
+            "name": "include_content",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Resolve and include the full policy text from the corpus lake",
+              "default": false,
+              "title": "Include Content"
+            },
+            "description": "Resolve and include the full policy text from the corpus lake"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      }
+    },
+    "/api/suppliers": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "List Suppliers",
+        "operationId": "waypointiq_get_suppliers",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Supplier"
+                  },
+                  "type": "array",
+                  "title": "Response List Suppliers Api Suppliers Get"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      }
+    },
+    "/api/scenarios": {
+      "get": {
+        "tags": [
+          "waypoint-iq-read"
+        ],
+        "summary": "List Scenarios",
+        "operationId": "waypointiq_get_scenarios",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Scenario"
+                  },
+                  "type": "array",
+                  "title": "Response List Scenarios Api Scenarios Get"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "read",
+        "description": "WaypointIQ authority: read."
+      }
+    },
+    "/api/audit/events": {
+      "get": {
+        "tags": [
+          "waypoint-iq-admin"
+        ],
+        "summary": "List Audit Events",
+        "operationId": "waypointiq_get_audit_events",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEvent"
+                  },
+                  "type": "array",
+                  "title": "Response List Audit Events Api Audit Events Get"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "admin",
+        "description": "WaypointIQ authority: admin."
+      }
+    },
+    "/api/audit/decisions": {
+      "get": {
+        "tags": [
+          "waypoint-iq-admin"
+        ],
+        "summary": "List Decision Audit Events",
+        "operationId": "waypointiq_get_decision_audit_events",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DecisionAuditEvent"
+                  },
+                  "type": "array",
+                  "title": "Response List Decision Audit Events Api Audit Decisions Get"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "admin",
+        "description": "WaypointIQ authority: admin."
+      }
+    },
+    "/api/admin/seed/ledgerfield": {
+      "post": {
+        "tags": [
+          "waypoint-iq-admin"
+        ],
+        "summary": "Import Ledgerfield Seed",
+        "operationId": "waypointiq_import_ledgerfield_seed",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LedgerfieldSeedImport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedImportResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-waypoint-iq-authority": "admin",
+        "description": "WaypointIQ authority: admin."
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActionType": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "required_role": {
+            "type": "string",
+            "title": "Required Role",
+            "default": "admin"
+          },
+          "approval_gate": {
+            "type": "string",
+            "title": "Approval Gate",
+            "default": "finance"
+          },
+          "external_side_effect": {
+            "type": "boolean",
+            "title": "External Side Effect",
+            "default": false
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description"
+        ],
+        "title": "ActionType"
+      },
+      "AgentRun": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "running"
+          },
+          "foundry_agent_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foundry Agent Name"
+          },
+          "foundry_conversation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foundry Conversation Id"
+          },
+          "foundry_response_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foundry Response Id"
+          },
+          "app_insights_operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "App Insights Operation Id"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "default": ""
+          },
+          "created_by": {
+            "type": "string",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AgentRun"
+      },
+      "AgentRunCreate": {
+        "properties": {
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "running"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "default": ""
+          },
+          "foundry_agent_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foundry Agent Name"
+          },
+          "foundry_conversation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foundry Conversation Id"
+          },
+          "app_insights_operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "App Insights Operation Id"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "AgentRunCreate"
+      },
+      "AssuranceCase": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "finding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finding Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "default": ""
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "investigating",
+              "pending_approval",
+              "authorized",
+              "closed"
+            ],
+            "title": "Status",
+            "default": "open"
+          },
+          "classification": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "confidential",
+              "ip_sensitive",
+              "restricted"
+            ],
+            "title": "Classification",
+            "default": "standard"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "invoice_id",
+          "title",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AssuranceCase"
+      },
+      "AssuranceCaseCreate": {
+        "properties": {
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "finding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finding Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "default": ""
+          },
+          "classification": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "confidential",
+              "ip_sensitive",
+              "restricted"
+            ],
+            "title": "Classification",
+            "default": "standard"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoice_id"
+        ],
+        "title": "AssuranceCaseCreate"
+      },
+      "AssuranceCaseView": {
+        "properties": {
+          "case": {
+            "$ref": "#/components/schemas/AssuranceCase"
+          },
+          "latest_recommendation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CaseRecommendation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recommendations": {
+            "items": {
+              "$ref": "#/components/schemas/CaseRecommendation"
+            },
+            "type": "array",
+            "title": "Recommendations"
+          },
+          "drafts": {
+            "items": {
+              "$ref": "#/components/schemas/CaseDraft"
+            },
+            "type": "array",
+            "title": "Drafts"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceReference"
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/RecommendationSource"
+            },
+            "type": "array",
+            "title": "Sources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case"
+        ],
+        "title": "AssuranceCaseView",
+        "description": "An agent case joined to its latest recommendation, drafts, evidence, and sources."
+      },
+      "AuditEvent": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "caller": {
+            "type": "string",
+            "title": "Caller"
+          },
+          "auth_source": {
+            "type": "string",
+            "title": "Auth Source"
+          },
+          "key_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Label"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "route": {
+            "type": "string",
+            "title": "Route"
+          },
+          "status": {
+            "type": "integer",
+            "title": "Status"
+          },
+          "resource_ids": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Resource Ids"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "caller",
+          "auth_source",
+          "method",
+          "route",
+          "status"
+        ],
+        "title": "AuditEvent"
+      },
+      "AuthorizeIntentCreate": {
+        "properties": {
+          "approval_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
+          "foundry_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Foundry Snapshot"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "title": "AuthorizeIntentCreate"
+      },
+      "AuthorizedIntent": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "proposed_action_id": {
+            "type": "string",
+            "title": "Proposed Action Id"
+          },
+          "action_type_id": {
+            "type": "string",
+            "title": "Action Type Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "authorized"
+          },
+          "approval_id": {
+            "type": "string",
+            "title": "Approval Id"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
+          "authorized_by": {
+            "type": "string",
+            "title": "Authorized By"
+          },
+          "authorized_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Authorized At"
+          },
+          "foundry_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Foundry Snapshot"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "case_id",
+          "proposed_action_id",
+          "action_type_id",
+          "approval_id",
+          "authorized_by",
+          "authorized_at"
+        ],
+        "title": "AuthorizedIntent"
+      },
+      "CaseApproval": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "proposed_action_id": {
+            "type": "string",
+            "title": "Proposed Action Id"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "rejected"
+            ],
+            "title": "Decision"
+          },
+          "justification": {
+            "type": "string",
+            "title": "Justification",
+            "default": ""
+          },
+          "artifact_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Id"
+          },
+          "artifact_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Version"
+          },
+          "artifact_content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Content Hash"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
+          "approved_by": {
+            "type": "string",
+            "title": "Approved By"
+          },
+          "approved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Approved At"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "case_id",
+          "proposed_action_id",
+          "decision",
+          "approved_by",
+          "approved_at"
+        ],
+        "title": "CaseApproval"
+      },
+      "CaseApprovalCreate": {
+        "properties": {
+          "proposed_action_id": {
+            "type": "string",
+            "title": "Proposed Action Id"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "rejected"
+            ],
+            "title": "Decision"
+          },
+          "justification": {
+            "type": "string",
+            "title": "Justification",
+            "default": ""
+          },
+          "artifact_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Id"
+          },
+          "artifact_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Version"
+          },
+          "artifact_content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Content Hash"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "proposed_action_id",
+          "decision"
+        ],
+        "title": "CaseApprovalCreate"
+      },
+      "CaseDraft": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "default": 1
+          },
+          "draft_type": {
+            "type": "string",
+            "enum": [
+              "supplier_dispute",
+              "escalation_packet",
+              "approval_summary"
+            ],
+            "title": "Draft Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "source_recommendation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Recommendation Id"
+          },
+          "classification": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "confidential",
+              "ip_sensitive",
+              "restricted"
+            ],
+            "title": "Classification",
+            "default": "standard"
+          },
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "created_by": {
+            "type": "string",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "case_id",
+          "draft_type",
+          "title",
+          "body",
+          "content_hash",
+          "created_by",
+          "created_at"
+        ],
+        "title": "CaseDraft"
+      },
+      "CaseDraftCreate": {
+        "properties": {
+          "draft_type": {
+            "type": "string",
+            "enum": [
+              "supplier_dispute",
+              "escalation_packet",
+              "approval_summary"
+            ],
+            "title": "Draft Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "source_recommendation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Recommendation Id"
+          },
+          "classification": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "confidential",
+              "ip_sensitive",
+              "restricted"
+            ],
+            "title": "Classification",
+            "default": "standard"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "draft_type",
+          "title",
+          "body"
+        ],
+        "title": "CaseDraftCreate"
+      },
+      "CaseRecommendation": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "default": 1
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "recover",
+              "escalate",
+              "review"
+            ],
+            "title": "Decision"
+          },
+          "reasoning": {
+            "type": "string",
+            "title": "Reasoning"
+          },
+          "confidence": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Confidence",
+            "default": "0"
+          },
+          "money_at_risk": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Money At Risk",
+            "default": "0"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence Ids"
+          },
+          "proposed_next_actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Proposed Next Actions"
+          },
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "created_by": {
+            "type": "string",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "foundry_response_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foundry Response Id"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "case_id",
+          "decision",
+          "reasoning",
+          "content_hash",
+          "created_by",
+          "created_at"
+        ],
+        "title": "CaseRecommendation"
+      },
+      "CaseRecommendationCreate": {
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "recover",
+              "escalate",
+              "review"
+            ],
+            "title": "Decision"
+          },
+          "reasoning": {
+            "type": "string",
+            "title": "Reasoning"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Confidence",
+            "default": "0"
+          },
+          "money_at_risk": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Money At Risk",
+            "default": "0"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence Ids"
+          },
+          "proposed_next_actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Proposed Next Actions"
+          },
+          "foundry_response_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foundry Response Id"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision",
+          "reasoning"
+        ],
+        "title": "CaseRecommendationCreate"
+      },
+      "ContextRedaction": {
+        "properties": {
+          "section": {
+            "type": "string",
+            "title": "Section"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "classification": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "confidential",
+              "ip_sensitive",
+              "restricted"
+            ],
+            "title": "Classification"
+          }
+        },
+        "type": "object",
+        "required": [
+          "section",
+          "reason",
+          "classification"
+        ],
+        "title": "ContextRedaction"
+      },
+      "ContractDocument": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "supplier_id": {
+            "type": "string",
+            "title": "Supplier Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "document_type": {
+            "type": "string",
+            "title": "Document Type",
+            "default": "contract"
+          },
+          "effective_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Date"
+          },
+          "uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uri"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "supplier_id",
+          "title"
+        ],
+        "title": "ContractDocument"
+      },
+      "ContractDocumentDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "supplier_id": {
+            "type": "string",
+            "title": "Supplier Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "document_type": {
+            "type": "string",
+            "title": "Document Type",
+            "default": "contract"
+          },
+          "effective_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Date"
+          },
+          "uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uri"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          },
+          "content_source": {
+            "type": "string",
+            "enum": [
+              "onelake",
+              "uri-only"
+            ],
+            "title": "Content Source",
+            "default": "uri-only"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "supplier_id",
+          "title"
+        ],
+        "title": "ContractDocumentDetail",
+        "description": "Contract document metadata plus resolved document text from the corpus lake."
+      },
+      "DecisionAuditEvent": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "event_type": {
+            "type": "string",
+            "enum": [
+              "case_created",
+              "recommendation_created",
+              "draft_created",
+              "action_proposed",
+              "approval_recorded",
+              "intent_authorized"
+            ],
+            "title": "Event Type"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor"
+          },
+          "auth_source": {
+            "type": "string",
+            "title": "Auth Source"
+          },
+          "resource_ids": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Resource Ids"
+          },
+          "snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Snapshot"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "event_type",
+          "actor",
+          "auth_source",
+          "created_at"
+        ],
+        "title": "DecisionAuditEvent"
+      },
+      "DrilldownConfig": {
+        "properties": {
+          "foundry_endpoint": {
+            "type": "string",
+            "title": "Foundry Endpoint",
+            "default": ""
+          },
+          "foundry_project_url": {
+            "type": "string",
+            "title": "Foundry Project Url",
+            "default": ""
+          },
+          "app_insights_resource_id": {
+            "type": "string",
+            "title": "App Insights Resource Id",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "DrilldownConfig",
+        "description": "Non-secret deep-link configuration for Foundry and App Insights views.\n\nSurfaced at runtime so the Runs, Costs, and Optimize screens can build deep links to\nFoundry and Azure Monitor without baking endpoints into the web bundle."
+      },
+      "EvidenceReference": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "evidence_type": {
+            "type": "string",
+            "title": "Evidence Type",
+            "default": "document"
+          },
+          "invoice_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Id"
+          },
+          "finding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finding Id"
+          },
+          "uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uri"
+          },
+          "excerpt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excerpt"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title"
+        ],
+        "title": "EvidenceReference"
+      },
+      "FindingValidation": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "finding_id": {
+            "type": "string",
+            "title": "Finding Id"
+          },
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "validator": {
+            "type": "string",
+            "title": "Validator"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "assurance-orchestrator"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "validated_existing_finding",
+              "not_validated",
+              "needs_review"
+            ],
+            "title": "Outcome",
+            "default": "validated_existing_finding"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence Ids"
+          },
+          "basis_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basis Summary"
+          },
+          "evidence_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence Snapshot"
+          },
+          "evidence_hash": {
+            "type": "string",
+            "title": "Evidence Hash"
+          },
+          "created_by": {
+            "type": "string",
+            "title": "Created By"
+          },
+          "auth_source": {
+            "type": "string",
+            "title": "Auth Source"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "finding_id",
+          "invoice_id",
+          "run_id",
+          "validator",
+          "evidence_hash",
+          "created_by",
+          "auth_source",
+          "created_at"
+        ],
+        "title": "FindingValidation"
+      },
+      "FindingValidationCreate": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "validator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validator"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "assurance-orchestrator"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "validated_existing_finding",
+              "not_validated",
+              "needs_review"
+            ],
+            "title": "Outcome",
+            "default": "validated_existing_finding"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence Ids"
+          },
+          "basis_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basis Summary"
+          },
+          "evidence_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence Snapshot"
+          },
+          "evidence_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Hash"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id"
+        ],
+        "title": "FindingValidationCreate"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Invoice": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "supplier_id": {
+            "type": "string",
+            "title": "Supplier Id"
+          },
+          "scenario_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Id"
+          },
+          "invoice_number": {
+            "type": "string",
+            "title": "Invoice Number"
+          },
+          "invoice_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Date"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "review"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "USD"
+          },
+          "total_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Amount",
+            "default": "0"
+          },
+          "html_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Html Uri"
+          },
+          "pdf_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf Uri"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "supplier_id",
+          "invoice_number"
+        ],
+        "title": "Invoice"
+      },
+      "InvoiceAssurance": {
+        "properties": {
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "has_agent_decision": {
+            "type": "boolean",
+            "title": "Has Agent Decision",
+            "default": false
+          },
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/AssuranceCaseView"
+            },
+            "type": "array",
+            "title": "Cases"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoice_id"
+        ],
+        "title": "InvoiceAssurance",
+        "description": "Agent control-plane decision(s) linked to a seed-corpus invoice."
+      },
+      "InvoiceContextBundle": {
+        "properties": {
+          "invoice": {
+            "$ref": "#/components/schemas/InvoiceDetail-Output"
+          },
+          "contract_documents": {
+            "items": {
+              "$ref": "#/components/schemas/ContractDocumentDetail"
+            },
+            "type": "array",
+            "title": "Contract Documents"
+          },
+          "policies": {
+            "items": {
+              "$ref": "#/components/schemas/PolicyDetail"
+            },
+            "type": "array",
+            "title": "Policies"
+          },
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/AssuranceCase"
+            },
+            "type": "array",
+            "title": "Cases"
+          },
+          "allowed_actions": {
+            "items": {
+              "$ref": "#/components/schemas/ActionType"
+            },
+            "type": "array",
+            "title": "Allowed Actions"
+          },
+          "redactions": {
+            "items": {
+              "$ref": "#/components/schemas/ContextRedaction"
+            },
+            "type": "array",
+            "title": "Redactions"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoice"
+        ],
+        "title": "InvoiceContextBundle"
+      },
+      "InvoiceDecision": {
+        "properties": {
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "invoice_number": {
+            "type": "string",
+            "title": "Invoice Number"
+          },
+          "supplier_id": {
+            "type": "string",
+            "title": "Supplier Id"
+          },
+          "supplier_name": {
+            "type": "string",
+            "title": "Supplier Name"
+          },
+          "scenario_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Id"
+          },
+          "scenario_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Name"
+          },
+          "decision": {
+            "type": "string",
+            "title": "Decision"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "reasoning": {
+            "type": "string",
+            "title": "Reasoning"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "USD"
+          },
+          "overpayment_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Overpayment Amount",
+            "default": "0"
+          },
+          "overpayment_display": {
+            "type": "string",
+            "title": "Overpayment Display"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "evidence_count": {
+            "type": "integer",
+            "title": "Evidence Count",
+            "default": 0
+          },
+          "contract_document_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Contract Document Ids"
+          },
+          "policy_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Policy Ids"
+          },
+          "basis_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basis Summary"
+          },
+          "basis_types": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "contract",
+                "policy"
+              ]
+            },
+            "type": "array",
+            "title": "Basis Types"
+          },
+          "html_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Html Uri"
+          },
+          "pdf_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf Uri"
+          },
+          "has_agent_decision": {
+            "type": "boolean",
+            "title": "Has Agent Decision",
+            "default": false
+          },
+          "agent_decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Decision"
+          },
+          "agent_run_count": {
+            "type": "integer",
+            "title": "Agent Run Count",
+            "default": 0
+          },
+          "agent_run_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Run Index"
+          },
+          "agent_run_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Run At"
+          },
+          "agent_case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Case Id"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "agent_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Title"
+          },
+          "agent_source_count": {
+            "type": "integer",
+            "title": "Agent Source Count",
+            "default": 0
+          },
+          "agent_plane_count": {
+            "type": "integer",
+            "title": "Agent Plane Count",
+            "default": 0
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoice_id",
+          "invoice_number",
+          "supplier_id",
+          "supplier_name",
+          "decision",
+          "category",
+          "reasoning",
+          "severity",
+          "status",
+          "overpayment_display",
+          "source"
+        ],
+        "title": "InvoiceDecision"
+      },
+      "InvoiceDetail-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "supplier_id": {
+            "type": "string",
+            "title": "Supplier Id"
+          },
+          "scenario_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Id"
+          },
+          "invoice_number": {
+            "type": "string",
+            "title": "Invoice Number"
+          },
+          "invoice_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Date"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "review"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "USD"
+          },
+          "total_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Total Amount",
+            "default": "0"
+          },
+          "html_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Html Uri"
+          },
+          "pdf_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf Uri"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "supplier": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Supplier"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "scenario": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Scenario"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLine-Input"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/ReconciliationFinding-Input"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceReference"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "supplier_id",
+          "invoice_number"
+        ],
+        "title": "InvoiceDetail"
+      },
+      "InvoiceDetail-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "supplier_id": {
+            "type": "string",
+            "title": "Supplier Id"
+          },
+          "scenario_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Id"
+          },
+          "invoice_number": {
+            "type": "string",
+            "title": "Invoice Number"
+          },
+          "invoice_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Date"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "review"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "USD"
+          },
+          "total_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Amount",
+            "default": "0"
+          },
+          "html_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Html Uri"
+          },
+          "pdf_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf Uri"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "supplier": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Supplier"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "scenario": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Scenario"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLine-Output"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/ReconciliationFinding-Output"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceReference"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "supplier_id",
+          "invoice_number"
+        ],
+        "title": "InvoiceDetail"
+      },
+      "InvoiceLine-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Quantity",
+            "default": "1"
+          },
+          "unit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Unit Price",
+            "default": "0"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Amount",
+            "default": "0"
+          },
+          "sku": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku"
+          },
+          "purchase_order": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchase Order"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "invoice_id",
+          "description"
+        ],
+        "title": "InvoiceLine"
+      },
+      "InvoiceLine-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "quantity": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Quantity",
+            "default": "1"
+          },
+          "unit_price": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Unit Price",
+            "default": "0"
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "default": "0"
+          },
+          "sku": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku"
+          },
+          "purchase_order": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchase Order"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "invoice_id",
+          "description"
+        ],
+        "title": "InvoiceLine"
+      },
+      "Item": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Name of the item"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Description",
+            "description": "Optional description of the item",
+            "default": ""
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "Whether the item is active",
+            "default": true
+          },
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Unique identifier for the item"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Timestamp when the item was created"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Timestamp when the item was last updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Item",
+        "description": "Full item schema with all fields including system-generated ones.",
+        "examples": [
+          {
+            "created_at": "2025-01-26T12:00:00Z",
+            "description": "This is an example item",
+            "id": "item-123",
+            "is_active": true,
+            "name": "Example Item",
+            "updated_at": "2025-01-26T12:00:00Z"
+          }
+        ]
+      },
+      "ItemCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Name of the item"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Description",
+            "description": "Optional description of the item",
+            "default": ""
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "Whether the item is active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ItemCreate",
+        "description": "Schema for creating a new item."
+      },
+      "ItemUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Name of the item"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Optional description of the item"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active",
+            "description": "Whether the item is active"
+          }
+        },
+        "type": "object",
+        "title": "ItemUpdate",
+        "description": "Schema for updating an existing item. All fields are optional."
+      },
+      "LedgerfieldSeedImport": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "Seed source label or Ledgerfield output URI",
+            "default": "ledgerfield"
+          },
+          "suppliers": {
+            "items": {
+              "$ref": "#/components/schemas/Supplier"
+            },
+            "type": "array",
+            "title": "Suppliers"
+          },
+          "contract_documents": {
+            "items": {
+              "$ref": "#/components/schemas/ContractDocument"
+            },
+            "type": "array",
+            "title": "Contract Documents"
+          },
+          "policies": {
+            "items": {
+              "$ref": "#/components/schemas/Policy"
+            },
+            "type": "array",
+            "title": "Policies"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/Scenario"
+            },
+            "type": "array",
+            "title": "Scenarios"
+          },
+          "invoices": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceDetail-Input"
+            },
+            "type": "array",
+            "title": "Invoices"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/ReconciliationFinding-Input"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceReference"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "title": "LedgerfieldSeedImport"
+      },
+      "Policy": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "default": "medium"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "Policy"
+      },
+      "PolicyDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "default": "medium"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          },
+          "content_source": {
+            "type": "string",
+            "enum": [
+              "onelake",
+              "uri-only"
+            ],
+            "title": "Content Source",
+            "default": "uri-only"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "PolicyDetail",
+        "description": "Policy metadata plus resolved document text from the corpus lake."
+      },
+      "ProposedAction": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "action_type_id": {
+            "type": "string",
+            "title": "Action Type Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "proposed",
+              "approved",
+              "authorized",
+              "rejected",
+              "cancelled"
+            ],
+            "title": "Status",
+            "default": "proposed"
+          },
+          "draft_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Draft Id"
+          },
+          "recommendation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation Id"
+          },
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "created_by": {
+            "type": "string",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "authorized_intent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Authorized Intent Id"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "case_id",
+          "action_type_id",
+          "title",
+          "content_hash",
+          "created_by",
+          "created_at"
+        ],
+        "title": "ProposedAction"
+      },
+      "ProposedActionCreate": {
+        "properties": {
+          "action_type_id": {
+            "type": "string",
+            "title": "Action Type Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "draft_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Draft Id"
+          },
+          "recommendation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation Id"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action_type_id",
+          "title"
+        ],
+        "title": "ProposedActionCreate"
+      },
+      "RecommendationSource": {
+        "properties": {
+          "agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent"
+          },
+          "plane": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plane"
+          },
+          "claim": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claim"
+          },
+          "supports": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supports"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "source_ref": {
+            "type": "string",
+            "title": "Source Ref"
+          },
+          "classification": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Classification"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_ref"
+        ],
+        "title": "RecommendationSource",
+        "description": "A single grounded source claim flattened from a recommendation's expert evidence."
+      },
+      "ReconciliationFinding-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "scenario_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Id"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "default": "medium"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "review",
+              "approved",
+              "recover",
+              "escalate",
+              "closed"
+            ],
+            "title": "Status",
+            "default": "open"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "overpayment_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Overpayment Amount",
+            "default": "0"
+          },
+          "contract_document_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Contract Document Ids"
+          },
+          "policy_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Policy Ids"
+          },
+          "basis_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basis Summary"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence Ids"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "invoice_id",
+          "category",
+          "summary"
+        ],
+        "title": "ReconciliationFinding"
+      },
+      "ReconciliationFinding-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "scenario_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Id"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "default": "medium"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "review",
+              "approved",
+              "recover",
+              "escalate",
+              "closed"
+            ],
+            "title": "Status",
+            "default": "open"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "overpayment_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Overpayment Amount",
+            "default": "0"
+          },
+          "contract_document_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Contract Document Ids"
+          },
+          "policy_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Policy Ids"
+          },
+          "basis_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basis Summary"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence Ids"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "invoice_id",
+          "category",
+          "summary"
+        ],
+        "title": "ReconciliationFinding"
+      },
+      "Scenario": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "source_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Uri"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "Scenario"
+      },
+      "SeedImportResult": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "suppliers": {
+            "type": "integer",
+            "title": "Suppliers"
+          },
+          "contract_documents": {
+            "type": "integer",
+            "title": "Contract Documents"
+          },
+          "policies": {
+            "type": "integer",
+            "title": "Policies"
+          },
+          "scenarios": {
+            "type": "integer",
+            "title": "Scenarios"
+          },
+          "invoices": {
+            "type": "integer",
+            "title": "Invoices"
+          },
+          "invoice_lines": {
+            "type": "integer",
+            "title": "Invoice Lines"
+          },
+          "findings": {
+            "type": "integer",
+            "title": "Findings"
+          },
+          "evidence": {
+            "type": "integer",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "suppliers",
+          "contract_documents",
+          "policies",
+          "scenarios",
+          "invoices",
+          "invoice_lines",
+          "findings",
+          "evidence"
+        ],
+        "title": "SeedImportResult"
+      },
+      "Supplier": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "active"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "default": "contract-manufacturer"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "Supplier"
+      },
+      "User": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "msal-bearer",
+              "api-key",
+              "dev-header",
+              "local-dev"
+            ],
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "email",
+          "source"
+        ],
+        "title": "User",
+        "description": "Current authenticated user profile."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WorkQueueItem": {
+        "properties": {
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "invoice_number": {
+            "type": "string",
+            "title": "Invoice Number"
+          },
+          "supplier_id": {
+            "type": "string",
+            "title": "Supplier Id"
+          },
+          "supplier_name": {
+            "type": "string",
+            "title": "Supplier Name"
+          },
+          "finding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finding Id"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "USD"
+          },
+          "money_at_risk": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Money At Risk",
+            "default": "0"
+          },
+          "classification": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "confidential",
+              "ip_sensitive",
+              "restricted"
+            ],
+            "title": "Classification",
+            "default": "standard"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoice_id",
+          "invoice_number",
+          "supplier_id",
+          "supplier_name",
+          "severity",
+          "status",
+          "category",
+          "summary"
+        ],
+        "title": "WorkQueueItem"
+      }
+    }
+  }
+}

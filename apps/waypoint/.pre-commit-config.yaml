@@ -1,0 +1,56 @@
+# Pre-commit hooks configuration
+# Install: uv tool install pre-commit && pre-commit install && pre-commit install --hook-type pre-push
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.43.0
+    hooks:
+      - id: markdownlint
+        args: ["--config", ".markdownlint.json"]
+        files: \.(md)$
+
+  # Python linting and formatting (API)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+        files: ^api/
+      - id: ruff-format
+        files: ^api/
+
+  # General file fixes
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.(md)$
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+        exclude: \.vscode/.*\.json$
+      - id: check-added-large-files
+
+  # Fast smoke checks before pushing to CI
+  - repo: local
+    hooks:
+      - id: api-mypy
+        name: API type checking
+        entry: uv --directory api run python -m mypy app/
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+      - id: api-tests
+        name: API unit tests
+        entry: uv --directory api run python -m pytest --tb=short
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+      - id: web-typecheck
+        name: Web type checking
+        entry: npm --prefix web run typecheck
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

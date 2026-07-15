@@ -1,0 +1,830 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Git ref of THIS (waypoint) repo to check out. Defaults to the triggering ref.
+        type: string
+        required: false
+        default: ""
+      key_vault_name:
+        description: Key Vault holding the generated Waypoint secrets. Empty derives the keystone vault name from the subscription id.
+        type: string
+        required: false
+        default: ""
+      api_key_auth_enabled:
+        description: Enable scoped x-api-key auth alongside MSAL.
+        type: boolean
+        required: false
+        default: false
+      fabric_provision_enabled:
+        description: Stand up the Microsoft Fabric OneLake corpus lake (capacity + workspace + lakehouse). Leave false to reuse an existing workspace.
+        type: boolean
+        required: false
+        default: false
+      fabric_iq_enabled:
+        description: Provision the Fabric IQ AI layer (Direct Lake semantic model + published Data Agent).
+        type: boolean
+        required: false
+        default: false
+      fabric_mirror_enabled:
+        description: Provision the FabricIQ source mirror (Fabric Mirroring of the operational Postgres financial core).
+        type: boolean
+        required: false
+        default: false
+  workflow_call:
+    inputs:
+      source_ref:
+        description: Git ref of THIS (waypoint) repo to check out. The keystone umbrella passes its waypoint_ref; defaults to the triggering ref for standalone runs.
+        type: string
+        required: false
+        default: ""
+      key_vault_name:
+        description: "Key Vault holding the generated Waypoint secrets (waypoint-api-keys, postgres-app-password). When set, the deploy step reads them from KV instead of the WAYPOINT_API_KEYS / POSTGRES_APP_PASSWORD secrets — used by the keystone umbrella because GitHub Actions cannot pass runtime-generated secrets through job outputs. Empty for standalone runs."
+        type: string
+        required: false
+        default: ""
+      environment:
+        description: Optional GitHub environment to deploy into
+        type: string
+        required: false
+      api_key_auth_enabled:
+        description: Enable scoped x-api-key auth alongside MSAL (agents use API keys; humans still use MSAL)
+        type: boolean
+        required: false
+        default: false
+      fabric_provision_enabled:
+        description: Stand up the Microsoft Fabric OneLake corpus lake (capacity via Bicep, workspace + lakehouse + role grants via provision-fabric.sh) and emit its coordinates as outputs. Default false keeps standalone deploys behaving exactly as before.
+        type: boolean
+        required: false
+        default: false
+      msal_tenant_id:
+        description: Entra tenant id (overrides vars.WAYPOINT_MSAL_TENANT_ID when set).
+        type: string
+        required: false
+        default: ''
+      msal_client_id:
+        description: Waypoint API app registration client id (overrides vars.WAYPOINT_MSAL_CLIENT_ID when set).
+        type: string
+        required: false
+        default: ''
+      msal_redirect_uri:
+        description: MSAL redirect URI (overrides vars.WAYPOINT_MSAL_REDIRECT_URI when set).
+        type: string
+        required: false
+        default: ''
+      msal_writer_app_role:
+        description: App role granting writer access (overrides vars.WAYPOINT_MSAL_WRITER_APP_ROLE when set).
+        type: string
+        required: false
+        default: ''
+      msal_reader_app_role:
+        description: App role granting reader access (overrides vars.WAYPOINT_MSAL_READER_APP_ROLE when set).
+        type: string
+        required: false
+        default: ''
+      msal_admin_app_role:
+        description: App role granting admin access (overrides vars.WAYPOINT_MSAL_ADMIN_APP_ROLE when set).
+        type: string
+        required: false
+        default: ''
+      msal_allowed_app_ids:
+        description: Allowed client app ids for app-only callers (overrides vars.WAYPOINT_MSAL_ALLOWED_APP_IDS when set).
+        type: string
+        required: false
+        default: ''
+      foundry_endpoint:
+        description: Azure AI Foundry endpoint (overrides vars.WAYPOINT_FOUNDRY_ENDPOINT when set).
+        type: string
+        required: false
+        default: ''
+      foundry_project_url:
+        description: Azure AI Foundry project URL (overrides vars.WAYPOINT_FOUNDRY_PROJECT_URL when set).
+        type: string
+        required: false
+        default: ''
+      app_insights_resource_id:
+        description: Application Insights resource id (overrides vars.WAYPOINT_APP_INSIGHTS_RESOURCE_ID when set).
+        type: string
+        required: false
+        default: ''
+      ledgerfield_seed_uri:
+        description: Ledgerfield seed URI (overrides vars.WAYPOINT_LEDGERFIELD_SEED_URI when set).
+        type: string
+        required: false
+        default: ''
+      postgres_server_name:
+        description: Postgres flexible server name (overrides vars.WAYPOINT_POSTGRES_SERVER_NAME when set).
+        type: string
+        required: false
+        default: ''
+      fabric_capacity_name:
+        description: Microsoft Fabric capacity name (overrides vars.WAYPOINT_FABRIC_CAPACITY_NAME when set).
+        type: string
+        required: false
+        default: ''
+      fabric_sku_name:
+        description: Microsoft Fabric capacity SKU (overrides vars.WAYPOINT_FABRIC_SKU_NAME when set).
+        type: string
+        required: false
+        default: ''
+      fabric_lakehouse_name:
+        description: Fabric lakehouse display name (overrides vars.WAYPOINT_FABRIC_LAKEHOUSE_NAME when set).
+        type: string
+        required: false
+        default: ''
+      fabric_corpus_prefix:
+        description: OneLake corpus path prefix (overrides vars.WAYPOINT_FABRIC_CORPUS_PREFIX when set).
+        type: string
+        required: false
+        default: ''
+      fabric_account_url:
+        description: OneLake DFS account URL (overrides vars.WAYPOINT_FABRIC_ACCOUNT_URL when set).
+        type: string
+        required: false
+        default: ''
+      fabric_administrator_members_json:
+        description: JSON array of Fabric workspace administrator principal/object ids (overrides vars.WAYPOINT_FABRIC_ADMIN_MEMBERS_JSON when set).
+        type: string
+        required: false
+        default: ''
+      fabric_workspace:
+        description: Fabric workspace GUID (overrides vars.WAYPOINT_FABRIC_WORKSPACE when set).
+        type: string
+        required: false
+        default: ''
+      fabric_workspace_name:
+        description: Fabric workspace display name used during provisioning (overrides vars.WAYPOINT_FABRIC_WORKSPACE_NAME when set).
+        type: string
+        required: false
+        default: ''
+      fabric_iq_enabled:
+        description: Provision the Fabric IQ AI layer (Direct Lake semantic model + published Data Agent over the lakehouse Tables) via infra/scripts/provision-fabric-iq.sh. Requires a workspace + lakehouse with Tables written. Default false.
+        type: boolean
+        required: false
+        default: false
+      fabric_mirror_enabled:
+        description: Provision the FabricIQ source mirror (Fabric Mirroring of the operational Postgres financial core) via infra/scripts/provision-fabric-mirror.sh. Requires a GeneralPurpose Postgres deployed with enableFabricMirroring=true. Default false.
+        type: boolean
+        required: false
+        default: false
+      fabric_semantic_model_name:
+        description: Direct Lake semantic model display name (overrides vars.WAYPOINT_FABRIC_SEMANTIC_MODEL_NAME when set; default CaldovaIQ).
+        type: string
+        required: false
+        default: ''
+      fabric_data_agent_name:
+        description: Fabric Data Agent display name (overrides vars.WAYPOINT_FABRIC_DATA_AGENT_NAME when set; default WaypointDataAgent).
+        type: string
+        required: false
+        default: ''
+      log_analytics_workspace_name:
+        description: Log Analytics workspace name for the deployment summary (overrides vars.WAYPOINT_LOG_ANALYTICS_WORKSPACE_NAME when set).
+        type: string
+        required: false
+        default: ''
+      log_analytics_resource_group:
+        description: Resource group of the Log Analytics workspace (overrides vars.WAYPOINT_LOG_ANALYTICS_RESOURCE_GROUP when set).
+        type: string
+        required: false
+        default: ''
+    secrets:
+      REPO_TOKEN:
+        description: "Token with contents:read on this repo so a cross-repo caller (keystone umbrella) can check out waypoint's own source. Falls back to GITHUB_TOKEN for standalone runs."
+        required: false
+      AZURE_CLIENT_ID:
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        required: true
+      AZURE_LOCATION:
+        required: true
+      AZURE_RESOURCE_GROUP:
+        required: true
+      POSTGRES_APP_PASSWORD:
+        required: true
+      WAYPOINT_API_KEYS:
+        description: Semicolon-separated scoped API keys in label:key:role[,role] format (e.g. aggregator:<key>:writer;concierge:<key>:reader;seed:<key>:admin). Only used when api_key_auth_enabled is true.
+        required: false
+      FABRIC_MIRROR_PASSWORD:
+        description: "Optional fallback for the PostgreSQL fabric_user mirroring role password. Normally unset: when fabric_mirror_enabled is true the deploy generates this once and stores it as 'fabric-mirror-password' in the keystone Key Vault, then both the API bootstrap and the Fabric connection read it from there. Only provide this to override the Key Vault value."
+        required: false
+    outputs:
+      api_fqdn:
+        description: Public FQDN of the Waypoint API Container App
+        value: ${{ jobs.deploy.outputs.api_fqdn }}
+      web_fqdn:
+        description: Public FQDN of the Waypoint web Container App
+        value: ${{ jobs.deploy.outputs.web_fqdn }}
+      api_app_id_uri:
+        description: Waypoint API app-id-URI (api://<client-id>)
+        value: ${{ jobs.deploy.outputs.api_app_id_uri }}
+      api_default_scope:
+        description: Client-credential scope for app-only callers (api://<client-id>/.default)
+        value: ${{ jobs.deploy.outputs.api_default_scope }}
+      onelake_workspace:
+        description: Fabric workspace GUID backing the OneLake corpus lake (empty unless fabric_provision_enabled). Pass to ledgerfield onelake-upload `workspace`.
+        value: ${{ jobs.deploy.outputs.onelake_workspace }}
+      onelake_lakehouse:
+        description: Fabric lakehouse display name (empty unless fabric_provision_enabled). Pass to ledgerfield onelake-upload `lakehouse`.
+        value: ${{ jobs.deploy.outputs.onelake_lakehouse }}
+      onelake_account_url:
+        description: OneLake DFS account URL (empty unless fabric_provision_enabled). Pass to ledgerfield onelake-upload `account_url`.
+        value: ${{ jobs.deploy.outputs.onelake_account_url }}
+      fabric_semantic_model:
+        description: Fabric IQ Direct Lake semantic model display name (empty unless fabric_iq_enabled).
+        value: ${{ jobs.deploy.outputs.fabric_semantic_model }}
+      fabric_data_agent:
+        description: Fabric IQ Data Agent display name (empty unless fabric_iq_enabled).
+        value: ${{ jobs.deploy.outputs.fabric_data_agent }}
+      fabric_workspace_id:
+        description: Fabric workspace GUID that hosts the Fabric IQ semantic model + Data Agent (empty unless fabric_iq_enabled). Forge needs this + fabric_data_agent_id to build the Foundry→Fabric connection.
+        value: ${{ jobs.deploy.outputs.fabric_workspace_id }}
+      fabric_semantic_model_id:
+        description: Fabric IQ Direct Lake semantic model item GUID (empty unless fabric_iq_enabled).
+        value: ${{ jobs.deploy.outputs.fabric_semantic_model_id }}
+      fabric_data_agent_id:
+        description: Fabric IQ Data Agent item GUID (empty unless fabric_iq_enabled). Forge binds the operations-data-expert's Fabric connection to this.
+        value: ${{ jobs.deploy.outputs.fabric_data_agent_id }}
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_GENERATE_ASPNET_CERTIFICATE: false
+  NUGET_XMLDOC_MODE: skip
+  DOTNET_MULTILEVEL_LOOKUP: 0
+
+# Prevent concurrent deployments
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to Azure
+    runs-on: ubuntu-latest
+    outputs:
+      api_fqdn: ${{ steps.deploy_outputs.outputs.api_fqdn }}
+      web_fqdn: ${{ steps.deploy_outputs.outputs.web_fqdn }}
+      api_app_id_uri: ${{ steps.deploy_outputs.outputs.api_app_id_uri }}
+      api_default_scope: ${{ steps.deploy_outputs.outputs.api_default_scope }}
+      onelake_workspace: ${{ steps.fabric.outputs.onelake_workspace }}
+      onelake_lakehouse: ${{ steps.fabric.outputs.onelake_lakehouse }}
+      onelake_account_url: ${{ steps.fabric.outputs.onelake_account_url }}
+      fabric_semantic_model: ${{ steps.fabric_iq.outputs.semantic_model_name }}
+      fabric_data_agent: ${{ steps.fabric_iq.outputs.data_agent_name }}
+      fabric_workspace_id: ${{ steps.fabric_iq.outputs.workspace_id }}
+      fabric_semantic_model_id: ${{ steps.fabric_iq.outputs.semantic_model_id }}
+      fabric_data_agent_id: ${{ steps.fabric_iq.outputs.data_agent_id }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: caldova/waypoint
+          ref: ${{ inputs.source_ref || github.ref }}
+          token: ${{ secrets.REPO_TOKEN || github.token }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Cache Aspire CLI
+        id: cache-aspire
+        uses: actions/cache@v4
+        with:
+          path: ~/.aspire
+          key: aspire-cli-${{ runner.os }}-${{ hashFiles('apphost.cs') }}-v1
+
+      - name: Install Aspire CLI
+        if: steps.cache-aspire.outputs.cache-hit != 'true'
+        run: curl -sSL https://aspire.dev/install.sh | bash
+
+      - name: Add Aspire to PATH
+        run: echo "$HOME/.aspire/bin" >> $GITHUB_PATH
+
+      - name: Warm up .NET SDK
+        run: |
+          dotnet --version
+          dotnet nuget locals all --list
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set build version
+        run: echo "BUILD_VERSION=$(date -u +'%Y%m%d.%H%M%S')" >> $GITHUB_ENV
+
+      - name: Deploy with Aspire
+        env:
+          BUILD_VERSION: ${{ env.BUILD_VERSION }}
+          Azure__TenantId: ${{ secrets.AZURE_TENANT_ID }}
+          Azure__SubscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          Azure__Location: ${{ secrets.AZURE_LOCATION }}
+          Azure__ResourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          Azure__AllowResourceGroupCreation: false
+          Waypoint__Msal__TenantId: ${{ inputs.msal_tenant_id != '' && inputs.msal_tenant_id || vars.WAYPOINT_MSAL_TENANT_ID }}
+          Waypoint__Msal__ClientId: ${{ inputs.msal_client_id != '' && inputs.msal_client_id || vars.WAYPOINT_MSAL_CLIENT_ID }}
+          Waypoint__Msal__RedirectUri: ${{ inputs.msal_redirect_uri != '' && inputs.msal_redirect_uri || vars.WAYPOINT_MSAL_REDIRECT_URI }}
+          Waypoint__Msal__WriterAppRole: ${{ inputs.msal_writer_app_role != '' && inputs.msal_writer_app_role || vars.WAYPOINT_MSAL_WRITER_APP_ROLE }}
+          Waypoint__Msal__ReaderAppRole: ${{ inputs.msal_reader_app_role != '' && inputs.msal_reader_app_role || vars.WAYPOINT_MSAL_READER_APP_ROLE }}
+          Waypoint__Msal__AdminAppRole: ${{ inputs.msal_admin_app_role != '' && inputs.msal_admin_app_role || vars.WAYPOINT_MSAL_ADMIN_APP_ROLE }}
+          Waypoint__Msal__AllowedAppIds: ${{ inputs.msal_allowed_app_ids != '' && inputs.msal_allowed_app_ids || vars.WAYPOINT_MSAL_ALLOWED_APP_IDS }}
+          Waypoint__Foundry__Endpoint: ${{ inputs.foundry_endpoint != '' && inputs.foundry_endpoint || vars.WAYPOINT_FOUNDRY_ENDPOINT }}
+          Waypoint__Foundry__ProjectUrl: ${{ inputs.foundry_project_url != '' && inputs.foundry_project_url || vars.WAYPOINT_FOUNDRY_PROJECT_URL }}
+          Waypoint__AppInsights__ResourceId: ${{ inputs.app_insights_resource_id != '' && inputs.app_insights_resource_id || vars.WAYPOINT_APP_INSIGHTS_RESOURCE_ID }}
+          Waypoint__Ledgerfield__SeedUri: ${{ inputs.ledgerfield_seed_uri != '' && inputs.ledgerfield_seed_uri || vars.WAYPOINT_LEDGERFIELD_SEED_URI }}
+          Waypoint__Postgres__ServerName: ${{ inputs.postgres_server_name != '' && inputs.postgres_server_name || vars.WAYPOINT_POSTGRES_SERVER_NAME }}
+          Waypoint__Fabric__ProvisionEnabled: ${{ inputs.fabric_provision_enabled }}
+          Waypoint__Fabric__CapacityName: ${{ inputs.fabric_capacity_name != '' && inputs.fabric_capacity_name || vars.WAYPOINT_FABRIC_CAPACITY_NAME }}
+          Waypoint__Fabric__SkuName: ${{ inputs.fabric_sku_name != '' && inputs.fabric_sku_name || vars.WAYPOINT_FABRIC_SKU_NAME }}
+          Waypoint__Fabric__LakehouseName: ${{ inputs.fabric_lakehouse_name != '' && inputs.fabric_lakehouse_name || vars.WAYPOINT_FABRIC_LAKEHOUSE_NAME }}
+          Waypoint__Fabric__CorpusPrefix: ${{ inputs.fabric_corpus_prefix != '' && inputs.fabric_corpus_prefix || vars.WAYPOINT_FABRIC_CORPUS_PREFIX }}
+          Waypoint__Fabric__AccountUrl: ${{ inputs.fabric_account_url != '' && inputs.fabric_account_url || vars.WAYPOINT_FABRIC_ACCOUNT_URL }}
+          Waypoint__Fabric__AdministratorMembersJson: ${{ inputs.fabric_administrator_members_json != '' && inputs.fabric_administrator_members_json || vars.WAYPOINT_FABRIC_ADMIN_MEMBERS_JSON }}
+          Waypoint__Fabric__Workspace: ${{ inputs.fabric_workspace != '' && inputs.fabric_workspace || vars.WAYPOINT_FABRIC_WORKSPACE }}
+          Waypoint__Fabric__IqEnabled: ${{ inputs.fabric_iq_enabled }}
+          Waypoint__Fabric__MirrorEnabled: ${{ inputs.fabric_mirror_enabled }}
+          Waypoint__Fabric__SemanticModelName: ${{ inputs.fabric_semantic_model_name != '' && inputs.fabric_semantic_model_name || vars.WAYPOINT_FABRIC_SEMANTIC_MODEL_NAME }}
+          Waypoint__Fabric__DataAgentName: ${{ inputs.fabric_data_agent_name != '' && inputs.fabric_data_agent_name || vars.WAYPOINT_FABRIC_DATA_AGENT_NAME }}
+          Parameters__postgres_app_password: ${{ secrets.POSTGRES_APP_PASSWORD }}
+          Parameters__fabric_mirror_password: ${{ secrets.FABRIC_MIRROR_PASSWORD }}
+          FABRIC_MIRROR_ENABLED: ${{ inputs.fabric_mirror_enabled }}
+          Waypoint__ApiKeyAuth__Enabled: ${{ inputs.api_key_auth_enabled }}
+          Parameters__api_keys: ${{ secrets.WAYPOINT_API_KEYS }}
+          KEY_VAULT_NAME: ${{ inputs.key_vault_name }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          # The keystone umbrella generates the api-keys + Postgres password ONCE and stores them
+          # in a deterministically-named Key Vault (the system of record), since GitHub Actions
+          # cannot pass masked runtime secrets through job outputs. The live Postgres role + the
+          # running container both use those KV values — so a standalone deploy MUST use the same
+          # secrets or the new revision fails Postgres auth (PoolTimeout) and never goes live.
+          #
+          # Resolution order for the secret store:
+          #   1. KEY_VAULT_NAME from the keystone reusable-call input (umbrella runs).
+          #   2. Otherwise (plain push / workflow_dispatch) DERIVE the keystone vault name the
+          #      same way keystone's discover.sh does: kv-keystone-<first 6 hex of sha256(sub)>.
+          #      This lets a `git push` to main self-serve the canonical secrets with no keystone
+          #      run, provided the waypoint deploy SP has been granted read on that vault.
+          # Reads are best-effort: if the vault or a secret isn't readable (true greenfield, or no
+          # keystone provisioning yet), we keep the passed-in POSTGRES_APP_PASSWORD / WAYPOINT_API_KEYS
+          # Actions secrets so behavior is unchanged from before.
+          if [ -z "$KEY_VAULT_NAME" ] && [ -n "${AZURE_SUBSCRIPTION_ID:-}" ]; then
+            kv_hash="$(printf '%s' "$AZURE_SUBSCRIPTION_ID" | sha256sum | cut -c1-6)"
+            KEY_VAULT_NAME="kv-keystone-${kv_hash}"
+            echo "Standalone run: derived keystone Key Vault '${KEY_VAULT_NAME}' for secret resolution."
+          fi
+          if [ -n "$KEY_VAULT_NAME" ]; then
+            kv_pg="$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name postgres-app-password --query value -o tsv 2>/dev/null || true)"
+            kv_keys="$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name waypoint-api-keys --query value -o tsv 2>/dev/null || true)"
+            if [ -n "$kv_pg" ]; then
+              echo "::add-mask::$kv_pg"
+              export Parameters__postgres_app_password="$kv_pg"
+              echo "Using Postgres app password from Key Vault '${KEY_VAULT_NAME}'."
+            else
+              echo "WARN: could not read postgres-app-password from Key Vault '${KEY_VAULT_NAME}' — falling back to the passed-in secret."
+            fi
+            if [ -n "$kv_keys" ]; then
+              echo "::add-mask::$kv_keys"
+              export Parameters__api_keys="$kv_keys"
+              echo "Using api-keys from Key Vault '${KEY_VAULT_NAME}'."
+            else
+              echo "WARN: could not read waypoint-api-keys from Key Vault '${KEY_VAULT_NAME}' — falling back to the passed-in secret."
+            fi
+            # Fabric Mirroring credential: the ONE secret the mirror path needs. It is generated
+            # once and stored in the same keystone Key Vault (system of record), then reused by
+            # both the API startup bootstrap (which creates the fabric_user role with it) and the
+            # deploy-time Fabric connection. Generate-if-absent here — the Deploy step always runs
+            # before the mirror step, so by the time mirroring runs the secret exists in the vault.
+            # No admin connection or psql is ever needed. Best-effort: fall back to the passed-in
+            # FABRIC_MIRROR_PASSWORD Actions secret if the vault is not writable.
+            if [ "${FABRIC_MIRROR_ENABLED:-false}" = "true" ]; then
+              kv_mirror="$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name fabric-mirror-password --query value -o tsv 2>/dev/null || true)"
+              if [ -z "$kv_mirror" ]; then
+                gen_mirror="$(openssl rand -base64 24 | tr -d '/+=' | cut -c1-32)"
+                if az keyvault secret set --vault-name "$KEY_VAULT_NAME" --name fabric-mirror-password --value "$gen_mirror" --output none 2>/dev/null; then
+                  kv_mirror="$gen_mirror"
+                  echo "Generated and stored fabric-mirror-password in Key Vault '${KEY_VAULT_NAME}'."
+                else
+                  echo "WARN: could not write fabric-mirror-password to Key Vault '${KEY_VAULT_NAME}' — falling back to the passed-in secret."
+                fi
+              else
+                echo "Using existing fabric-mirror-password from Key Vault '${KEY_VAULT_NAME}'."
+              fi
+              if [ -n "$kv_mirror" ]; then
+                echo "::add-mask::$kv_mirror"
+                export Parameters__fabric_mirror_password="$kv_mirror"
+              fi
+              # Postgres admin password: keystone generate-once's it into the same vault so the API
+              # startup bootstrap can CREATE the fabric_user mirroring role (no psql on the runner).
+              # Only when we can read it do we hand it to Aspire AND flip AdminBootstrapEnabled so
+              # apphost declares the postgres-admin-password parameter + sets the bootstrap
+              # connection. Absent -> skip gracefully (mirroring still works if fabric_user already
+              # exists from a prior run or out-of-band creation); apphost never demands the param.
+              kv_admin="$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name postgres-admin-password --query value -o tsv 2>/dev/null || true)"
+              if [ -n "$kv_admin" ]; then
+                echo "::add-mask::$kv_admin"
+                export Parameters__postgres_admin_password="$kv_admin"
+                export Waypoint__Fabric__AdminBootstrapEnabled=true
+                echo "Using Postgres admin password from Key Vault '${KEY_VAULT_NAME}' for fabric_user bootstrap."
+              else
+                echo "WARN: postgres-admin-password not present in Key Vault '${KEY_VAULT_NAME}' — skipping fabric_user auto-bootstrap (create it via a later keystone run or the local fabric-mirror-role.sql fallback)."
+              fi
+            fi
+          fi
+          aspire deploy --non-interactive
+
+      - name: Apply MSAL redirect URI to Web
+        if: success()
+        env:
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          WAYPOINT_MSAL_CLIENT_ID: ${{ inputs.msal_client_id != '' && inputs.msal_client_id || vars.WAYPOINT_MSAL_CLIENT_ID }}
+          WAYPOINT_MSAL_REDIRECT_URI: ${{ inputs.msal_redirect_uri != '' && inputs.msal_redirect_uri || vars.WAYPOINT_MSAL_REDIRECT_URI }}
+        run: |
+          set -euo pipefail
+          web_fqdn="$(az containerapp show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name web \
+            --query properties.configuration.ingress.fqdn \
+            --output tsv)"
+
+          redirect_origin="${WAYPOINT_MSAL_REDIRECT_URI:-https://$web_fqdn}"
+          redirect_origin="${redirect_origin%/}"
+          if [ "${redirect_origin%/auth/msal/callback}" != "$redirect_origin" ]; then
+            callback_uri="$redirect_origin"
+            redirect_origin="${redirect_origin%/auth/msal/callback}"
+          else
+            callback_uri="$redirect_origin/auth/msal/callback"
+          fi
+
+          az containerapp update \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name web \
+            --set-env-vars "WAYPOINT_MSAL_REDIRECT_URI=$redirect_origin"
+
+          if [ -z "$WAYPOINT_MSAL_CLIENT_ID" ]; then
+            echo "No WAYPOINT_MSAL_CLIENT_ID configured; skipping app registration redirect URI reconciliation."
+            exit 0
+          fi
+
+          existing_uris="$(az ad app show --id "$WAYPOINT_MSAL_CLIENT_ID" --query "spa.redirectUris" -o tsv 2>/dev/null || true)"
+          merged_uris="$(EXISTING_URIS="$existing_uris" REDIRECT_ORIGIN="$redirect_origin" CALLBACK_URI="$callback_uri" python3 - <<'PY'
+          import json
+          import os
+
+          uris = {
+              line.strip()
+              for line in os.environ.get("EXISTING_URIS", "").splitlines()
+              if line.strip()
+          }
+          uris.add(os.environ["REDIRECT_ORIGIN"])
+          uris.add(os.environ["CALLBACK_URI"])
+          print(json.dumps(sorted(uris)))
+          PY
+          )"
+
+          if az ad app update --id "$WAYPOINT_MSAL_CLIENT_ID" --set spa.redirectUris="$merged_uris" --output none; then
+            echo "Ensured Waypoint MSAL SPA redirect URIs include $redirect_origin and $callback_uri."
+          else
+            echo "WARN: could not update the Waypoint app registration redirect URIs. Ensure it allows $callback_uri." >&2
+          fi
+
+      - name: Resolve Fabric identifiers
+        if: ${{ success() && inputs.fabric_provision_enabled }}
+        env:
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          FABRIC_CAPACITY_NAME: ${{ inputs.fabric_capacity_name != '' && inputs.fabric_capacity_name || vars.WAYPOINT_FABRIC_CAPACITY_NAME || 'waypointcorpus' }}
+        run: |
+          set -euo pipefail
+          capacity_id="$(az resource show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$FABRIC_CAPACITY_NAME" \
+            --resource-type Microsoft.Fabric/capacities \
+            --query id --output tsv)"
+
+          # API container-app managed identity object id (user-assigned preferred, system-assigned fallback).
+          uai_id="$(az containerapp show --name api --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query "identity.userAssignedIdentities | keys(@)[0]" --output tsv 2>/dev/null || true)"
+          mi_client_id=""
+          if [ -n "$uai_id" ]; then
+            mi_principal_id="$(az identity show --ids "$uai_id" --query principalId --output tsv)"
+            # Client id of the user-assigned identity. DefaultAzureCredential needs AZURE_CLIENT_ID
+            # set to this value to select the right identity for OneLake reads (a user-assigned MI is
+            # never the IMDS default), otherwise token acquisition fails at runtime.
+            mi_client_id="$(az identity show --ids "$uai_id" --query clientId --output tsv 2>/dev/null || true)"
+          else
+            mi_principal_id="$(az containerapp show --name api --resource-group "$AZURE_RESOURCE_GROUP" \
+              --query identity.principalId --output tsv 2>/dev/null || true)"
+          fi
+
+          # Object id of the deploy/OIDC service principal (the identity ledgerfield's upload runs as).
+          deploy_principal_id="$(az ad sp show --id "$AZURE_CLIENT_ID" --query id --output tsv)"
+
+          {
+            echo "WAYPOINT_FABRIC_CAPACITY_ID=$capacity_id"
+            echo "WAYPOINT_FABRIC_MI_PRINCIPAL_ID=$mi_principal_id"
+            echo "WAYPOINT_FABRIC_MI_CLIENT_ID=$mi_client_id"
+            echo "WAYPOINT_FABRIC_DEPLOY_PRINCIPAL_ID=$deploy_principal_id"
+          } >> "$GITHUB_ENV"
+
+      - name: Provision Fabric workspace and lakehouse
+        id: fabric
+        if: ${{ success() && inputs.fabric_provision_enabled }}
+        env:
+          WAYPOINT_FABRIC_PROVISION_ENABLED: "true"
+          WAYPOINT_FABRIC_CAPACITY_ID: ${{ env.WAYPOINT_FABRIC_CAPACITY_ID }}
+          WAYPOINT_FABRIC_WORKSPACE_NAME: ${{ inputs.fabric_workspace_name != '' && inputs.fabric_workspace_name || vars.WAYPOINT_FABRIC_WORKSPACE_NAME || 'waypoint-corpus' }}
+          WAYPOINT_FABRIC_LAKEHOUSE_NAME: ${{ inputs.fabric_lakehouse_name != '' && inputs.fabric_lakehouse_name || vars.WAYPOINT_FABRIC_LAKEHOUSE_NAME || 'corpus' }}
+          WAYPOINT_FABRIC_CORPUS_PREFIX: ${{ inputs.fabric_corpus_prefix != '' && inputs.fabric_corpus_prefix || vars.WAYPOINT_FABRIC_CORPUS_PREFIX || 'Files/corpus' }}
+          WAYPOINT_FABRIC_MI_PRINCIPAL_ID: ${{ env.WAYPOINT_FABRIC_MI_PRINCIPAL_ID }}
+          WAYPOINT_FABRIC_DEPLOY_PRINCIPAL_ID: ${{ env.WAYPOINT_FABRIC_DEPLOY_PRINCIPAL_ID }}
+        run: |
+          set -euo pipefail
+          ./infra/scripts/provision-fabric.sh
+          account_url="${{ inputs.fabric_account_url != '' && inputs.fabric_account_url || vars.WAYPOINT_FABRIC_ACCOUNT_URL }}"
+          echo "onelake_account_url=${account_url:-https://onelake.dfs.fabric.microsoft.com}" >> "$GITHUB_OUTPUT"
+
+      - name: Apply OneLake workspace and identity to API
+        if: ${{ success() && inputs.fabric_provision_enabled && steps.fabric.outputs.onelake_workspace != '' }}
+        env:
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          ONELAKE_WORKSPACE: ${{ steps.fabric.outputs.onelake_workspace }}
+          MI_CLIENT_ID: ${{ env.WAYPOINT_FABRIC_MI_CLIENT_ID }}
+        run: |
+          set -euo pipefail
+          # Set the resolved workspace GUID and, when the API runs under a user-assigned managed
+          # identity, AZURE_CLIENT_ID so DefaultAzureCredential selects it for OneLake reads.
+          env_vars="APP_ONELAKE_WORKSPACE=$ONELAKE_WORKSPACE"
+          if [ -n "${MI_CLIENT_ID:-}" ]; then
+            env_vars="$env_vars AZURE_CLIENT_ID=$MI_CLIENT_ID"
+          fi
+          az containerapp update --name api --resource-group "$AZURE_RESOURCE_GROUP" \
+            --set-env-vars $env_vars
+
+      - name: Attach existing OneLake workspace to API
+        # Wire the API container app to an already-provisioned OneLake workspace on every deploy
+        # (idempotent), without re-running Fabric provisioning. Runs when a workspace GUID is supplied
+        # via the fabric_workspace input or the WAYPOINT_FABRIC_WORKSPACE repo variable and provisioning
+        # was NOT requested (the provisioning path above wires this itself). Keeps standalone deploys
+        # OneLake-free unless the workspace variable is set.
+        if: ${{ success() && !inputs.fabric_provision_enabled && (inputs.fabric_workspace != '' || vars.WAYPOINT_FABRIC_WORKSPACE != '') }}
+        env:
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          ONELAKE_WORKSPACE: ${{ inputs.fabric_workspace != '' && inputs.fabric_workspace || vars.WAYPOINT_FABRIC_WORKSPACE }}
+        run: |
+          set -euo pipefail
+          # Resolve the API's user-assigned managed identity client id so DefaultAzureCredential selects
+          # it for OneLake reads (a user-assigned MI is never the IMDS default).
+          uai_id="$(az containerapp show --name api --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query "identity.userAssignedIdentities | keys(@)[0]" --output tsv 2>/dev/null || true)"
+          env_vars="APP_ONELAKE_WORKSPACE=$ONELAKE_WORKSPACE"
+          if [ -n "$uai_id" ]; then
+            mi_client_id="$(az identity show --ids "$uai_id" --query clientId --output tsv 2>/dev/null || true)"
+            if [ -n "$mi_client_id" ]; then
+              env_vars="$env_vars AZURE_CLIENT_ID=$mi_client_id"
+            fi
+          fi
+          az containerapp update --name api --resource-group "$AZURE_RESOURCE_GROUP" \
+            --set-env-vars $env_vars
+
+      - name: Ensure Fabric workspace roles (reused workspace)
+        # provision-fabric.sh grants the deploy service principal (and the API managed identity) a
+        # workspace Member role, but only on the provisioning path. When a deploy REUSES an existing
+        # workspace (fabric_provision_enabled=false) and then runs the mirror / IQ steps, those call
+        # the Fabric REST API as the deploy SP and 401 unless it is already a workspace member. This
+        # step closes that gap idempotently so the reuse path is keystone-repeatable instead of needing
+        # a manual roleAssignments POST. Only runs when reusing a workspace AND mirror or IQ is enabled.
+        if: ${{ success() && !inputs.fabric_provision_enabled && (inputs.fabric_mirror_enabled || inputs.fabric_iq_enabled) && (inputs.fabric_workspace != '' || vars.WAYPOINT_FABRIC_WORKSPACE != '') }}
+        env:
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          WAYPOINT_FABRIC_WORKSPACE: ${{ inputs.fabric_workspace != '' && inputs.fabric_workspace || vars.WAYPOINT_FABRIC_WORKSPACE }}
+        run: |
+          set -euo pipefail
+          # Object id of the deploy/OIDC service principal that runs the mirror + IQ REST calls.
+          deploy_principal_id="$(az ad sp show --id "$AZURE_CLIENT_ID" --query id --output tsv)"
+          # Object id of the API container-app managed identity (user-assigned preferred), granted a
+          # role too so runtime OneLake reads keep working against the reused workspace.
+          uai_id="$(az containerapp show --name api --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query "identity.userAssignedIdentities | keys(@)[0]" --output tsv 2>/dev/null || true)"
+          if [ -n "$uai_id" ]; then
+            mi_principal_id="$(az identity show --ids "$uai_id" --query principalId --output tsv 2>/dev/null || true)"
+          else
+            mi_principal_id="$(az containerapp show --name api --resource-group "$AZURE_RESOURCE_GROUP" \
+              --query identity.principalId --output tsv 2>/dev/null || true)"
+          fi
+          principals="${deploy_principal_id}:ServicePrincipal:the deploy service principal"
+          if [ -n "${mi_principal_id:-}" ]; then
+            principals="${principals}"$'\n'"${mi_principal_id}:ServicePrincipal:the Waypoint managed identity"
+          fi
+          export WAYPOINT_FABRIC_ROLE_PRINCIPALS="$principals"
+          ./infra/scripts/ensure-fabric-workspace-roles.sh
+
+      - name: Ensure Fabric workspace consumer roles (Forge data-agent access)
+        # Codifies the cross-repo Fabric workspace Viewer grant that lets a downstream consumer
+        # managed identity (Forge's Foundry project MI) reach the WaypointDataAgent + the mirrored
+        # SQL analytics endpoint for headless grounding (operations-data-expert). Without this the
+        # grant is a hand-made live roleAssignments POST (tracked in forge#31). Reuses the shared,
+        # idempotent ensure-fabric-workspace-roles.sh (look-up-before-create) with role=Viewer, so a
+        # fresh environment reproduces it automatically. Runs on BOTH the provision and reuse paths
+        # whenever consumer principals are configured and a workspace is resolvable. The consumer
+        # object ids are supplied out-of-band via the WAYPOINT_FABRIC_CONSUMER_MEMBERS repo variable
+        # (keystone injects the deployment-specific Forge MI id) instead of a hardcoded GUID.
+        if: ${{ success() && (inputs.fabric_mirror_enabled || inputs.fabric_iq_enabled) && vars.WAYPOINT_FABRIC_CONSUMER_MEMBERS != '' && (steps.fabric.outputs.onelake_workspace != '' || inputs.fabric_workspace != '' || vars.WAYPOINT_FABRIC_WORKSPACE != '') }}
+        env:
+          WAYPOINT_FABRIC_WORKSPACE: ${{ steps.fabric.outputs.onelake_workspace != '' && steps.fabric.outputs.onelake_workspace || (inputs.fabric_workspace != '' && inputs.fabric_workspace || vars.WAYPOINT_FABRIC_WORKSPACE) }}
+          WAYPOINT_FABRIC_WORKSPACE_ROLE: Viewer
+          WAYPOINT_FABRIC_CONSUMER_MEMBERS: ${{ vars.WAYPOINT_FABRIC_CONSUMER_MEMBERS }}
+        run: |
+          set -euo pipefail
+          # Accept a comma- and/or newline-separated list of consumer principals. Each entry is
+          # "<object_id>[:<type>[:<label>]]"; a bare object id defaults to a ServicePrincipal (managed
+          # identity). Trim whitespace and drop blank lines into the newline-separated form the roles
+          # script consumes.
+          principals="$(printf '%s' "$WAYPOINT_FABRIC_CONSUMER_MEMBERS" | tr ',' '\n' \
+            | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; /^$/d')"
+          if [ -z "$principals" ]; then
+            echo "No consumer principals resolved from WAYPOINT_FABRIC_CONSUMER_MEMBERS; nothing to do."
+            exit 0
+          fi
+          export WAYPOINT_FABRIC_ROLE_PRINCIPALS="$principals"
+          ./infra/scripts/ensure-fabric-workspace-roles.sh
+
+      - name: Provision Fabric source mirror (operational Postgres -> OneLake)
+        id: fabric_mirror
+        # Provision the FabricIQ source mirror: Fabric Mirroring of the operational Postgres
+        # financial core into OneLake. Idempotent + notebook-free. Gated + only runs once a
+        # workspace is resolvable and the mirror server + password are supplied. The Postgres
+        # server must already be deployed on a mirroring-supported tier with the prerequisites
+        # (enableFabricMirroring=true: SAMI + logical WAL + azure_cdc). The fabric_user mirroring
+        # ROLE is bootstrapped by the API at startup (using the admin bootstrap connection it
+        # already holds), so this step needs neither an admin connection nor psql — only the shared
+        # fabric-mirror-password, read from the same keystone Key Vault the Deploy step generated it
+        # into. That keeps the whole mirror path idempotent and keystone-repeatable.
+        if: ${{ success() && inputs.fabric_mirror_enabled && (steps.fabric.outputs.onelake_workspace != '' || inputs.fabric_workspace != '' || vars.WAYPOINT_FABRIC_WORKSPACE != '') && (vars.WAYPOINT_FABRIC_MIRROR_SERVER != '') }}
+        env:
+          WAYPOINT_FABRIC_MIRROR_ENABLED: "true"
+          WAYPOINT_FABRIC_WORKSPACE: ${{ steps.fabric.outputs.onelake_workspace != '' && steps.fabric.outputs.onelake_workspace || (inputs.fabric_workspace != '' && inputs.fabric_workspace || vars.WAYPOINT_FABRIC_WORKSPACE) }}
+          WAYPOINT_FABRIC_WORKSPACE_NAME: ${{ inputs.fabric_workspace_name != '' && inputs.fabric_workspace_name || vars.WAYPOINT_FABRIC_WORKSPACE_NAME || 'waypoint-corpus' }}
+          WAYPOINT_FABRIC_MIRROR_SERVER: ${{ vars.WAYPOINT_FABRIC_MIRROR_SERVER }}
+          WAYPOINT_FABRIC_MIRROR_CONNECTION_ID: ${{ vars.WAYPOINT_FABRIC_MIRROR_CONNECTION_ID }}
+          WAYPOINT_FABRIC_MIRROR_NAME: ${{ vars.WAYPOINT_FABRIC_MIRROR_NAME || 'WaypointMirror' }}
+          # Fallback only; the canonical value is read from the keystone Key Vault below.
+          FALLBACK_FABRIC_MIRROR_PASSWORD: ${{ secrets.FABRIC_MIRROR_PASSWORD }}
+          KEY_VAULT_NAME: ${{ inputs.key_vault_name }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          set -euo pipefail
+          # Resolve the shared mirroring credential from the same keystone Key Vault the Deploy
+          # step generated it into (read-only here — never generate, so the two steps can never
+          # diverge). Mirrors the Deploy step's vault-name resolution: explicit input, else derive
+          # kv-keystone-<sha256(sub)[:6]>. Falls back to the passed-in Actions secret.
+          if [ -z "${KEY_VAULT_NAME:-}" ] && [ -n "${AZURE_SUBSCRIPTION_ID:-}" ]; then
+            kv_hash="$(printf '%s' "$AZURE_SUBSCRIPTION_ID" | sha256sum | cut -c1-6)"
+            KEY_VAULT_NAME="kv-keystone-${kv_hash}"
+          fi
+          mirror_pw=""
+          if [ -n "${KEY_VAULT_NAME:-}" ]; then
+            mirror_pw="$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name fabric-mirror-password --query value -o tsv 2>/dev/null || true)"
+          fi
+          if [ -z "$mirror_pw" ]; then
+            mirror_pw="${FALLBACK_FABRIC_MIRROR_PASSWORD:-}"
+            echo "Using fallback FABRIC_MIRROR_PASSWORD (Key Vault value unavailable)."
+          else
+            echo "Using fabric-mirror-password from Key Vault '${KEY_VAULT_NAME}'."
+          fi
+          if [ -z "$mirror_pw" ]; then
+            echo "ERROR: no fabric mirror password available from Key Vault or fallback secret." >&2
+            exit 1
+          fi
+          echo "::add-mask::$mirror_pw"
+          export WAYPOINT_FABRIC_MIRROR_PASSWORD="$mirror_pw"
+          ./infra/scripts/provision-fabric-mirror.sh
+
+      - name: Provision Fabric IQ (semantic model + Data Agent)
+        id: fabric_iq
+        # Provision the Fabric IQ AI layer. By default (WAYPOINT_FABRIC_IQ_SOURCE=mirrored) it grounds
+        # on the mirrored operational Postgres financial core; set it to "lakehouse" to use the
+        # keystone corpus Tables. Idempotent + notebook-free. Resolves the workspace GUID from the
+        # provisioning step output when it ran, otherwise from the fabric_workspace input /
+        # WAYPOINT_FABRIC_WORKSPACE variable (already-provisioned lake). IQ_ALLOW_EMPTY=true makes a
+        # first one-click deploy a soft skip (lakehouse source) when the corpus Tables are uploaded
+        # later (by ledgerfield); a subsequent deploy/scheduler run then completes IQ.
+        if: ${{ success() && inputs.fabric_iq_enabled && (steps.fabric.outputs.onelake_workspace != '' || inputs.fabric_workspace != '' || vars.WAYPOINT_FABRIC_WORKSPACE != '') }}
+        env:
+          WAYPOINT_FABRIC_IQ_ENABLED: "true"
+          WAYPOINT_FABRIC_IQ_ALLOW_EMPTY: "true"
+          WAYPOINT_FABRIC_IQ_SOURCE: ${{ vars.WAYPOINT_FABRIC_IQ_SOURCE || 'mirrored' }}
+          WAYPOINT_FABRIC_MIRRORED_DATABASE_NAME: ${{ vars.WAYPOINT_FABRIC_MIRROR_NAME || 'WaypointMirror' }}
+          WAYPOINT_FABRIC_MIRRORED_SCHEMA: ${{ vars.WAYPOINT_FABRIC_MIRRORED_SCHEMA || '_public' }}
+          WAYPOINT_FABRIC_WORKSPACE: ${{ steps.fabric.outputs.onelake_workspace != '' && steps.fabric.outputs.onelake_workspace || (inputs.fabric_workspace != '' && inputs.fabric_workspace || vars.WAYPOINT_FABRIC_WORKSPACE) }}
+          WAYPOINT_FABRIC_WORKSPACE_NAME: ${{ inputs.fabric_workspace_name != '' && inputs.fabric_workspace_name || vars.WAYPOINT_FABRIC_WORKSPACE_NAME || 'waypoint-corpus' }}
+          WAYPOINT_FABRIC_LAKEHOUSE_NAME: ${{ inputs.fabric_lakehouse_name != '' && inputs.fabric_lakehouse_name || vars.WAYPOINT_FABRIC_LAKEHOUSE_NAME || 'corpus' }}
+          WAYPOINT_FABRIC_SEMANTIC_MODEL_NAME: ${{ inputs.fabric_semantic_model_name != '' && inputs.fabric_semantic_model_name || vars.WAYPOINT_FABRIC_SEMANTIC_MODEL_NAME || 'CaldovaIQ' }}
+          WAYPOINT_FABRIC_DATA_AGENT_NAME: ${{ inputs.fabric_data_agent_name != '' && inputs.fabric_data_agent_name || vars.WAYPOINT_FABRIC_DATA_AGENT_NAME || 'WaypointDataAgent' }}
+        run: |
+          set -euo pipefail
+          ./infra/scripts/provision-fabric-iq.sh
+
+      - name: Resolve deployment outputs
+        id: deploy_outputs
+        if: success()
+        env:
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          WAYPOINT_MSAL_CLIENT_ID: ${{ inputs.msal_client_id != '' && inputs.msal_client_id || vars.WAYPOINT_MSAL_CLIENT_ID }}
+        run: |
+          api_fqdn="$(az containerapp show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name api \
+            --query properties.configuration.ingress.fqdn \
+            --output tsv 2>/dev/null || true)"
+          web_fqdn="$(az containerapp show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name web \
+            --query properties.configuration.ingress.fqdn \
+            --output tsv 2>/dev/null || true)"
+
+          api_app_id_uri=""
+          api_default_scope=""
+          if [ -n "$WAYPOINT_MSAL_CLIENT_ID" ]; then
+            api_app_id_uri="api://$WAYPOINT_MSAL_CLIENT_ID"
+            api_default_scope="api://$WAYPOINT_MSAL_CLIENT_ID/.default"
+          fi
+
+          {
+            echo "api_fqdn=$api_fqdn"
+            echo "web_fqdn=$web_fqdn"
+            echo "api_app_id_uri=$api_app_id_uri"
+            echo "api_default_scope=$api_default_scope"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Deployment endpoints"
+            echo ""
+            echo "- **API**: https://$api_fqdn"
+            echo "- **Web**: https://$web_fqdn"
+            echo "- **API app-id-URI**: $api_app_id_uri"
+            echo "- **App-only scope**: $api_default_scope"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Post deployment summary
+        if: success()
+        continue-on-error: true
+        env:
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          WAYPOINT_LOG_ANALYTICS_WORKSPACE_NAME: ${{ inputs.log_analytics_workspace_name != '' && inputs.log_analytics_workspace_name || vars.WAYPOINT_LOG_ANALYTICS_WORKSPACE_NAME }}
+          WAYPOINT_LOG_ANALYTICS_RESOURCE_GROUP: ${{ inputs.log_analytics_resource_group != '' && inputs.log_analytics_resource_group || vars.WAYPOINT_LOG_ANALYTICS_RESOURCE_GROUP }}
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Version**: ${{ env.BUILD_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Resource Group**: ${{ secrets.AZURE_RESOURCE_GROUP }}" >> $GITHUB_STEP_SUMMARY
+
+          if [ -z "$WAYPOINT_LOG_ANALYTICS_WORKSPACE_NAME" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Log Analytics summary skipped because WAYPOINT_LOG_ANALYTICS_WORKSPACE_NAME is not configured." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
+          workspace_resource_group="${WAYPOINT_LOG_ANALYTICS_RESOURCE_GROUP:-$AZURE_RESOURCE_GROUP}"
+          workspace_id="$(az monitor log-analytics workspace show \
+            --resource-group "$workspace_resource_group" \
+            --workspace-name "$WAYPOINT_LOG_ANALYTICS_WORKSPACE_NAME" \
+            --query customerId \
+            --output tsv)"
+
+          query='let since = ago(30m);
+          ContainerAppConsoleLogs_CL
+          | where TimeGenerated > since
+          | where ContainerAppName_s in ("api", "web")
+          | summarize LastLog=max(TimeGenerated), ErrorCount=countif(Log_s has_any ("ERROR", "Exception", "Traceback", "failed")) by ContainerAppName_s
+          | order by ContainerAppName_s asc'
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Container App logs (last 30 minutes)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          # Non-fatal: the ContainerAppConsoleLogs_CL table only exists once the
+          # container apps have ingested console logs (absent on a fresh environment),
+          # so a query failure here must never fail the deployment.
+          if ! az monitor log-analytics query \
+            --workspace "$workspace_id" \
+            --analytics-query "$query" \
+            --output table >> $GITHUB_STEP_SUMMARY 2>/tmp/la_err; then
+            echo "Container App log summary unavailable (no console logs ingested yet): $(cat /tmp/la_err)" >> $GITHUB_STEP_SUMMARY
+          fi

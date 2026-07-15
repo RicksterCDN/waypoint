@@ -1,0 +1,32 @@
+third_party/p2m/build/
+third_party/p2m/*.egg-info/
+**/*.egg-info/
+
+# Python environments and caches
+.venv*/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local environment/config
+.env
+.azure/
+.azure
+
+# Generated artifacts and local samples
+samples/
+artifacts/
+azd-ai-agents-*.log
+
+# Developer scratch: token/credential probes that intentionally live outside
+# the deploy pipeline. Keep gitignored so local debugging doesn't accidentally
+# leak credentials or get picked up by validate.yml.
+scripts/test_litellm_azure_token.py
+
+# Prompty trace files (one per agent run, viewable in the Prompty VS Code extension)
+.runs/
+**/.runs/

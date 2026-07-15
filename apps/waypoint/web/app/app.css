@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/*
+ * Caldova brand palette — remap Tailwind's `blue-*` scale so every existing
+ * `blue-*` utility across the app renders in Caldova blues.
+ *   Ice Blue  #F4F7FC  (light fill)      -> blue-50
+ *   Royal Blue #2E6CFC (core accent)     -> blue-600
+ *   Navy      #16234B  (primary/brand)   -> blue-900
+ */
+@theme {
+  --color-blue-50: #f4f7fc;
+  --color-blue-100: #e6eefd;
+  --color-blue-200: #c8d9fb;
+  --color-blue-300: #9cbbf6;
+  --color-blue-400: #6191f1;
+  --color-blue-500: #4a80fd;
+  --color-blue-600: #2e6cfc;
+  --color-blue-700: #1e54d1;
+  --color-blue-800: #1b3e92;
+  --color-blue-900: #16234b;
+  --color-blue-950: #0e1a38;
+}
+
+/* Custom styles can be added here */
+
+/* Smooth transitions for dark mode */
+html {
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+/* Focus ring styles */
+:focus-visible {
+  outline: 2px solid theme(colors.blue.500);
+  outline-offset: 2px;
+}
+
+* {
+  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

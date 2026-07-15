@@ -1,0 +1,63 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+env/
+
+# JavaScript
+node_modules/
+dist/
+build/
+.vite/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Generated migration/runtime artifacts
+runs/
+outputs/
+.rft_job.json
+*.trace.json
+*.output-items.jsonl
+*.fine-tune*.json
+
+# Corpus generated artifacts
+modules/corpus/data/contracts/docx/
+modules/corpus/data/policies/docx/
+modules/corpus/data/invoices/html/
+modules/corpus/data/invoices/pdf/
+
+# Agent local runtime artifacts
+modules/agents/**/.venv/
+modules/agents/**/runs/
+modules/agents/**/outputs/
+
+# Eval and optimization generated artifacts
+modules/evals/runs/
+modules/evals/outputs/
+modules/evals/.rft_job.json
+modules/optimization/runs/
+modules/optimization/outputs/
+modules/optimization/.rft_job.json
+
+# Waypoint local build artifacts
+apps/waypoint/web/node_modules/
+apps/waypoint/web/build/
+apps/waypoint/web/.react-router/
+apps/waypoint/api/.venv/

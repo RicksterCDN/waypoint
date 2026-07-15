@@ -1,0 +1,276 @@
+{
+  "metadata_version": "1.0",
+  "purpose": "Scenario metadata maps future invoice issues to contract and policy evidence. Expected outcomes live here, not inside source contracts.",
+  "scenarios": [
+    {
+      "scenario_id": "scn-sup-001-packaging-authorization",
+      "supplier_id": "sup-001",
+      "issue_category": "off_contract_packaging",
+      "future_invoice_line": "Blister packaging surcharge for ALLER-20 monthly production",
+      "expected_decision_state": "disputed",
+      "evidence_refs": [
+        {
+          "document": "data/contracts/source-markdown/sup-001-aster-ridge-biomanufacturing-sow.md",
+          "section": "3.2 Packaging authorization"
+        },
+        {
+          "document": "data/policies/source-markdown/invoice-reconciliation-policy.md",
+          "section": "4. Minimum evidence for approval"
+        }
+      ],
+      "recommended_action": "Request packaging authorization or supplier credit for the unsupported surcharge."
+    },
+    {
+      "scenario_id": "scn-sup-002-pending-batch",
+      "supplier_id": "sup-002",
+      "issue_category": "unreleased_batch_billing",
+      "future_invoice_line": "Batch manufacturing and QA release fee for a batch with pending QA status",
+      "expected_decision_state": "disputed",
+      "evidence_refs": [
+        {
+          "document": "data/contracts/source-markdown/sup-002-northstar-fill-finish-quality-agreement.md",
+          "section": "2.3 Pending batches"
+        },
+        {
+          "document": "data/policies/source-markdown/quality-release-billability-policy.md",
+          "section": "3. Pending batches"
+        }
+      ],
+      "recommended_action": "Withhold the batch-related charges until QA release evidence is available."
+    },
+    {
+      "scenario_id": "scn-sup-003-premium-logistics",
+      "supplier_id": "sup-003",
+      "issue_category": "unsupported_logistics_surcharge",
+      "future_invoice_line": "Premium freight surcharge for an EU lane shipment without lane exception approval",
+      "expected_decision_state": "variance",
+      "evidence_refs": [
+        {
+          "document": "data/contracts/source-markdown/sup-003-heliopack-pharma-services-packaging-agreement.md",
+          "section": "4. Logistics charges"
+        },
+        {
+          "document": "data/policies/source-markdown/invoice-dispute-and-recovery-procedure.md",
+          "section": "2. Dispute packet"
+        }
+      ],
+      "recommended_action": "Ask the supplier for lane exception approval and dispute the surcharge if approval is not provided."
+    },
+    {
+      "scenario_id": "scn-sup-004-yield-true-up",
+      "supplier_id": "sup-004",
+      "issue_category": "invalid_true_up",
+      "future_invoice_line": "Yield adjustment calculated from forecast API volume instead of actual lot yield",
+      "expected_decision_state": "variance",
+      "evidence_refs": [
+        {
+          "document": "data/contracts/source-markdown/sup-004-meridian-api-works-supply-agreement.md",
+          "section": "3. Yield true-up"
+        },
+        {
+          "document": "data/policies/source-markdown/invoice-reconciliation-policy.md",
+          "section": "5. Payment leakage categories"
+        }
+      ],
+      "recommended_action": "Recalculate the true-up against actual lot evidence and request a corrected invoice."
+    },
+    {
+      "scenario_id": "scn-sup-005-early-stability-pull",
+      "supplier_id": "sup-005",
+      "issue_category": "early_milestone_billing",
+      "future_invoice_line": "Stability pull billed before the approved study schedule window",
+      "expected_decision_state": "disputed",
+      "evidence_refs": [
+        {
+          "document": "data/contracts/source-markdown/sup-005-crescent-gmp-labs-testing-sow.md",
+          "section": "3. Stability study windows"
+        },
+        {
+          "document": "data/policies/source-markdown/invoice-reconciliation-policy.md",
+          "section": "2. Required reconciliation"
+        }
+      ],
+      "recommended_action": "Hold the charge until the supplier ties the pull to the approved schedule or approved deviation window."
+    },
+    {
+      "scenario_id": "scn-sup-006-same-family-changeover",
+      "supplier_id": "sup-006",
+      "issue_category": "included_service_billed",
+      "future_invoice_line": "Changeover fee between ALLER-CAP 25 mg and ALLER-CAP 50 mg in the same campaign week",
+      "expected_decision_state": "disputed",
+      "evidence_refs": [
+        {
+          "document": "data/contracts/source-markdown/sup-006-summit-dose-manufacturing-sow.md",
+          "section": "3. Changeover rules"
+        },
+        {
+          "document": "data/policies/source-markdown/invoice-dispute-and-recovery-procedure.md",
+          "section": "3. Supplier response"
+        }
+      ],
+      "recommended_action": "Request withdrawal or credit because same-family changeover is included in unit pricing."
+    },
+    {
+      "scenario_id": "scn-sup-007-storage-after-close",
+      "supplier_id": "sup-007",
+      "issue_category": "invalid_storage_period",
+      "future_invoice_line": "Temperature-controlled storage days after the study close date without extension approval",
+      "expected_decision_state": "variance",
+      "evidence_refs": [
+        {
+          "document": "data/contracts/source-markdown/sup-007-orchid-clinical-supply-services-agreement.md",
+          "section": "4. Temperature-controlled storage"
+        },
+        {
+          "document": "data/policies/source-markdown/invoice-reconciliation-policy.md",
+          "section": "4. Minimum evidence for approval"
+        }
+      ],
+      "recommended_action": "Pay supported storage days and dispute post-close days lacking written extension."
+    },
+    {
+      "scenario_id": "scn-sup-008-duplicate-brokerage",
+      "supplier_id": "sup-008",
+      "issue_category": "duplicate_billing",
+      "future_invoice_line": "Customs brokerage billed on both master and child shipment records",
+      "expected_decision_state": "disputed",
+      "evidence_refs": [
+        {
+          "document": "data/contracts/source-markdown/sup-008-valence-cold-chain-logistics-agreement.md",
+          "section": "4. Customs brokerage"
+        },
+        {
+          "document": "data/policies/source-markdown/invoice-reconciliation-policy.md",
+          "section": "5. Payment leakage categories"
+        }
+      ],
+      "recommended_action": "Request credit for the duplicate brokerage line tied to the same customs entry."
+    },
+    {
+      "scenario_id": "scn-sup-009-supplier-caused-investigation",
+      "supplier_id": "sup-009",
+      "issue_category": "quality_deviation_charge",
+      "future_invoice_line": "Contamination investigation billed where deviation record indicates supplier-caused contamination",
+      "expected_decision_state": "escalated",
+      "evidence_refs": [
+        {
+          "document": "data/contracts/source-markdown/sup-009-bluepeak-biologics-capacity-agreement.md",
+          "section": "4. Contamination and deviation costs"
+        },
+        {
+          "document": "data/policies/source-markdown/invoice-dispute-and-recovery-procedure.md",
+          "section": "6. Escalation"
+        }
+      ],
+      "recommended_action": "Escalate for quality review and dispute supplier-caused investigation charges."
+    },
+    {
+      "scenario_id": "scn-sup-010-scrap-allowance",
+      "supplier_id": "sup-010",
+      "issue_category": "scrap_above_allowance",
+      "future_invoice_line": "Component scrap above 1.5% billed without sponsor-caused defect evidence",
+      "expected_decision_state": "variance",
+      "evidence_refs": [
+        {
+          "document": "data/contracts/source-markdown/sup-010-keystone-device-assembly-sow.md",
+          "section": "3. Component scrap allowance"
+        },
+        {
+          "document": "data/policies/source-markdown/invoice-reconciliation-policy.md",
+          "section": "2. Required reconciliation"
+        }
+      ],
+      "recommended_action": "Approve only supported scrap and request backup or credit for excess scrap charges."
+    },
+    {
+      "scenario_id": "scn-sup-011-release-packet-before-qa",
+      "supplier_id": "sup-011",
+      "issue_category": "premature_release_documentation",
+      "future_invoice_line": "Release packet fee billed before sponsor QA acceptance of sterilization documentation",
+      "expected_decision_state": "disputed",
+      "evidence_refs": [
+        {
+          "document": "data/contracts/source-markdown/sup-011-lumasterile-services-sterilization-agreement.md",
+          "section": "4. Release packets"
+        },
+        {
+          "document": "data/policies/source-markdown/quality-release-billability-policy.md",
+          "section": "6. Required evidence"
+        }
+      ],
+      "recommended_action": "Withhold the release packet fee until final sponsor QA acceptance is provided."
+    },
+    {
+      "scenario_id": "scn-sup-012-engineering-as-gmp",
+      "supplier_id": "sup-012",
+      "issue_category": "wrong_rate",
+      "future_invoice_line": "Engineering batch invoiced at GMP validation batch rate",
+      "expected_decision_state": "variance",
+      "evidence_refs": [
+        {
+          "document": "data/contracts/source-markdown/sup-012-pioneer-process-development-sow.md",
+          "section": "3. Engineering batch classification"
+        },
+        {
+          "document": "data/policies/source-markdown/invoice-reconciliation-policy.md",
+          "section": "5. Payment leakage categories"
+        }
+      ],
+      "recommended_action": "Reprice the line at the engineering batch rate unless GMP validation protocol evidence is supplied."
+    },
+    {
+      "scenario_id": "scn-sup-013-escalation-cap",
+      "supplier_id": "sup-013",
+      "issue_category": "price_escalation_cap",
+      "future_invoice_line": "Material price escalation above 2.5% without procurement approval",
+      "expected_decision_state": "disputed",
+      "evidence_refs": [
+        {
+          "document": "data/contracts/source-markdown/sup-013-evergreen-excipients-supply-agreement.md",
+          "section": "2. Unit cost and escalation"
+        },
+        {
+          "document": "data/policies/source-markdown/invoice-dispute-and-recovery-procedure.md",
+          "section": "5. Withholding disputed amounts"
+        }
+      ],
+      "recommended_action": "Pay at the capped escalation rate and request a corrected invoice or approval evidence."
+    },
+    {
+      "scenario_id": "scn-sup-014-outdated-forecast",
+      "supplier_id": "sup-014",
+      "issue_category": "invalid_true_up",
+      "future_invoice_line": "Volume true-up calculated from outdated forecast rather than current actual volume",
+      "expected_decision_state": "variance",
+      "evidence_refs": [
+        {
+          "document": "data/contracts/source-markdown/sup-014-atlas-regional-manufacturing-sow.md",
+          "section": "4. Volume true-up"
+        },
+        {
+          "document": "data/policies/source-markdown/invoice-reconciliation-policy.md",
+          "section": "2. Required reconciliation"
+        }
+      ],
+      "recommended_action": "Recalculate the true-up with current forecast and actual-volume evidence."
+    },
+    {
+      "scenario_id": "scn-sup-015-unapproved-country",
+      "supplier_id": "sup-015",
+      "issue_category": "unapproved_country_scope",
+      "future_invoice_line": "Variation submission fee for a country not listed in the approved regulatory work order",
+      "expected_decision_state": "disputed",
+      "evidence_refs": [
+        {
+          "document": "data/contracts/source-markdown/sup-015-signal-ridge-regulatory-services-agreement.md",
+          "section": "2. Country scope authorization"
+        },
+        {
+          "document": "data/policies/source-markdown/invoice-reconciliation-policy.md",
+          "section": "4. Minimum evidence for approval"
+        }
+      ],
+      "recommended_action": "Dispute the country-specific charge unless sponsor regulatory approval is provided."
+    }
+  ]
+}

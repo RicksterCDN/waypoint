@@ -1,0 +1,12 @@
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+*.egg-info/
+
+# Generated demo artifacts
+data/contracts/docx/
+data/policies/docx/
+data/invoices/html/
+data/invoices/pdf/

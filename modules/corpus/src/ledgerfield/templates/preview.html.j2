@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Ledgerfield invoice lab</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{height:100%;overflow:hidden}
+    body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#f8fafc;color:#0f172a}
+    .shell{display:grid;grid-template-columns:190px minmax(0,1fr) 170px;height:100%;min-height:0;overflow:hidden}
+    .nav,.actions{background:white;padding:12px;overflow-x:hidden;overflow-y:auto;min-height:0;min-width:0}
+    .nav{border-right:1px solid #cbd5e1}.actions{border-left:1px solid #cbd5e1}
+    main{min-width:0;min-height:0;overflow:hidden;background:#e2e8f0}
+    h1{font-size:17px;margin:0 0 4px}.muted{font-size:12px;color:#64748b;line-height:1.45;margin:0 0 12px;overflow-wrap:anywhere}.muted code{word-break:break-word}
+    .tools{display:grid;grid-template-columns:1fr;gap:7px;margin:0 0 12px}
+    .tools a,.button{border:0;border-radius:8px;background:#0f172a;color:white;cursor:pointer;display:block;font:inherit;font-size:11px;font-weight:800;padding:7px 8px;text-align:center;text-decoration:none;width:100%}
+    .button.secondary{background:#2563eb}.button.muted-button{background:#475569}.button.danger{background:#be123c}
+    .invoice-link{display:block;padding:8px 9px;margin:0 0 6px;border:1px solid #e2e8f0;border-radius:8px;color:#1d4ed8;text-decoration:none;font-size:12px}
+    .invoice-link:hover{background:#eff6ff;border-color:#bfdbfe}
+    .invoice-link.active{background:#dbeafe;border-color:#93c5fd}
+    .supplier{display:block;color:#334155;font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.template{display:block;color:#64748b;font-size:10px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .panel-title{font-size:11px;font-weight:800;margin:13px 0 6px;text-transform:uppercase;letter-spacing:.08em;color:#475569}
+    .field{margin:7px 0}.field label{display:block;font-size:10px;font-weight:800;color:#475569;margin-bottom:4px}.field input{border:1px solid #cbd5e1;border-radius:8px;font:inherit;font-size:11px;padding:6px;width:100%}
+    .stack{display:grid;gap:6px}.compact-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.compact-grid.three{grid-template-columns:1fr 1fr 1fr}
+    .output{background:#0f172a;border-radius:10px;color:#dbeafe;font-family:Consolas,monospace;font-size:10px;line-height:1.45;margin-top:10px;max-height:220px;overflow:auto;padding:8px;white-space:pre-wrap}
+    iframe{border:0;display:block;width:100%;height:100%;background:white}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="nav">
+      <h1>Ledgerfield invoice lab</h1>
+      <p class="muted">Live FastAPI preview of generated supplier invoices. Edit files in <code>src/ledgerfield/templates/invoices/</code>, then refresh.</p>
+      <div class="tools">
+        <a href="/docs" target="_blank">API docs</a>
+        <a href="/api/invoices" target="_blank">All invoices JSON</a>
+      </div>
+      {% for item in invoices %}
+        <a class="invoice-link{% if loop.first %} active{% endif %}" data-invoice-id="{{ item.invoice_id }}" href="/api/invoices/{{ item.invoice_id }}/html" target="invoice-frame">
+          <span class="supplier">{{ item.supplier_id }} - {{ item.supplier_name }}</span>
+          <span class="template">{{ item.invoice_id }}</span>
+        </a>
+      {% endfor %}
+    </aside>
+    <main>
+      <iframe name="invoice-frame" src="/api/invoices/{{ invoices[0].invoice_id }}/html"></iframe>
+    </main>
+    <aside class="actions">
+      <h1>API</h1>
+      <p class="muted">Live controls for the selected invoice.</p>
+
+      <div class="panel-title">Invoice</div>
+      <div class="compact-grid three">
+        <button class="button secondary" type="button" data-action="invoice-json" title="View selected invoice JSON">JSON</button>
+        <button class="button secondary" type="button" data-action="invoice-html" title="Reload selected invoice HTML">HTML</button>
+        <button class="button secondary" type="button" data-action="invoice-pdf" title="Render selected invoice PDF">PDF</button>
+      </div>
+
+      <div class="panel-title">Generate</div>
+      <div class="compact-grid">
+        <button class="button" type="button" data-action="generate-html" title="Generate invoice HTML files">HTML</button>
+        <button class="button" type="button" data-action="generate-pdf" title="Generate invoice PDF files">PDFs</button>
+        <button class="button" type="button" data-action="generate-docx" title="Generate DOCX evidence files">DOCX</button>
+        <button class="button" type="button" data-action="generate-all" title="Generate all artifacts">All</button>
+      </div>
+
+      <div class="panel-title">Agent</div>
+      <div class="compact-grid">
+        <button class="button" type="button" data-action="agent-manifest" title="Discover agent integration surface">Manifest</button>
+        <button class="button" type="button" data-action="agent-doctor" title="Check source and artifact status">Doctor</button>
+        <button class="button" type="button" data-action="agent-bootstrap" title="Generate artifacts through agent bootstrap">Bootstrap</button>
+      </div>
+
+      <div class="panel-title">Postgres</div>
+      <div class="field">
+        <label for="dsn">DSN override</label>
+        <input id="dsn" type="text" placeholder="optional; uses env when empty">
+      </div>
+      <div class="field">
+        <label for="cycles">Append cycles</label>
+        <input id="cycles" type="number" min="1" value="1">
+      </div>
+      <div class="compact-grid">
+        <button class="button muted-button" type="button" data-action="db-status" title="Check DB status">Ping</button>
+        <button class="button muted-button" type="button" data-action="db-seed" title="Seed DB if needed">Seed</button>
+        <button class="button muted-button" type="button" data-action="db-append" title="Append live invoices">Append</button>
+      </div>
+
+      <div class="output" id="output">Ready.</div>
+    </aside>
+  </div>
+  <script>
+    let selectedInvoiceId = "{{ invoices[0].invoice_id }}";
+    const output = document.querySelector("#output");
+    const frame = document.querySelector("iframe[name='invoice-frame']");
+
+    function show(value) {
+      output.textContent = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+    }
+
+    async function callJson(url, options = {}) {
+      const response = await fetch(url, options);
+      const text = await response.text();
+      let body;
+      try { body = JSON.parse(text); } catch { body = text; }
+      if (!response.ok) throw body;
+      return body;
+    }
+
+    function dsnQuery() {
+      const value = document.querySelector("#dsn").value.trim();
+      return value ? `?dsn=${encodeURIComponent(value)}` : "";
+    }
+
+    document.querySelectorAll(".invoice-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        selectedInvoiceId = link.dataset.invoiceId;
+        document.querySelectorAll(".invoice-link").forEach((item) => item.classList.remove("active"));
+        link.classList.add("active");
+        show(`Selected ${selectedInvoiceId}`);
+      });
+    });
+
+    document.querySelectorAll("[data-action]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const action = button.dataset.action;
+        try {
+          show(`Running ${action}...`);
+          if (action === "invoice-json") {
+            show(await callJson(`/api/invoices/${selectedInvoiceId}`));
+          } else if (action === "invoice-html") {
+            frame.src = `/api/invoices/${selectedInvoiceId}/html?ts=${Date.now()}`;
+            show(`Loaded HTML preview for ${selectedInvoiceId}`);
+          } else if (action === "invoice-pdf") {
+            window.open(`/api/invoices/${selectedInvoiceId}/pdf`, "_blank");
+            show(`Opened PDF endpoint for ${selectedInvoiceId}`);
+          } else if (action === "generate-html") {
+            show(await callJson("/api/generation/invoices/html", { method: "POST" }));
+          } else if (action === "generate-pdf") {
+            show(await callJson("/api/generation/invoices/pdf", { method: "POST" }));
+          } else if (action === "generate-docx") {
+            show(await callJson("/api/generation/docx", { method: "POST" }));
+          } else if (action === "generate-all") {
+            show(await callJson("/api/generation/all", { method: "POST" }));
+          } else if (action === "agent-manifest") {
+            show(await callJson("/api/agent/manifest"));
+          } else if (action === "agent-doctor") {
+            show(await callJson("/api/agent/doctor"));
+          } else if (action === "agent-bootstrap") {
+            show(await callJson("/api/agent/bootstrap?artifacts=true", { method: "POST" }));
+          } else if (action === "db-status") {
+            show(await callJson(`/api/db/status${dsnQuery()}`));
+          } else if (action === "db-seed") {
+            const separator = dsnQuery() ? "&" : "?";
+            show(await callJson(`/api/db/seed${dsnQuery()}${separator}if_needed=true`, { method: "POST" }));
+          } else if (action === "db-append") {
+            const cycles = document.querySelector("#cycles").value || "1";
+            const separator = dsnQuery() ? "&" : "?";
+            show(await callJson(`/api/db/append${dsnQuery()}${separator}cycles=${encodeURIComponent(cycles)}`, { method: "POST" }));
+          }
+        } catch (error) {
+          show(error);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

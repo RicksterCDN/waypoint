@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ invoice.invoice_id }} - {{ invoice.supplier_name }}</title>
+  <style>
+    @page { size: Letter; margin: 0; }
+    * { box-sizing: border-box; }
+    html { background: #eef0f3; }
+    body {
+      margin: 0;
+      color: #1f2937;
+      font-family: {{ theme.font }};
+      font-size: 11px;
+      line-height: 1.36;
+      background: #eef0f3;
+      padding: 0.35in;
+    }
+    .invoice {
+      border: 1px solid #d1d5db;
+      height: 10.3in;
+      margin: 0 auto;
+      overflow: hidden;
+      position: relative;
+      width: 7.8in;
+      background: #ffffff;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    }
+    header {
+      background: #ffffff;
+      border-top: 5px solid {{ theme.accent }};
+      border-bottom: 1px solid #d1d5db;
+      color: #1f2937;
+      padding: 16px 20px 14px;
+      display: grid;
+      grid-template-columns: 70px 1.45fr 0.85fr;
+      gap: 18px;
+      align-items: center;
+    }
+    .logo-mark {
+      align-items: center;
+      background: {{ theme.accent_light }};
+      border: 1px solid {{ theme.accent }};
+      border-radius: 6px;
+      color: {{ theme.accent }};
+      display: flex;
+      font-size: 16px;
+      font-weight: 900;
+      height: 52px;
+      justify-content: center;
+      letter-spacing: 0.08em;
+      width: 52px;
+    }
+    .supplier-name {
+      font-size: 18px;
+      font-weight: 750;
+      letter-spacing: 0.01em;
+    }
+    .profile { margin-top: 5px; color: #6b7280; font-size: 10px; max-width: 4.8in; text-transform: capitalize; }
+    .invoice-title {
+      text-align: right;
+      font-size: 21px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #111827;
+    }
+    .invoice-id { text-align: right; margin-top: 3px; color: #4b5563; font-size: 11px; }
+    .document-phrase { text-align: right; margin-top: 6px; color: #6b7280; font-size: 9px; }
+    .hero-total {
+      border: 1px solid #d1d5db;
+      border-top: 4px solid {{ theme.accent }};
+      margin-top: 9px;
+      padding: 7px 9px;
+      text-align: right;
+    }
+    .hero-total .label { letter-spacing: 0.08em; }
+    .hero-total .value { color: #111827; font-size: 18px; margin-top: 2px; }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-bottom: 1px solid #d1d5db;
+      background: #f9fafb;
+    }
+    .summary div { padding: 9px 12px; border-right: 1px solid #e5e7eb; }
+    .summary div:last-child { border-right: 0; }
+    .label {
+      display: block;
+      color: #6b7280;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .value { display: block; margin-top: 3px; color: #111827; font-size: 12px; font-weight: 700; }
+    .content { padding: 14px 18px 18px; }
+    .party-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr 0.95fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .party-card {
+      border: 1px solid #d1d5db;
+      min-height: 72px;
+      padding: 9px 10px;
+    }
+    .party-title {
+      color: #6b7280;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+    .party-name { color: #111827; font-size: 12px; font-weight: 800; }
+    .party-line { color: #4b5563; margin-top: 2px; }
+    .support-list { margin: 4px 0 0; padding-left: 16px; }
+    .support-list li { margin-top: 2px; }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 3px 0;
+    }
+    .meta-row:first-of-type { padding-top: 0; }
+    .meta-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .meta-row span:first-child { color: #6b7280; }
+    .meta-row span:last-child { color: #111827; font-weight: 700; text-align: right; }
+    .note {
+      border: 1px solid #d1d5db;
+      border-left: 4px solid {{ theme.accent }};
+      background: #f9fafb;
+      padding: 8px 10px;
+      margin-bottom: 12px;
+    }
+    .statement-summary {
+      border: 1px solid #d1d5db;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      margin-bottom: 12px;
+    }
+    .statement-summary div {
+      border-right: 1px solid #e5e7eb;
+      padding: 7px 9px;
+    }
+    .statement-summary div:last-child { border-right: 0; }
+    table { border-collapse: collapse; width: 100%; }
+    th {
+      background: #f3f4f6;
+      border-bottom: 1px solid #d1d5db;
+      color: #4b5563;
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      padding: 6px 7px;
+      text-align: left;
+      text-transform: uppercase;
+    }
+    td { border-bottom: 1px solid #e5e7eb; padding: 6px 7px; vertical-align: top; }
+    .amount, .quantity, .unit-price { text-align: right; white-space: nowrap; }
+    .line-id { color: #4b5563; font-size: 9px; font-weight: 700; }
+    .description { margin-top: 2px; color: #1f2937; }
+    .reference { margin-top: 2px; color: #6b7280; font-size: 9px; }
+    .reference-label { color: #4b5563; font-weight: 700; }
+    .totals { display: flex; justify-content: flex-end; margin-top: 12px; }
+    .totals-card { min-width: 235px; border: 1px solid #d1d5db; }
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 9px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .totals-row:last-child {
+      border-bottom: 0;
+      background: #f9fafb;
+      border-top: 2px solid {{ theme.accent }};
+      font-size: 14px;
+      font-weight: 800;
+    }
+    footer {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      color: #4b5563;
+      font-size: 9px;
+    }
+    .box { border: 1px solid #d1d5db; background: #ffffff; padding: 9px; min-height: 58px; }
+    .page-footer {
+      align-items: center;
+      border-top: 1px solid #e5e7eb;
+      bottom: 0.18in;
+      color: #6b7280;
+      display: flex;
+      font-size: 8px;
+      justify-content: space-between;
+      left: 0.22in;
+      letter-spacing: 0.02em;
+      position: absolute;
+      right: 0.22in;
+    }
+    @media print {
+      html, body { background: #ffffff; padding: 0; }
+      .invoice { border: 0; box-shadow: none; height: 11in; width: 8.5in; }
+      .page-footer { bottom: 0.24in; left: 0.45in; right: 0.45in; }
+    }
+    body.style-sidebar .invoice {
+      display: grid;
+      grid-template-columns: 1.65in minmax(0, 1fr);
+    }
+    body.style-sidebar header {
+      align-items: flex-start;
+      display: block;
+      grid-row: 1 / span 3;
+      min-height: 10.3in;
+      padding: 22px 16px;
+      background: #f9fafb;
+      border-right: 1px solid #d1d5db;
+      border-top: 0;
+    }
+    body.style-sidebar header > div { margin-bottom: 22px; }
+    body.style-sidebar .logo-mark { height: 62px; width: 62px; }
+    body.style-sidebar .supplier-name,
+    body.style-sidebar .invoice-title,
+    body.style-sidebar .invoice-id,
+    body.style-sidebar .document-phrase {
+      text-align: left;
+    }
+    body.style-sidebar .hero-total { text-align: left; }
+    body.style-sidebar .supplier-name { font-size: 18px; line-height: 1.15; }
+    body.style-sidebar .invoice-title { font-size: 20px; }
+    body.style-sidebar .summary,
+    body.style-sidebar .content { grid-column: 2; }
+    body.style-sidebar .summary { grid-template-columns: repeat(2, 1fr); }
+
+    body.style-letterhead .invoice {
+      border-width: 1px;
+      box-shadow: inset 0 6px 0 {{ theme.accent }}, 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    body.style-letterhead header {
+      background: white !important;
+      border-bottom: 2px solid {{ theme.accent }};
+      color: #172033;
+    }
+    body.style-letterhead .logo-mark {
+      background: {{ theme.accent_light }};
+      border-color: {{ theme.accent }};
+      color: {{ theme.accent }};
+    }
+    body.style-letterhead .summary {
+      background: white;
+      border-bottom: 2px solid #d1d5db;
+    }
+
+    body.style-ledger table,
+    body.style-ledger th,
+    body.style-ledger td {
+      border: 1px solid #cbd5e1;
+    }
+    body.style-ledger th {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    body.style-ledger .note {
+      background: #f9fafb;
+      border: 1px solid #d1d5db;
+      border-left: 4px solid {{ theme.accent }};
+    }
+
+    body.style-compact {
+      font-size: 10.5px;
+    }
+    body.style-compact .invoice {
+      min-height: auto;
+    }
+    body.style-compact header {
+      gap: 14px;
+      padding: 14px 16px;
+    }
+    body.style-compact .logo-mark { height: 48px; width: 48px; font-size: 15px; }
+    body.style-compact .supplier-name { font-size: 18px; }
+    body.style-compact .invoice-title { font-size: 19px; }
+    body.style-compact .summary div,
+    body.style-compact td,
+    body.style-compact th { padding: 6px 7px; }
+    body.style-compact .content { padding: 12px 14px 14px; }
+    body.style-compact .party-grid { gap: 8px; margin-bottom: 10px; }
+    body.style-compact .party-card { min-height: 68px; padding: 8px; }
+    body.style-compact footer { margin-top: 12px; }
+
+    body.style-statement .summary {
+      margin: 16px 22px 0;
+      border: 1px solid #d1d5db;
+    }
+    body.style-statement .content { padding-top: 14px; }
+    body.style-statement .totals {
+      justify-content: stretch;
+    }
+    body.style-statement .totals-card {
+      margin-left: auto;
+      min-width: 320px;
+    }
+    body.style-statement .totals-row:last-child {
+      font-size: 18px;
+      padding: 10px;
+    }
+
+    body.style-service-detail tbody tr {
+      background: #fff;
+      box-shadow: inset 3px 0 0 {{ theme.accent_light }};
+    }
+    body.style-service-detail td {
+      padding-bottom: 12px;
+      padding-top: 12px;
+    }
+    body.style-service-detail .description {
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    body.style-logistics-form .invoice {
+      border-left-width: 8px;
+    }
+    body.style-logistics-form .summary {
+      background: #f8fafc;
+      border-bottom: 4px solid {{ theme.accent }};
+    }
+    body.style-logistics-form .reference:before {
+      content: "POD ";
+      color: {{ theme.accent }};
+      font-weight: 800;
+    }
+
+    body.style-industrial header {
+      background: #f9fafb !important;
+      border-top-color: #374151;
+    }
+    body.style-industrial .logo-mark {
+      border-radius: 0;
+    }
+    body.style-industrial th {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    body.style-milestone .summary {
+      grid-template-columns: 1.2fr 1fr 1.3fr 1fr;
+    }
+    body.style-milestone .note {
+      border-left-style: dashed;
+      border-left-width: 6px;
+    }
+    body.style-milestone tbody tr:nth-child(odd) {
+      background: #fffbeb;
+    }
+
+    body.style-regional header {
+      border-bottom: 8px solid {{ theme.accent_light }};
+    }
+    body.style-regional .summary {
+      border-bottom: 5px solid {{ theme.accent }};
+    }
+    body.style-regional .note {
+      background: #fff7ed;
+    }
+    {% block supplier_css %}{% endblock %}
+  </style>
+</head>
+<body class="style-{{ theme.style_family }}">
+  <article class="invoice">
+    {% block header %}
+    <header>
+      <div><div class="logo-mark">{{ theme.logo }}</div></div>
+      <div>
+        <div class="supplier-name">{{ invoice.supplier_name }}</div>
+        <div class="profile">{{ supplier.specialty }} &bull; {{ supplier.region }}</div>
+      </div>
+      <div>
+        <div class="invoice-title">Invoice</div>
+        <div class="invoice-id">{{ invoice.invoice_id }}</div>
+        <div class="document-phrase">{{ theme.invoice_label }}</div>
+        <div class="hero-total">
+          <span class="label">Total Due</span>
+          <span class="value">{{ money(invoice.total_amount) }}</span>
+        </div>
+      </div>
+    </header>
+    {% endblock %}
+
+    {% block summary %}
+    <section class="summary">
+      <div><span class="label">Supplier ID</span><span class="value">{{ invoice.supplier_id }}</span></div>
+      <div><span class="label">Invoice Date</span><span class="value">{{ invoice.invoice_date }}</span></div>
+      <div><span class="label">Purchase Order</span><span class="value">{{ invoice.purchase_order_id }}</span></div>
+      <div><span class="label">Due Date</span><span class="value">{{ invoice.document_metadata.due_date }}</span></div>
+    </section>
+    {% endblock %}
+
+    <section class="content">
+      {% block parties %}
+      <section class="party-grid">
+        <div class="party-card">
+          <div class="party-title">Bill To</div>
+          <div class="party-name">Waypoint Therapeutics AP</div>
+          <div class="party-line">1000 Discovery Parkway</div>
+          <div class="party-line">Cambridge, MA 02139</div>
+          <div class="party-line">Account {{ profile.billing_profile.customer_account }}</div>
+          <div class="party-line">ap@waypoint.example</div>
+        </div>
+        <div class="party-card">
+          <div class="party-title">Remit To</div>
+          <div class="party-name">{{ invoice.supplier_name }}</div>
+          {% for address_line in profile.billing_profile.address_lines %}
+          <div class="party-line">{{ address_line }}</div>
+          {% endfor %}
+          <div class="party-line">{{ profile.billing_profile.billing_email }}</div>
+        </div>
+        <div class="party-card">
+          <div class="party-title">Invoice Details</div>
+          <div class="meta-row"><span>Invoice #</span><span>{{ invoice.invoice_id }}</span></div>
+          <div class="meta-row"><span>Date</span><span>{{ invoice.invoice_date }}</span></div>
+          <div class="meta-row"><span>Due</span><span>{{ invoice.document_metadata.due_date }}</span></div>
+          <div class="meta-row"><span>PO</span><span>{{ invoice.purchase_order_id }}</span></div>
+          <div class="meta-row"><span>Period</span><span>{{ invoice.document_metadata.service_period }}</span></div>
+          <div class="meta-row"><span>Terms</span><span>Net 45</span></div>
+        </div>
+      </section>
+      {% endblock %}
+
+      {% block note %}
+      <div class="note">
+        <strong>Supporting documents:</strong>
+        <ul class="support-list">
+          {% for reference in invoice.document_metadata.support_references %}
+          <li>{{ reference }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endblock %}
+
+      {% if invoice.document_metadata.statement_summary is defined %}
+      <section class="statement-summary">
+        <div><span class="label">Previous Balance</span><span class="value">{{ money(invoice.document_metadata.statement_summary.previous_balance) }}</span></div>
+        <div><span class="label">Payments</span><span class="value">{{ money(invoice.document_metadata.statement_summary.payments_received) }}</span></div>
+        <div><span class="label">Current Charges</span><span class="value">{{ money(invoice.document_metadata.statement_summary.current_charges) }}</span></div>
+        <div><span class="label">Balance Due</span><span class="value">{{ money(invoice.document_metadata.statement_summary.balance_due) }}</span></div>
+      </section>
+      {% endif %}
+
+      {% block line_items %}
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 45%">Line</th>
+            <th style="width: 19%">Type</th>
+            <th class="quantity" style="width: 12%">Qty</th>
+            <th class="unit-price" style="width: 14%">Unit Price</th>
+            <th class="amount" style="width: 14%">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for line in invoice.lines %}
+          <tr>
+            <td>
+              <div class="line-id">{{ line.line_id }}</div>
+              <div class="description">{{ line.description }}</div>
+              <div class="reference"><span class="reference-label">{{ support_label(line.line_type) }}:</span> {{ line.reference_id }}</div>
+            </td>
+            <td>{{ line.line_type }}</td>
+            <td class="quantity">{{ quantity(line.quantity) }}</td>
+            <td class="unit-price">{{ money(line.unit_price) }}</td>
+            <td class="amount">{{ money(line.amount) }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% endblock %}
+
+      <section class="totals">
+        <div class="totals-card">
+          <div class="totals-row"><span>Subtotal</span><span>{{ money(invoice.total_amount) }}</span></div>
+          <div class="totals-row"><span>Tax / VAT</span><span>{{ invoice.document_metadata.tax_display }}</span></div>
+          <div class="totals-row"><span>Total Due</span><span>{{ money(invoice.total_amount) }}</span></div>
+        </div>
+      </section>
+
+      <footer>
+        {% block footer %}
+        <div class="box">
+          <strong>Payment and remittance</strong><br>
+          {{ theme.payment_terms }} Remittance ref: {{ profile.billing_profile.remittance_reference }}. Include invoice ID and PO on all remittance advice.
+        </div>
+        <div class="box">
+          <strong>Billing contact</strong><br>
+          {{ profile.billing_profile.billing_contact }} &lt;{{ profile.billing_profile.billing_email }}&gt;. {{ profile.billing_profile.tax_id }}. {{ invoice.document_metadata.tax_treatment }}
+        </div>
+        {% endblock %}
+      </footer>
+    </section>
+    <div class="page-footer">
+      <span>{{ invoice.supplier_name }} | {{ profile.billing_profile.tax_id }}</span>
+      <span>{{ invoice.invoice_id }} | Account {{ profile.billing_profile.customer_account }} | Page 1 of 1</span>
+    </div>
+  </article>
+</body>
+</html>

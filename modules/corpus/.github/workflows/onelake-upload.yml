@@ -1,0 +1,108 @@
+name: OneLake Upload
+
+# Uploads the generated Ledgerfield corpus into a Waypoint Microsoft Fabric OneLake lakehouse:
+# documents into Files/corpus/... and Delta tables into Tables/.... Exposed as a reusable
+# workflow_call stage so the keystone umbrella can invoke it after waypoint-deploy provisions the
+# (empty) lake, passing the lake coordinates from the deploy outputs. Also runnable manually via
+# workflow_dispatch. Authenticates to Azure with OIDC (DefaultAzureCredential picks up the federated
+# token); the deploy identity must be a Fabric workspace Member.
+
+on:
+  workflow_call:
+    inputs:
+      source_ref:
+        description: Git ref of THIS (ledgerfield) repo to check out. The keystone umbrella passes its ledgerfield_ref; defaults to the triggering ref for standalone runs.
+        required: false
+        type: string
+        default: ""
+      workspace:
+        description: Fabric workspace name or GUID (acts as the OneLake filesystem).
+        required: true
+        type: string
+      lakehouse:
+        description: Fabric lakehouse name (without the .Lakehouse suffix).
+        required: true
+        type: string
+      account_url:
+        description: OneLake DFS endpoint.
+        required: false
+        type: string
+        default: "https://onelake.dfs.fabric.microsoft.com"
+      corpus_prefix:
+        description: Lakehouse path prefix for corpus documents.
+        required: false
+        type: string
+        default: "Files/corpus"
+    secrets:
+      REPO_TOKEN:
+        description: Token with contents:read on this repo so a cross-repo caller (keystone umbrella) can check out ledgerfield's own source. Falls back to GITHUB_TOKEN for standalone runs.
+        required: false
+      AZURE_CLIENT_ID:
+        description: Client ID of the OIDC deploy identity (workspace Member).
+        required: true
+      AZURE_TENANT_ID:
+        description: Azure AD tenant ID.
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        description: Azure subscription ID (optional for OneLake-only access).
+        required: false
+  workflow_dispatch:
+    inputs:
+      workspace:
+        description: Fabric workspace name or GUID (acts as the OneLake filesystem).
+        required: true
+        type: string
+      lakehouse:
+        description: Fabric lakehouse name (without the .Lakehouse suffix).
+        required: true
+        type: string
+      account_url:
+        description: OneLake DFS endpoint.
+        required: false
+        type: string
+        default: "https://onelake.dfs.fabric.microsoft.com"
+      corpus_prefix:
+        description: Lakehouse path prefix for corpus documents.
+        required: false
+        type: string
+        default: "Files/corpus"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: caldova/waypoint
+          ref: ${{ inputs.source_ref || github.ref }}
+          token: ${{ secrets.REPO_TOKEN || github.token }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+
+      - name: Sync dependencies
+        run: uv sync
+
+      - name: Install Playwright Chromium
+        run: uv run ledgerfield setup
+
+      - name: Azure login (OIDC)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          allow-no-subscriptions: true
+
+      - name: Upload corpus to OneLake
+        run: |
+          uv run ledgerfield upload-onelake \
+            --workspace "${{ inputs.workspace }}" \
+            --lakehouse "${{ inputs.lakehouse }}" \
+            --account-url "${{ inputs.account_url }}" \
+            --corpus-prefix "${{ inputs.corpus_prefix }}"

@@ -1,0 +1,34 @@
+[project]
+name = "caliber"
+version = "0.1.0"
+description = "Fine-tuning support tools for Forge agents."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "azure-ai-projects>=1.0.0",
+  "azure-identity>=1.17.0",
+  "openai>=1.50.0",
+  "python-dotenv>=1.0.0",
+]
+
+[dependency-groups]
+dev = [
+  "ruff>=0.14.0",
+]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+caliber = "caliber.cli:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

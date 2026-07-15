@@ -1,0 +1,9 @@
+{
+  "candidateId": "cand_6bf6980ed16f4538ba0faf8935d93c01",
+  "avgScore": 0.8521,
+  "passRate": 1.0,
+  "mutations": {
+    "strategy": "skills + system_prompt"
+  },
+  "sampleSize": 8
+}

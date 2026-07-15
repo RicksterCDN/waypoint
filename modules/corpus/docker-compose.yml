@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: ledgerfield-postgres
+    environment:
+      POSTGRES_DB: ledgerfield
+      POSTGRES_USER: ledgerfield
+      POSTGRES_PASSWORD: ledgerfield
+    ports:
+      - "5432:5432"
+    volumes:
+      - ledgerfield-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ledgerfield -d ledgerfield"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ledgerfield-postgres-data:

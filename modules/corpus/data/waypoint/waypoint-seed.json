@@ -1,0 +1,3407 @@
+{
+  "schema_version": "1.0",
+  "suppliers": [
+    {
+      "id": "sup-001",
+      "name": "Aster Ridge Biomanufacturing",
+      "status": "active",
+      "category": "contract_manufacturer",
+      "metadata": {
+        "region": "North America",
+        "specialty": "high-volume tablet compression and coating",
+        "contract_model": "hybrid",
+        "invoice_categories": [
+          "unit production",
+          "batch release",
+          "materials pass-through",
+          "packaging"
+        ],
+        "reconciliation_focus": [
+          "released batch volume",
+          "tiered unit price",
+          "material unit cost",
+          "packaging authorization"
+        ],
+        "risk_examples": [
+          "billed above released quantity",
+          "missed volume discount tier",
+          "unapproved blister packaging charge"
+        ]
+      }
+    },
+    {
+      "id": "sup-002",
+      "name": "Northstar Fill Finish",
+      "status": "active",
+      "category": "contract_manufacturer",
+      "metadata": {
+        "region": "North America",
+        "specialty": "sterile fill-finish and final inspection",
+        "contract_model": "batch",
+        "invoice_categories": [
+          "batch fee",
+          "QA release testing",
+          "line clearance",
+          "deviation investigation"
+        ],
+        "reconciliation_focus": [
+          "batch release status",
+          "quality agreement",
+          "release testing evidence",
+          "deviation approval"
+        ],
+        "risk_examples": [
+          "QA release fee billed twice",
+          "rejected batch invoiced as released",
+          "deviation investigation billed without approval"
+        ]
+      }
+    },
+    {
+      "id": "sup-003",
+      "name": "HelioPack Pharma Services",
+      "status": "active",
+      "category": "packaging_partner",
+      "metadata": {
+        "region": "Europe",
+        "specialty": "secondary packaging, serialization, and labeling",
+        "contract_model": "unit",
+        "invoice_categories": [
+          "serialization",
+          "labeling",
+          "cartoning",
+          "logistics"
+        ],
+        "reconciliation_focus": [
+          "SKU authorization",
+          "shipment reference",
+          "approved label change",
+          "contracted logistics terms"
+        ],
+        "risk_examples": [
+          "off-contract relabeling fee",
+          "shipping surcharge not allowed by contract",
+          "serialized unit count exceeds receipt"
+        ]
+      }
+    },
+    {
+      "id": "sup-004",
+      "name": "Meridian API Works",
+      "status": "active",
+      "category": "api_supplier",
+      "metadata": {
+        "region": "Asia Pacific",
+        "specialty": "active pharmaceutical ingredient synthesis",
+        "contract_model": "materials",
+        "invoice_categories": [
+          "API lot",
+          "raw materials",
+          "yield adjustment",
+          "expedited release"
+        ],
+        "reconciliation_focus": [
+          "lot traceability",
+          "yield calculation",
+          "material pass-through",
+          "certificate of analysis"
+        ],
+        "risk_examples": [
+          "yield true-up calculated from forecast instead of actuals",
+          "raw material uplift exceeds escalation clause",
+          "expedited release fee without trigger event"
+        ]
+      }
+    },
+    {
+      "id": "sup-005",
+      "name": "Crescent GMP Labs",
+      "status": "active",
+      "category": "quality_lab",
+      "metadata": {
+        "region": "North America",
+        "specialty": "release testing and stability studies",
+        "contract_model": "milestone",
+        "invoice_categories": [
+          "release testing",
+          "stability pull",
+          "method validation",
+          "certificate of analysis"
+        ],
+        "reconciliation_focus": [
+          "approved milestone",
+          "testing protocol",
+          "quality release evidence",
+          "billable study schedule"
+        ],
+        "risk_examples": [
+          "stability pull billed before scheduled window",
+          "method validation billed without approved milestone",
+          "duplicate certificate charge"
+        ]
+      }
+    },
+    {
+      "id": "sup-006",
+      "name": "Summit Dose Manufacturing",
+      "status": "active",
+      "category": "contract_manufacturer",
+      "metadata": {
+        "region": "Europe",
+        "specialty": "capsule filling and oral solid dose manufacturing",
+        "contract_model": "unit",
+        "invoice_categories": [
+          "unit production",
+          "minimum order quantity",
+          "changeover",
+          "cleaning validation"
+        ],
+        "reconciliation_focus": [
+          "MOQ",
+          "actual quantity",
+          "contracted changeover rules",
+          "cleaning validation approval"
+        ],
+        "risk_examples": [
+          "MOQ fee applied despite qualifying volume",
+          "changeover billed for same-family SKU",
+          "cleaning validation charged outside approved protocol"
+        ]
+      }
+    },
+    {
+      "id": "sup-007",
+      "name": "Orchid Clinical Supply",
+      "status": "active",
+      "category": "clinical_supply_partner",
+      "metadata": {
+        "region": "North America",
+        "specialty": "clinical trial packaging and comparator sourcing",
+        "contract_model": "milestone",
+        "invoice_categories": [
+          "kit assembly",
+          "comparator sourcing",
+          "temperature-controlled storage",
+          "study milestone"
+        ],
+        "reconciliation_focus": [
+          "milestone approval",
+          "storage days",
+          "study protocol",
+          "authorized comparator material"
+        ],
+        "risk_examples": [
+          "temperature storage billed after study close",
+          "comparator pass-through lacks receipt",
+          "milestone billed before approval"
+        ]
+      }
+    },
+    {
+      "id": "sup-008",
+      "name": "Valence Cold Chain Logistics",
+      "status": "active",
+      "category": "logistics_partner",
+      "metadata": {
+        "region": "Global",
+        "specialty": "temperature-controlled pharmaceutical logistics",
+        "contract_model": "unit",
+        "invoice_categories": [
+          "cold chain shipment",
+          "lane surcharge",
+          "excursion handling",
+          "customs brokerage"
+        ],
+        "reconciliation_focus": [
+          "shipment ID",
+          "temperature excursion record",
+          "approved lane",
+          "contracted surcharge"
+        ],
+        "risk_examples": [
+          "lane surcharge outside approved route",
+          "excursion handling billed without excursion record",
+          "customs brokerage duplicated across shipments"
+        ]
+      }
+    },
+    {
+      "id": "sup-009",
+      "name": "BluePeak Biologics",
+      "status": "active",
+      "category": "contract_manufacturer",
+      "metadata": {
+        "region": "North America",
+        "specialty": "biologic drug substance manufacturing",
+        "contract_model": "capacity",
+        "invoice_categories": [
+          "reserved capacity",
+          "utilized capacity",
+          "cell culture run",
+          "contamination investigation"
+        ],
+        "reconciliation_focus": [
+          "reserved capacity",
+          "utilized capacity",
+          "minimum fee",
+          "quality deviation"
+        ],
+        "risk_examples": [
+          "unused-capacity fee exceeds minimum rule",
+          "contamination investigation billed despite supplier-caused deviation",
+          "capacity true-up omits prior credit"
+        ]
+      }
+    },
+    {
+      "id": "sup-010",
+      "name": "Keystone Device Assembly",
+      "status": "active",
+      "category": "combination_device_partner",
+      "metadata": {
+        "region": "North America",
+        "specialty": "combination device assembly and final packaging",
+        "contract_model": "hybrid",
+        "invoice_categories": [
+          "device assembly",
+          "component scrap",
+          "final inspection",
+          "engineering change order"
+        ],
+        "reconciliation_focus": [
+          "approved ECO",
+          "scrap allowance",
+          "inspection result",
+          "component receipt"
+        ],
+        "risk_examples": [
+          "scrap billed above contract allowance",
+          "engineering change billed before approval",
+          "failed inspection units invoiced as accepted"
+        ]
+      }
+    },
+    {
+      "id": "sup-011",
+      "name": "LumaSterile Services",
+      "status": "active",
+      "category": "sterilization_partner",
+      "metadata": {
+        "region": "Europe",
+        "specialty": "sterilization, environmental monitoring, and release documentation",
+        "contract_model": "batch",
+        "invoice_categories": [
+          "sterilization cycle",
+          "bioburden testing",
+          "environmental monitoring",
+          "release packet"
+        ],
+        "reconciliation_focus": [
+          "cycle record",
+          "release packet",
+          "test result",
+          "batch acceptance criteria"
+        ],
+        "risk_examples": [
+          "release packet billed before QA acceptance",
+          "bioburden retest charged without retest trigger",
+          "sterilization cycle count exceeds batch record"
+        ]
+      }
+    },
+    {
+      "id": "sup-012",
+      "name": "Pioneer Process Development",
+      "status": "active",
+      "category": "process_development_partner",
+      "metadata": {
+        "region": "North America",
+        "specialty": "tech transfer, scale-up, and process validation",
+        "contract_model": "milestone",
+        "invoice_categories": [
+          "tech transfer",
+          "process validation",
+          "engineering batch",
+          "protocol authoring"
+        ],
+        "reconciliation_focus": [
+          "approved milestone",
+          "validation protocol",
+          "engineering batch status",
+          "deliverable acceptance"
+        ],
+        "risk_examples": [
+          "protocol authoring billed without deliverable acceptance",
+          "engineering batch billed as GMP batch",
+          "process validation milestone billed early"
+        ]
+      }
+    },
+    {
+      "id": "sup-013",
+      "name": "Evergreen Excipients",
+      "status": "active",
+      "category": "materials_supplier",
+      "metadata": {
+        "region": "North America",
+        "specialty": "regulated excipients and specialty ingredients",
+        "contract_model": "materials",
+        "invoice_categories": [
+          "excipient lot",
+          "material surcharge",
+          "rush order",
+          "quality documentation"
+        ],
+        "reconciliation_focus": [
+          "material lot",
+          "unit cost",
+          "escalation rate",
+          "approved rush order"
+        ],
+        "risk_examples": [
+          "material surcharge exceeds escalation cap",
+          "rush order fee lacks approval",
+          "quality documentation charged despite included term"
+        ]
+      }
+    },
+    {
+      "id": "sup-014",
+      "name": "Atlas Regional Manufacturing",
+      "status": "active",
+      "category": "contract_manufacturer",
+      "metadata": {
+        "region": "Latin America",
+        "specialty": "regional OTC manufacturing and packaging",
+        "contract_model": "hybrid",
+        "invoice_categories": [
+          "unit production",
+          "capacity reservation",
+          "regional packaging",
+          "volume true-up"
+        ],
+        "reconciliation_focus": [
+          "forecast volume",
+          "actual volume",
+          "capacity minimum",
+          "regional price tier"
+        ],
+        "risk_examples": [
+          "true-up uses outdated forecast",
+          "capacity reservation billed after cancellation window",
+          "regional packaging tier applied incorrectly"
+        ]
+      }
+    },
+    {
+      "id": "sup-015",
+      "name": "Signal Ridge Regulatory Services",
+      "status": "active",
+      "category": "regulatory_services_partner",
+      "metadata": {
+        "region": "Global",
+        "specialty": "site addition support, variation packets, and regulatory documentation",
+        "contract_model": "milestone",
+        "invoice_categories": [
+          "site addition packet",
+          "variation submission",
+          "regulatory response",
+          "document translation"
+        ],
+        "reconciliation_focus": [
+          "milestone approval",
+          "submission evidence",
+          "country scope",
+          "contracted translation rate"
+        ],
+        "risk_examples": [
+          "variation submission billed for unapproved country",
+          "translation charged above contracted rate",
+          "response milestone billed before authority acknowledgement"
+        ]
+      }
+    }
+  ],
+  "contract_documents": [
+    {
+      "id": "contract-sup-001-aster-ridge-biomanufacturing-sow",
+      "supplier_id": "sup-001",
+      "title": "Statement of Work: Aster Ridge Biomanufacturing",
+      "document_type": "contract",
+      "effective_date": "2026-01-01",
+      "uri": "data/contracts/source-markdown/sup-001-aster-ridge-biomanufacturing-sow.md",
+      "metadata": {
+        "source_format": "markdown",
+        "generated_docx_uri": "data/contracts/docx/sup-001-aster-ridge-biomanufacturing-sow.docx"
+      }
+    },
+    {
+      "id": "contract-sup-002-northstar-fill-finish-quality-agreement",
+      "supplier_id": "sup-002",
+      "title": "Quality Agreement and Billing Addendum: Northstar Fill Finish",
+      "document_type": "contract",
+      "effective_date": "2026-01-01",
+      "uri": "data/contracts/source-markdown/sup-002-northstar-fill-finish-quality-agreement.md",
+      "metadata": {
+        "source_format": "markdown",
+        "generated_docx_uri": "data/contracts/docx/sup-002-northstar-fill-finish-quality-agreement.docx"
+      }
+    },
+    {
+      "id": "contract-sup-003-heliopack-pharma-services-packaging-agreement",
+      "supplier_id": "sup-003",
+      "title": "Packaging and Serialization Agreement: HelioPack Pharma Services",
+      "document_type": "contract",
+      "effective_date": "2026-01-01",
+      "uri": "data/contracts/source-markdown/sup-003-heliopack-pharma-services-packaging-agreement.md",
+      "metadata": {
+        "source_format": "markdown",
+        "generated_docx_uri": "data/contracts/docx/sup-003-heliopack-pharma-services-packaging-agreement.docx"
+      }
+    },
+    {
+      "id": "contract-sup-004-meridian-api-works-supply-agreement",
+      "supplier_id": "sup-004",
+      "title": "API Supply Agreement: Meridian API Works",
+      "document_type": "contract",
+      "effective_date": "2026-01-01",
+      "uri": "data/contracts/source-markdown/sup-004-meridian-api-works-supply-agreement.md",
+      "metadata": {
+        "source_format": "markdown",
+        "generated_docx_uri": "data/contracts/docx/sup-004-meridian-api-works-supply-agreement.docx"
+      }
+    },
+    {
+      "id": "contract-sup-005-crescent-gmp-labs-testing-sow",
+      "supplier_id": "sup-005",
+      "title": "Statement of Work: Crescent GMP Labs",
+      "document_type": "contract",
+      "effective_date": "2026-01-01",
+      "uri": "data/contracts/source-markdown/sup-005-crescent-gmp-labs-testing-sow.md",
+      "metadata": {
+        "source_format": "markdown",
+        "generated_docx_uri": "data/contracts/docx/sup-005-crescent-gmp-labs-testing-sow.docx"
+      }
+    },
+    {
+      "id": "contract-sup-006-summit-dose-manufacturing-sow",
+      "supplier_id": "sup-006",
+      "title": "Statement of Work: Summit Dose Manufacturing",
+      "document_type": "contract",
+      "effective_date": "2026-01-01",
+      "uri": "data/contracts/source-markdown/sup-006-summit-dose-manufacturing-sow.md",
+      "metadata": {
+        "source_format": "markdown",
+        "generated_docx_uri": "data/contracts/docx/sup-006-summit-dose-manufacturing-sow.docx"
+      }
+    },
+    {
+      "id": "contract-sup-007-orchid-clinical-supply-services-agreement",
+      "supplier_id": "sup-007",
+      "title": "Clinical Supply Services Agreement: Orchid Clinical Supply",
+      "document_type": "contract",
+      "effective_date": "2026-01-01",
+      "uri": "data/contracts/source-markdown/sup-007-orchid-clinical-supply-services-agreement.md",
+      "metadata": {
+        "source_format": "markdown",
+        "generated_docx_uri": "data/contracts/docx/sup-007-orchid-clinical-supply-services-agreement.docx"
+      }
+    },
+    {
+      "id": "contract-sup-008-valence-cold-chain-logistics-agreement",
+      "supplier_id": "sup-008",
+      "title": "Cold Chain Logistics Agreement: Valence Cold Chain Logistics",
+      "document_type": "contract",
+      "effective_date": "2026-01-01",
+      "uri": "data/contracts/source-markdown/sup-008-valence-cold-chain-logistics-agreement.md",
+      "metadata": {
+        "source_format": "markdown",
+        "generated_docx_uri": "data/contracts/docx/sup-008-valence-cold-chain-logistics-agreement.docx"
+      }
+    },
+    {
+      "id": "contract-sup-009-bluepeak-biologics-capacity-agreement",
+      "supplier_id": "sup-009",
+      "title": "Capacity Reservation Agreement: BluePeak Biologics",
+      "document_type": "contract",
+      "effective_date": "2026-01-01",
+      "uri": "data/contracts/source-markdown/sup-009-bluepeak-biologics-capacity-agreement.md",
+      "metadata": {
+        "source_format": "markdown",
+        "generated_docx_uri": "data/contracts/docx/sup-009-bluepeak-biologics-capacity-agreement.docx"
+      }
+    },
+    {
+      "id": "contract-sup-010-keystone-device-assembly-sow",
+      "supplier_id": "sup-010",
+      "title": "Statement of Work: Keystone Device Assembly",
+      "document_type": "contract",
+      "effective_date": "2026-01-01",
+      "uri": "data/contracts/source-markdown/sup-010-keystone-device-assembly-sow.md",
+      "metadata": {
+        "source_format": "markdown",
+        "generated_docx_uri": "data/contracts/docx/sup-010-keystone-device-assembly-sow.docx"
+      }
+    },
+    {
+      "id": "contract-sup-011-lumasterile-services-sterilization-agreement",
+      "supplier_id": "sup-011",
+      "title": "Sterilization Services Agreement: LumaSterile Services",
+      "document_type": "contract",
+      "effective_date": "2026-01-01",
+      "uri": "data/contracts/source-markdown/sup-011-lumasterile-services-sterilization-agreement.md",
+      "metadata": {
+        "source_format": "markdown",
+        "generated_docx_uri": "data/contracts/docx/sup-011-lumasterile-services-sterilization-agreement.docx"
+      }
+    },
+    {
+      "id": "contract-sup-012-pioneer-process-development-sow",
+      "supplier_id": "sup-012",
+      "title": "Statement of Work: Pioneer Process Development",
+      "document_type": "contract",
+      "effective_date": "2026-01-01",
+      "uri": "data/contracts/source-markdown/sup-012-pioneer-process-development-sow.md",
+      "metadata": {
+        "source_format": "markdown",
+        "generated_docx_uri": "data/contracts/docx/sup-012-pioneer-process-development-sow.docx"
+      }
+    },
+    {
+      "id": "contract-sup-013-evergreen-excipients-supply-agreement",
+      "supplier_id": "sup-013",
+      "title": "Materials Supply Agreement: Evergreen Excipients",
+      "document_type": "contract",
+      "effective_date": "2026-01-01",
+      "uri": "data/contracts/source-markdown/sup-013-evergreen-excipients-supply-agreement.md",
+      "metadata": {
+        "source_format": "markdown",
+        "generated_docx_uri": "data/contracts/docx/sup-013-evergreen-excipients-supply-agreement.docx"
+      }
+    },
+    {
+      "id": "contract-sup-014-atlas-regional-manufacturing-sow",
+      "supplier_id": "sup-014",
+      "title": "Regional Manufacturing Statement of Work: Atlas Regional Manufacturing",
+      "document_type": "contract",
+      "effective_date": "2026-01-01",
+      "uri": "data/contracts/source-markdown/sup-014-atlas-regional-manufacturing-sow.md",
+      "metadata": {
+        "source_format": "markdown",
+        "generated_docx_uri": "data/contracts/docx/sup-014-atlas-regional-manufacturing-sow.docx"
+      }
+    },
+    {
+      "id": "contract-sup-015-signal-ridge-regulatory-services-agreement",
+      "supplier_id": "sup-015",
+      "title": "Regulatory Services Agreement: Signal Ridge Regulatory Services",
+      "document_type": "contract",
+      "effective_date": "2026-01-01",
+      "uri": "data/contracts/source-markdown/sup-015-signal-ridge-regulatory-services-agreement.md",
+      "metadata": {
+        "source_format": "markdown",
+        "generated_docx_uri": "data/contracts/docx/sup-015-signal-ridge-regulatory-services-agreement.docx"
+      }
+    }
+  ],
+  "policies": [
+    {
+      "id": "policy-invoice-dispute-and-recovery-procedure",
+      "name": "Invoice Dispute and Recovery Procedure",
+      "description": "Ledgerfield policy evidence source generated from invoice-dispute-and-recovery-procedure.md.",
+      "severity": "medium",
+      "metadata": {
+        "uri": "data/policies/source-markdown/invoice-dispute-and-recovery-procedure.md",
+        "source_format": "markdown",
+        "generated_docx_uri": "data/policies/docx/invoice-dispute-and-recovery-procedure.docx"
+      }
+    },
+    {
+      "id": "policy-invoice-reconciliation-policy",
+      "name": "Invoice Reconciliation Policy",
+      "description": "Ledgerfield policy evidence source generated from invoice-reconciliation-policy.md.",
+      "severity": "medium",
+      "metadata": {
+        "uri": "data/policies/source-markdown/invoice-reconciliation-policy.md",
+        "source_format": "markdown",
+        "generated_docx_uri": "data/policies/docx/invoice-reconciliation-policy.docx"
+      }
+    },
+    {
+      "id": "policy-quality-release-billability-policy",
+      "name": "Quality Release and Billability Policy",
+      "description": "Ledgerfield policy evidence source generated from quality-release-billability-policy.md.",
+      "severity": "medium",
+      "metadata": {
+        "uri": "data/policies/source-markdown/quality-release-billability-policy.md",
+        "source_format": "markdown",
+        "generated_docx_uri": "data/policies/docx/quality-release-billability-policy.docx"
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "wps-api-handling",
+      "name": "Api Handling",
+      "description": "Sensitive API handling fees that must be tied to approved batch authorization.",
+      "generated_at": "2026-06-16T00:00:00Z",
+      "source_uri": "data/waypoint/invoice-decisions.json#/wps-api-handling",
+      "metadata": {
+        "decision_count": 1,
+        "source": "ledgerfield"
+      }
+    },
+    {
+      "id": "wps-approved-surge",
+      "name": "Approved Surge",
+      "description": "Documented surge approval cases where expedited work is payable.",
+      "generated_at": "2026-06-16T00:00:00Z",
+      "source_uri": "data/waypoint/invoice-decisions.json#/wps-approved-surge",
+      "metadata": {
+        "decision_count": 1,
+        "source": "ledgerfield"
+      }
+    },
+    {
+      "id": "wps-duplicate-submission",
+      "name": "Duplicate Submission",
+      "description": "Duplicate invoice submissions across supplier channels.",
+      "generated_at": "2026-06-16T00:00:00Z",
+      "source_uri": "data/waypoint/invoice-decisions.json#/wps-duplicate-submission",
+      "metadata": {
+        "decision_count": 1,
+        "source": "ledgerfield"
+      }
+    },
+    {
+      "id": "wps-ip-sensitive-work",
+      "name": "Ip Sensitive Work",
+      "description": "IP-sensitive tooling, packaging, and tech-transfer work requiring legal or IP review.",
+      "generated_at": "2026-06-16T00:00:00Z",
+      "source_uri": "data/waypoint/invoice-decisions.json#/wps-ip-sensitive-work",
+      "metadata": {
+        "decision_count": 3,
+        "source": "ledgerfield"
+      }
+    },
+    {
+      "id": "wps-matched-production",
+      "name": "Matched Production",
+      "description": "Matched production, rate-card, conversion, and cleaning charges that should approve cleanly.",
+      "generated_at": "2026-06-16T00:00:00Z",
+      "source_uri": "data/waypoint/invoice-decisions.json#/wps-matched-production",
+      "metadata": {
+        "decision_count": 4,
+        "source": "ledgerfield"
+      }
+    },
+    {
+      "id": "wps-quality-release",
+      "name": "Quality Release",
+      "description": "QA release, deviation, hold, and protocol evidence needed before quality charges are paid.",
+      "generated_at": "2026-06-16T00:00:00Z",
+      "source_uri": "data/waypoint/invoice-decisions.json#/wps-quality-release",
+      "metadata": {
+        "decision_count": 5,
+        "source": "ledgerfield"
+      }
+    },
+    {
+      "id": "wps-storage-condition",
+      "name": "Storage Condition",
+      "description": "Storage surcharges requiring approved temperature-control evidence.",
+      "generated_at": "2026-06-16T00:00:00Z",
+      "source_uri": "data/waypoint/invoice-decisions.json#/wps-storage-condition",
+      "metadata": {
+        "decision_count": 1,
+        "source": "ledgerfield"
+      }
+    },
+    {
+      "id": "wps-surge-capacity",
+      "name": "Surge Capacity",
+      "description": "Surge capacity and overtime premiums that require approved schedule and PO changes.",
+      "generated_at": "2026-06-16T00:00:00Z",
+      "source_uri": "data/waypoint/invoice-decisions.json#/wps-surge-capacity",
+      "metadata": {
+        "decision_count": 1,
+        "source": "ledgerfield"
+      }
+    },
+    {
+      "id": "wps-unmatched-invoice",
+      "name": "Unmatched Invoice",
+      "description": "Invoice lines missing PO, batch, or operational authorization.",
+      "generated_at": "2026-06-16T00:00:00Z",
+      "source_uri": "data/waypoint/invoice-decisions.json#/wps-unmatched-invoice",
+      "metadata": {
+        "decision_count": 1,
+        "source": "ledgerfield"
+      }
+    }
+  ],
+  "invoices": [
+    {
+      "id": "INV-2026-08034",
+      "supplier_id": "sup-009",
+      "scenario_id": "wps-quality-release",
+      "invoice_number": "INV-2026-08034",
+      "invoice_date": "2026-08-03",
+      "due_date": "2026-09-17",
+      "status": "open",
+      "currency": "USD",
+      "total_amount": "985000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-009-inv-2026-08034.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-009-inv-2026-08034.pdf",
+      "metadata": {
+        "supplier_name": "BluePeak Biologics",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08034"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08034-L1",
+          "invoice_id": "INV-2026-08034",
+          "description": "Contamination investigation billed where deviation record indicates supplier-caused contamination",
+          "quantity": "1.00",
+          "unit_price": "111000.00",
+          "amount": "111000.00",
+          "sku": "BP-1026",
+          "purchase_order": "DEV-BP-1026-SUPPLIER",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Quality deviation",
+            "source_status": "escalate"
+          }
+        },
+        {
+          "id": "INV-2026-08034-L2",
+          "invoice_id": "INV-2026-08034",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "874000.00",
+          "amount": "874000.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "DEV-BP-1026-SUPPLIER",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08034",
+          "invoice_id": "INV-2026-08034",
+          "scenario_id": "wps-quality-release",
+          "category": "quality_deviation",
+          "severity": "high",
+          "status": "escalate",
+          "summary": "Contamination investigation was billed to the sponsor where the deviation record indicates supplier-caused contamination, so the investigation cost is not recoverable and must be escalated.",
+          "overpayment_amount": "111000.00",
+          "evidence_ids": [
+            "ev-inv-2026-08034-01",
+            "ev-inv-2026-08034-02"
+          ],
+          "contract_document_ids": [
+            "contract-sup-009-bluepeak-biologics-capacity-agreement"
+          ],
+          "policy_ids": [
+            "policy-quality-release-billability-policy",
+            "policy-invoice-dispute-and-recovery-procedure"
+          ],
+          "metadata": {
+            "basis_summary": "BluePeak capacity agreement (contamination and deviation costs) + quality release and dispute policies.",
+            "display_category": "Quality deviation",
+            "source_labels": [
+              "deviation record",
+              "capacity agreement"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08034"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08034-01",
+          "title": "deviation record evidence for INV-2026-08034",
+          "evidence_type": "deviation_record",
+          "invoice_id": "INV-2026-08034",
+          "finding_id": "finding-inv-2026-08034",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08034/deviation_record",
+          "excerpt": "deviation record supports review of: Contamination investigation was billed to the sponsor where the deviation record indicates supplier-caused contamination, so the investigation cost is not recoverable and must be escalated.",
+          "metadata": {
+            "source_label": "deviation record",
+            "supplier_id": "sup-009",
+            "scenario_id": "wps-quality-release"
+          }
+        },
+        {
+          "id": "ev-inv-2026-08034-02",
+          "title": "capacity agreement evidence for INV-2026-08034",
+          "evidence_type": "capacity_agreement",
+          "invoice_id": "INV-2026-08034",
+          "finding_id": "finding-inv-2026-08034",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08034/capacity_agreement",
+          "excerpt": "capacity agreement supports review of: Contamination investigation was billed to the sponsor where the deviation record indicates supplier-caused contamination, so the investigation cost is not recoverable and must be escalated.",
+          "metadata": {
+            "source_label": "capacity agreement",
+            "supplier_id": "sup-009",
+            "scenario_id": "wps-quality-release"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08055",
+      "supplier_id": "sup-012",
+      "scenario_id": "wps-ip-sensitive-work",
+      "invoice_number": "INV-2026-08055",
+      "invoice_date": "2026-08-06",
+      "due_date": "2026-09-20",
+      "status": "open",
+      "currency": "USD",
+      "total_amount": "182000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-012-inv-2026-08055.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-012-inv-2026-08055.pdf",
+      "metadata": {
+        "supplier_name": "Pioneer Process Development",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08055"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08055-L1",
+          "invoice_id": "INV-2026-08055",
+          "description": "Tooling setup for protected formulation process support",
+          "quantity": "1.00",
+          "unit_price": "16400.00",
+          "amount": "16400.00",
+          "sku": "RX-IP-TOOL",
+          "purchase_order": "PO-IP-REVIEW-PENDING",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "IP-sensitive tooling",
+            "source_status": "escalate"
+          }
+        },
+        {
+          "id": "INV-2026-08055-L2",
+          "invoice_id": "INV-2026-08055",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "165600.00",
+          "amount": "165600.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-IP-REVIEW-PENDING",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08055",
+          "invoice_id": "INV-2026-08055",
+          "scenario_id": "wps-ip-sensitive-work",
+          "category": "ip_sensitive_tooling",
+          "severity": "high",
+          "status": "escalate",
+          "summary": "Off-contract tooling setup references a protected formulation process that is not covered by the current MSA.",
+          "overpayment_amount": "16400.00",
+          "evidence_ids": [
+            "ev-inv-2026-08055-01",
+            "ev-inv-2026-08055-02"
+          ],
+          "contract_document_ids": [
+            "contract-sup-012-pioneer-process-development-sow"
+          ],
+          "policy_ids": [
+            "policy-invoice-reconciliation-policy",
+            "policy-invoice-dispute-and-recovery-procedure"
+          ],
+          "metadata": {
+            "basis_summary": "MSA/IP-sensitive work terms + reconciliation and dispute policies.",
+            "display_category": "IP-sensitive tooling",
+            "source_labels": [
+              "MSA",
+              "invoice PDF"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08055"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08055-01",
+          "title": "MSA evidence for INV-2026-08055",
+          "evidence_type": "contract",
+          "invoice_id": "INV-2026-08055",
+          "finding_id": "finding-inv-2026-08055",
+          "uri": "data/contracts/source-markdown/sup-012-*",
+          "excerpt": "MSA supports review of: Off-contract tooling setup references a protected formulation process that is not covered by the current MSA.",
+          "metadata": {
+            "source_label": "MSA",
+            "supplier_id": "sup-012",
+            "scenario_id": "wps-ip-sensitive-work"
+          }
+        },
+        {
+          "id": "ev-inv-2026-08055-02",
+          "title": "invoice PDF evidence for INV-2026-08055",
+          "evidence_type": "invoice_pdf",
+          "invoice_id": "INV-2026-08055",
+          "finding_id": "finding-inv-2026-08055",
+          "uri": "data/waypoint/invoices/pdf/sup-012-inv-2026-08055.pdf",
+          "excerpt": "invoice PDF supports review of: Off-contract tooling setup references a protected formulation process that is not covered by the current MSA.",
+          "metadata": {
+            "source_label": "invoice PDF",
+            "supplier_id": "sup-012",
+            "scenario_id": "wps-ip-sensitive-work"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08102",
+      "supplier_id": "sup-002",
+      "scenario_id": "wps-quality-release",
+      "invoice_number": "INV-2026-08102",
+      "invoice_date": "2026-08-09",
+      "due_date": "2026-09-23",
+      "status": "open",
+      "currency": "USD",
+      "total_amount": "168000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-002-inv-2026-08102.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-002-inv-2026-08102.pdf",
+      "metadata": {
+        "supplier_name": "Northstar Fill Finish",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08102"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08102-L1",
+          "invoice_id": "INV-2026-08102",
+          "description": "Duplicate QA release testing for batch lot NFF-26-118",
+          "quantity": "1.00",
+          "unit_price": "14200.00",
+          "amount": "14200.00",
+          "sku": "QA-REL",
+          "purchase_order": "PO-QA-4418",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Duplicate QA charge",
+            "source_status": "recover"
+          }
+        },
+        {
+          "id": "INV-2026-08102-L2",
+          "invoice_id": "INV-2026-08102",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "153800.00",
+          "amount": "153800.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-QA-4418",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08102",
+          "invoice_id": "INV-2026-08102",
+          "scenario_id": "wps-quality-release",
+          "category": "duplicate_qa_charge",
+          "severity": "medium",
+          "status": "recover",
+          "summary": "Duplicate QA release testing appears on the invoice and release log for the same batch lot.",
+          "overpayment_amount": "14200.00",
+          "evidence_ids": [
+            "ev-inv-2026-08102-01"
+          ],
+          "contract_document_ids": [
+            "contract-sup-002-northstar-fill-finish-quality-agreement"
+          ],
+          "policy_ids": [
+            "policy-quality-release-billability-policy",
+            "policy-invoice-dispute-and-recovery-procedure"
+          ],
+          "metadata": {
+            "basis_summary": "Quality agreement + quality release and recovery policy.",
+            "display_category": "Duplicate QA charge",
+            "source_labels": [
+              "QA release log"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08102"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08102-01",
+          "title": "QA release log evidence for INV-2026-08102",
+          "evidence_type": "qa_release_log",
+          "invoice_id": "INV-2026-08102",
+          "finding_id": "finding-inv-2026-08102",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08102/qa_release_log",
+          "excerpt": "QA release log supports review of: Duplicate QA release testing appears on the invoice and release log for the same batch lot.",
+          "metadata": {
+            "source_label": "QA release log",
+            "supplier_id": "sup-002",
+            "scenario_id": "wps-quality-release"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08140",
+      "supplier_id": "sup-001",
+      "scenario_id": "wps-matched-production",
+      "invoice_number": "INV-2026-08140",
+      "invoice_date": "2026-08-12",
+      "due_date": "2026-09-26",
+      "status": "approved",
+      "currency": "USD",
+      "total_amount": "512000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-001-inv-2026-08140.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-001-inv-2026-08140.pdf",
+      "metadata": {
+        "supplier_name": "Aster Ridge Biomanufacturing",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08140"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08140-L1",
+          "invoice_id": "INV-2026-08140",
+          "description": "Base production run for approved commercial tablet batch",
+          "quantity": "125000.00",
+          "unit_price": "4.10",
+          "amount": "512000.00",
+          "sku": "RX-4921",
+          "purchase_order": "PO-ARB-8104",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Matched production",
+            "source_status": "approved"
+          }
+        },
+        {
+          "id": "INV-2026-08140-L2",
+          "invoice_id": "INV-2026-08140",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "0.00",
+          "amount": "0.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-ARB-8104",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08140",
+          "invoice_id": "INV-2026-08140",
+          "scenario_id": "wps-matched-production",
+          "category": "matched_production",
+          "severity": "low",
+          "status": "approved",
+          "summary": "Base production run matches PO quantity, approved batch record, and contracted conversion fee.",
+          "overpayment_amount": "0.00",
+          "evidence_ids": [
+            "ev-inv-2026-08140-01",
+            "ev-inv-2026-08140-02"
+          ],
+          "contract_document_ids": [
+            "contract-sup-001-aster-ridge-biomanufacturing-sow"
+          ],
+          "policy_ids": [
+            "policy-invoice-reconciliation-policy"
+          ],
+          "metadata": {
+            "basis_summary": "Supplier rate card + invoice reconciliation policy satisfied.",
+            "display_category": "Matched production",
+            "source_labels": [
+              "PO",
+              "batch record"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08140"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08140-01",
+          "title": "PO evidence for INV-2026-08140",
+          "evidence_type": "purchase_order",
+          "invoice_id": "INV-2026-08140",
+          "finding_id": "finding-inv-2026-08140",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08140/po",
+          "excerpt": "PO supports review of: Base production run matches PO quantity, approved batch record, and contracted conversion fee.",
+          "metadata": {
+            "source_label": "PO",
+            "supplier_id": "sup-001",
+            "scenario_id": "wps-matched-production"
+          }
+        },
+        {
+          "id": "ev-inv-2026-08140-02",
+          "title": "batch record evidence for INV-2026-08140",
+          "evidence_type": "batch_record",
+          "invoice_id": "INV-2026-08140",
+          "finding_id": "finding-inv-2026-08140",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08140/batch_record",
+          "excerpt": "batch record supports review of: Base production run matches PO quantity, approved batch record, and contracted conversion fee.",
+          "metadata": {
+            "source_label": "batch record",
+            "supplier_id": "sup-001",
+            "scenario_id": "wps-matched-production"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08177",
+      "supplier_id": "sup-004",
+      "scenario_id": "wps-api-handling",
+      "invoice_number": "INV-2026-08177",
+      "invoice_date": "2026-08-15",
+      "due_date": "2026-09-29",
+      "status": "open",
+      "currency": "USD",
+      "total_amount": "760000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-004-inv-2026-08177.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-004-inv-2026-08177.pdf",
+      "metadata": {
+        "supplier_name": "Meridian API Works",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08177"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08177-L1",
+          "invoice_id": "INV-2026-08177",
+          "description": "Sensitive API handling fee without batch authorization",
+          "quantity": "1.00",
+          "unit_price": "92000.00",
+          "amount": "92000.00",
+          "sku": "API-SENS-17",
+          "purchase_order": "PO-MAW-6220",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "API handling",
+            "source_status": "escalate"
+          }
+        },
+        {
+          "id": "INV-2026-08177-L2",
+          "invoice_id": "INV-2026-08177",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "668000.00",
+          "amount": "668000.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-MAW-6220",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08177",
+          "invoice_id": "INV-2026-08177",
+          "scenario_id": "wps-api-handling",
+          "category": "api_handling",
+          "severity": "high",
+          "status": "escalate",
+          "summary": "Unapproved API handling fee lacks a matching batch authorization for the sensitive ingredient.",
+          "overpayment_amount": "92000.00",
+          "evidence_ids": [
+            "ev-inv-2026-08177-01"
+          ],
+          "contract_document_ids": [
+            "contract-sup-004-meridian-api-works-supply-agreement"
+          ],
+          "policy_ids": [
+            "policy-invoice-reconciliation-policy",
+            "policy-invoice-dispute-and-recovery-procedure"
+          ],
+          "metadata": {
+            "basis_summary": "API supply agreement + sensitive-material authorization policy.",
+            "display_category": "API handling",
+            "source_labels": [
+              "Batch record"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08177"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08177-01",
+          "title": "Batch record evidence for INV-2026-08177",
+          "evidence_type": "batch_record",
+          "invoice_id": "INV-2026-08177",
+          "finding_id": "finding-inv-2026-08177",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08177/batch_record",
+          "excerpt": "Batch record supports review of: Unapproved API handling fee lacks a matching batch authorization for the sensitive ingredient.",
+          "metadata": {
+            "source_label": "Batch record",
+            "supplier_id": "sup-004",
+            "scenario_id": "wps-api-handling"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08201",
+      "supplier_id": "sup-003",
+      "scenario_id": "wps-approved-surge",
+      "invoice_number": "INV-2026-08201",
+      "invoice_date": "2026-08-18",
+      "due_date": "2026-10-02",
+      "status": "approved",
+      "currency": "USD",
+      "total_amount": "148000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-003-inv-2026-08201.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-003-inv-2026-08201.pdf",
+      "metadata": {
+        "supplier_name": "HelioPack Pharma Services",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08201"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08201-L1",
+          "invoice_id": "INV-2026-08201",
+          "description": "Approved expedited packaging line changeover",
+          "quantity": "1.00",
+          "unit_price": "148000.00",
+          "amount": "148000.00",
+          "sku": "PKG-RX-SURGE",
+          "purchase_order": "PO-HPP-9007",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Approved surge work",
+            "source_status": "approved"
+          }
+        },
+        {
+          "id": "INV-2026-08201-L2",
+          "invoice_id": "INV-2026-08201",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "0.00",
+          "amount": "0.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-HPP-9007",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08201",
+          "invoice_id": "INV-2026-08201",
+          "scenario_id": "wps-approved-surge",
+          "category": "approved_surge_work",
+          "severity": "low",
+          "status": "approved",
+          "summary": "Expedited packaging line changeover matches a documented prescription-surge approval.",
+          "overpayment_amount": "0.00",
+          "evidence_ids": [
+            "ev-inv-2026-08201-01"
+          ],
+          "contract_document_ids": [
+            "contract-sup-003-heliopack-pharma-services-packaging-agreement"
+          ],
+          "policy_ids": [
+            "policy-invoice-reconciliation-policy"
+          ],
+          "metadata": {
+            "basis_summary": "Packaging agreement + documented surge approval policy satisfied.",
+            "display_category": "Approved surge work",
+            "source_labels": [
+              "Approval email"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08201"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08201-01",
+          "title": "Approval email evidence for INV-2026-08201",
+          "evidence_type": "email",
+          "invoice_id": "INV-2026-08201",
+          "finding_id": "finding-inv-2026-08201",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08201/approval_email",
+          "excerpt": "Approval email supports review of: Expedited packaging line changeover matches a documented prescription-surge approval.",
+          "metadata": {
+            "source_label": "Approval email",
+            "supplier_id": "sup-003",
+            "scenario_id": "wps-approved-surge"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08244",
+      "supplier_id": "sup-003",
+      "scenario_id": "wps-ip-sensitive-work",
+      "invoice_number": "INV-2026-08244",
+      "invoice_date": "2026-08-21",
+      "due_date": "2026-10-05",
+      "status": "open",
+      "currency": "USD",
+      "total_amount": "143000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-003-inv-2026-08244.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-003-inv-2026-08244.pdf",
+      "metadata": {
+        "supplier_name": "HelioPack Pharma Services",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08244"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08244-L1",
+          "invoice_id": "INV-2026-08244",
+          "description": "Packaging line changeover for IP-sensitive SKU without approved PO",
+          "quantity": "1.00",
+          "unit_price": "12800.00",
+          "amount": "12800.00",
+          "sku": "IP-PKG-41",
+          "purchase_order": "",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Packaging changeover",
+            "source_status": "recover"
+          }
+        },
+        {
+          "id": "INV-2026-08244-L2",
+          "invoice_id": "INV-2026-08244",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "130200.00",
+          "amount": "130200.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-PENDING-REVIEW",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08244",
+          "invoice_id": "INV-2026-08244",
+          "scenario_id": "wps-ip-sensitive-work",
+          "category": "packaging_changeover",
+          "severity": "medium",
+          "status": "recover",
+          "summary": "Packaging line changeover was billed for an IP-sensitive SKU without an approved purchase order.",
+          "overpayment_amount": "12800.00",
+          "evidence_ids": [
+            "ev-inv-2026-08244-01",
+            "ev-inv-2026-08244-02"
+          ],
+          "contract_document_ids": [
+            "contract-sup-003-heliopack-pharma-services-packaging-agreement"
+          ],
+          "policy_ids": [
+            "policy-invoice-reconciliation-policy",
+            "policy-invoice-dispute-and-recovery-procedure"
+          ],
+          "metadata": {
+            "basis_summary": "Packaging agreement + IP-sensitive changeover approval policy.",
+            "display_category": "Packaging changeover",
+            "source_labels": [
+              "PDF",
+              "production plan"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08244"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08244-01",
+          "title": "PDF evidence for INV-2026-08244",
+          "evidence_type": "invoice_pdf",
+          "invoice_id": "INV-2026-08244",
+          "finding_id": "finding-inv-2026-08244",
+          "uri": "data/waypoint/invoices/pdf/sup-003-inv-2026-08244.pdf",
+          "excerpt": "PDF supports review of: Packaging line changeover was billed for an IP-sensitive SKU without an approved purchase order.",
+          "metadata": {
+            "source_label": "PDF",
+            "supplier_id": "sup-003",
+            "scenario_id": "wps-ip-sensitive-work"
+          }
+        },
+        {
+          "id": "ev-inv-2026-08244-02",
+          "title": "production plan evidence for INV-2026-08244",
+          "evidence_type": "production_plan",
+          "invoice_id": "INV-2026-08244",
+          "finding_id": "finding-inv-2026-08244",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08244/production_plan",
+          "excerpt": "production plan supports review of: Packaging line changeover was billed for an IP-sensitive SKU without an approved purchase order.",
+          "metadata": {
+            "source_label": "production plan",
+            "supplier_id": "sup-003",
+            "scenario_id": "wps-ip-sensitive-work"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08273",
+      "supplier_id": "sup-006",
+      "scenario_id": "wps-unmatched-invoice",
+      "invoice_number": "INV-2026-08273",
+      "invoice_date": "2026-08-24",
+      "due_date": "2026-10-08",
+      "status": "open",
+      "currency": "USD",
+      "total_amount": "148000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-006-inv-2026-08273.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-006-inv-2026-08273.pdf",
+      "metadata": {
+        "supplier_name": "Summit Dose Manufacturing",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08273"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08273-L1",
+          "invoice_id": "INV-2026-08273",
+          "description": "Manufacturing support line missing PO and batch ID",
+          "quantity": "1.00",
+          "unit_price": "11900.00",
+          "amount": "11900.00",
+          "sku": "UNMATCHED",
+          "purchase_order": "",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Unmatched invoice",
+            "source_status": "review"
+          }
+        },
+        {
+          "id": "INV-2026-08273-L2",
+          "invoice_id": "INV-2026-08273",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "136100.00",
+          "amount": "136100.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-PENDING-REVIEW",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08273",
+          "invoice_id": "INV-2026-08273",
+          "scenario_id": "wps-unmatched-invoice",
+          "category": "unmatched_invoice",
+          "severity": "medium",
+          "status": "review",
+          "summary": "Invoice line is missing a PO and batch ID, so it cannot be tied to authorized manufacturing work.",
+          "overpayment_amount": "11900.00",
+          "evidence_ids": [
+            "ev-inv-2026-08273-01"
+          ],
+          "contract_document_ids": [
+            "contract-sup-006-summit-dose-manufacturing-sow"
+          ],
+          "policy_ids": [
+            "policy-invoice-reconciliation-policy"
+          ],
+          "metadata": {
+            "basis_summary": "Manufacturing SOW + minimum PO and batch evidence policy.",
+            "display_category": "Unmatched invoice",
+            "source_labels": [
+              "Supplier portal"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08273"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08273-01",
+          "title": "Supplier portal evidence for INV-2026-08273",
+          "evidence_type": "purchase_order",
+          "invoice_id": "INV-2026-08273",
+          "finding_id": "finding-inv-2026-08273",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08273/supplier_portal",
+          "excerpt": "Supplier portal supports review of: Invoice line is missing a PO and batch ID, so it cannot be tied to authorized manufacturing work.",
+          "metadata": {
+            "source_label": "Supplier portal",
+            "supplier_id": "sup-006",
+            "scenario_id": "wps-unmatched-invoice"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08305",
+      "supplier_id": "sup-005",
+      "scenario_id": "wps-quality-release",
+      "invoice_number": "INV-2026-08305",
+      "invoice_date": "2026-08-27",
+      "due_date": "2026-10-11",
+      "status": "approved",
+      "currency": "USD",
+      "total_amount": "96000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-005-inv-2026-08305.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-005-inv-2026-08305.pdf",
+      "metadata": {
+        "supplier_name": "Crescent GMP Labs",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08305"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08305-L1",
+          "invoice_id": "INV-2026-08305",
+          "description": "Approved stability testing surcharge under QA protocol",
+          "quantity": "1.00",
+          "unit_price": "96000.00",
+          "amount": "96000.00",
+          "sku": "STAB-12M",
+          "purchase_order": "PO-CGL-3372",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Approved quality work",
+            "source_status": "approved"
+          }
+        },
+        {
+          "id": "INV-2026-08305-L2",
+          "invoice_id": "INV-2026-08305",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "0.00",
+          "amount": "0.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-CGL-3372",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08305",
+          "invoice_id": "INV-2026-08305",
+          "scenario_id": "wps-quality-release",
+          "category": "approved_quality_work",
+          "severity": "low",
+          "status": "approved",
+          "summary": "Stability testing surcharge matches the quality protocol attached to the approved batch record.",
+          "overpayment_amount": "0.00",
+          "evidence_ids": [
+            "ev-inv-2026-08305-01"
+          ],
+          "contract_document_ids": [
+            "contract-sup-005-crescent-gmp-labs-testing-sow"
+          ],
+          "policy_ids": [
+            "policy-quality-release-billability-policy"
+          ],
+          "metadata": {
+            "basis_summary": "Testing SOW + quality protocol policy satisfied.",
+            "display_category": "Approved quality work",
+            "source_labels": [
+              "QA protocol"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08305"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08305-01",
+          "title": "QA protocol evidence for INV-2026-08305",
+          "evidence_type": "qa_protocol",
+          "invoice_id": "INV-2026-08305",
+          "finding_id": "finding-inv-2026-08305",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08305/qa_protocol",
+          "excerpt": "QA protocol supports review of: Stability testing surcharge matches the quality protocol attached to the approved batch record.",
+          "metadata": {
+            "source_label": "QA protocol",
+            "supplier_id": "sup-005",
+            "scenario_id": "wps-quality-release"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08338",
+      "supplier_id": "sup-012",
+      "scenario_id": "wps-ip-sensitive-work",
+      "invoice_number": "INV-2026-08338",
+      "invoice_date": "2026-08-30",
+      "due_date": "2026-10-14",
+      "status": "open",
+      "currency": "USD",
+      "total_amount": "128000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-012-inv-2026-08338.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-012-inv-2026-08338.pdf",
+      "metadata": {
+        "supplier_name": "Pioneer Process Development",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08338"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08338-L1",
+          "invoice_id": "INV-2026-08338",
+          "description": "Tech transfer process-support fee pending legal and IP review",
+          "quantity": "1.00",
+          "unit_price": "9600.00",
+          "amount": "9600.00",
+          "sku": "TT-IP-REVIEW",
+          "purchase_order": "PO-PPD-LEGAL-HOLD",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Tech transfer",
+            "source_status": "escalate"
+          }
+        },
+        {
+          "id": "INV-2026-08338-L2",
+          "invoice_id": "INV-2026-08338",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "118400.00",
+          "amount": "118400.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-PPD-LEGAL-HOLD",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08338",
+          "invoice_id": "INV-2026-08338",
+          "scenario_id": "wps-ip-sensitive-work",
+          "category": "tech_transfer",
+          "severity": "medium",
+          "status": "escalate",
+          "summary": "Tech transfer support fee references process-support work that requires legal and IP review.",
+          "overpayment_amount": "9600.00",
+          "evidence_ids": [
+            "ev-inv-2026-08338-01",
+            "ev-inv-2026-08338-02"
+          ],
+          "contract_document_ids": [
+            "contract-sup-012-pioneer-process-development-sow"
+          ],
+          "policy_ids": [
+            "policy-invoice-reconciliation-policy",
+            "policy-invoice-dispute-and-recovery-procedure"
+          ],
+          "metadata": {
+            "basis_summary": "Tech-transfer SOW + IP/legal escalation policy.",
+            "display_category": "Tech transfer",
+            "source_labels": [
+              "MSA",
+              "email"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08338"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08338-01",
+          "title": "MSA evidence for INV-2026-08338",
+          "evidence_type": "contract",
+          "invoice_id": "INV-2026-08338",
+          "finding_id": "finding-inv-2026-08338",
+          "uri": "data/contracts/source-markdown/sup-012-*",
+          "excerpt": "MSA supports review of: Tech transfer support fee references process-support work that requires legal and IP review.",
+          "metadata": {
+            "source_label": "MSA",
+            "supplier_id": "sup-012",
+            "scenario_id": "wps-ip-sensitive-work"
+          }
+        },
+        {
+          "id": "ev-inv-2026-08338-02",
+          "title": "email evidence for INV-2026-08338",
+          "evidence_type": "email",
+          "invoice_id": "INV-2026-08338",
+          "finding_id": "finding-inv-2026-08338",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08338/email",
+          "excerpt": "email supports review of: Tech transfer support fee references process-support work that requires legal and IP review.",
+          "metadata": {
+            "source_label": "email",
+            "supplier_id": "sup-012",
+            "scenario_id": "wps-ip-sensitive-work"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08392",
+      "supplier_id": "sup-011",
+      "scenario_id": "wps-quality-release",
+      "invoice_number": "INV-2026-08392",
+      "invoice_date": "2026-09-02",
+      "due_date": "2026-10-17",
+      "status": "open",
+      "currency": "USD",
+      "total_amount": "96000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-011-inv-2026-08392.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-011-inv-2026-08392.pdf",
+      "metadata": {
+        "supplier_name": "LumaSterile Services",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08392"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08392-L1",
+          "invoice_id": "INV-2026-08392",
+          "description": "Batch record reconciliation before deviation closure timestamp",
+          "quantity": "1.00",
+          "unit_price": "7400.00",
+          "amount": "7400.00",
+          "sku": "DEV-REC",
+          "purchase_order": "PO-LSS-4402",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Batch reconciliation",
+            "source_status": "review"
+          }
+        },
+        {
+          "id": "INV-2026-08392-L2",
+          "invoice_id": "INV-2026-08392",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "88600.00",
+          "amount": "88600.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-LSS-4402",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08392",
+          "invoice_id": "INV-2026-08392",
+          "scenario_id": "wps-quality-release",
+          "category": "batch_reconciliation",
+          "severity": "medium",
+          "status": "review",
+          "summary": "Batch record reconciliation fee begins before the documented deviation closure timestamp.",
+          "overpayment_amount": "7400.00",
+          "evidence_ids": [
+            "ev-inv-2026-08392-01"
+          ],
+          "contract_document_ids": [
+            "contract-sup-011-lumasterile-services-sterilization-agreement"
+          ],
+          "policy_ids": [
+            "policy-quality-release-billability-policy"
+          ],
+          "metadata": {
+            "basis_summary": "Sterilization agreement + quality release timing policy.",
+            "display_category": "Batch reconciliation",
+            "source_labels": [
+              "Deviation log"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08392"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08392-01",
+          "title": "Deviation log evidence for INV-2026-08392",
+          "evidence_type": "deviation_log",
+          "invoice_id": "INV-2026-08392",
+          "finding_id": "finding-inv-2026-08392",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08392/deviation_log",
+          "excerpt": "Deviation log supports review of: Batch record reconciliation fee begins before the documented deviation closure timestamp.",
+          "metadata": {
+            "source_label": "Deviation log",
+            "supplier_id": "sup-011",
+            "scenario_id": "wps-quality-release"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08411",
+      "supplier_id": "sup-006",
+      "scenario_id": "wps-matched-production",
+      "invoice_number": "INV-2026-08411",
+      "invoice_date": "2026-09-05",
+      "due_date": "2026-10-20",
+      "status": "approved",
+      "currency": "USD",
+      "total_amount": "88000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-006-inv-2026-08411.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-006-inv-2026-08411.pdf",
+      "metadata": {
+        "supplier_name": "Summit Dose Manufacturing",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08411"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08411-L1",
+          "invoice_id": "INV-2026-08411",
+          "description": "Contracted minimum batch charge under supplier rate card",
+          "quantity": "1.00",
+          "unit_price": "88000.00",
+          "amount": "88000.00",
+          "sku": "MIN-BATCH",
+          "purchase_order": "PO-SDM-8411",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Rate-card minimum",
+            "source_status": "approved"
+          }
+        },
+        {
+          "id": "INV-2026-08411-L2",
+          "invoice_id": "INV-2026-08411",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "0.00",
+          "amount": "0.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-SDM-8411",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08411",
+          "invoice_id": "INV-2026-08411",
+          "scenario_id": "wps-matched-production",
+          "category": "rate_card_minimum",
+          "severity": "low",
+          "status": "approved",
+          "summary": "Minimum batch charge applied correctly under the supplier rate card.",
+          "overpayment_amount": "0.00",
+          "evidence_ids": [
+            "ev-inv-2026-08411-01"
+          ],
+          "contract_document_ids": [
+            "contract-sup-006-summit-dose-manufacturing-sow"
+          ],
+          "policy_ids": [
+            "policy-invoice-reconciliation-policy"
+          ],
+          "metadata": {
+            "basis_summary": "Supplier rate-card minimum + invoice reconciliation policy satisfied.",
+            "display_category": "Rate-card minimum",
+            "source_labels": [
+              "Supplier contract"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08411"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08411-01",
+          "title": "Supplier contract evidence for INV-2026-08411",
+          "evidence_type": "contract",
+          "invoice_id": "INV-2026-08411",
+          "finding_id": "finding-inv-2026-08411",
+          "uri": "data/contracts/source-markdown/sup-006-*",
+          "excerpt": "Supplier contract supports review of: Minimum batch charge applied correctly under the supplier rate card.",
+          "metadata": {
+            "source_label": "Supplier contract",
+            "supplier_id": "sup-006",
+            "scenario_id": "wps-matched-production"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08462",
+      "supplier_id": "sup-008",
+      "scenario_id": "wps-duplicate-submission",
+      "invoice_number": "INV-2026-08462",
+      "invoice_date": "2026-09-08",
+      "due_date": "2026-10-23",
+      "status": "open",
+      "currency": "USD",
+      "total_amount": "190000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-008-inv-2026-08462.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-008-inv-2026-08462.pdf",
+      "metadata": {
+        "supplier_name": "Valence Cold Chain Logistics",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08462"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08462-L1",
+          "invoice_id": "INV-2026-08462",
+          "description": "Duplicate shipment support invoice submitted through EDI and portal",
+          "quantity": "1.00",
+          "unit_price": "28500.00",
+          "amount": "28500.00",
+          "sku": "SHIP-SUPPORT",
+          "purchase_order": "PO-VCC-8462",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Duplicate invoice",
+            "source_status": "recover"
+          }
+        },
+        {
+          "id": "INV-2026-08462-L2",
+          "invoice_id": "INV-2026-08462",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "161500.00",
+          "amount": "161500.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-VCC-8462",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08462",
+          "invoice_id": "INV-2026-08462",
+          "scenario_id": "wps-duplicate-submission",
+          "category": "duplicate_invoice",
+          "severity": "high",
+          "status": "recover",
+          "summary": "Duplicate invoice number submitted through both EDI and supplier portal.",
+          "overpayment_amount": "28500.00",
+          "evidence_ids": [
+            "ev-inv-2026-08462-01",
+            "ev-inv-2026-08462-02"
+          ],
+          "contract_document_ids": [
+            "contract-sup-008-valence-cold-chain-logistics-agreement"
+          ],
+          "policy_ids": [
+            "policy-invoice-reconciliation-policy",
+            "policy-invoice-dispute-and-recovery-procedure"
+          ],
+          "metadata": {
+            "basis_summary": "Logistics agreement + duplicate submission recovery policy.",
+            "display_category": "Duplicate invoice",
+            "source_labels": [
+              "EDI",
+              "portal"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08462"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08462-01",
+          "title": "EDI evidence for INV-2026-08462",
+          "evidence_type": "supplier_submission",
+          "invoice_id": "INV-2026-08462",
+          "finding_id": "finding-inv-2026-08462",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08462/edi",
+          "excerpt": "EDI supports review of: Duplicate invoice number submitted through both EDI and supplier portal.",
+          "metadata": {
+            "source_label": "EDI",
+            "supplier_id": "sup-008",
+            "scenario_id": "wps-duplicate-submission"
+          }
+        },
+        {
+          "id": "ev-inv-2026-08462-02",
+          "title": "portal evidence for INV-2026-08462",
+          "evidence_type": "purchase_order",
+          "invoice_id": "INV-2026-08462",
+          "finding_id": "finding-inv-2026-08462",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08462/portal",
+          "excerpt": "portal supports review of: Duplicate invoice number submitted through both EDI and supplier portal.",
+          "metadata": {
+            "source_label": "portal",
+            "supplier_id": "sup-008",
+            "scenario_id": "wps-duplicate-submission"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08507",
+      "supplier_id": "sup-007",
+      "scenario_id": "wps-storage-condition",
+      "invoice_number": "INV-2026-08507",
+      "invoice_date": "2026-09-11",
+      "due_date": "2026-10-26",
+      "status": "open",
+      "currency": "USD",
+      "total_amount": "84000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-007-inv-2026-08507.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-007-inv-2026-08507.pdf",
+      "metadata": {
+        "supplier_name": "Orchid Clinical Supply",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08507"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08507-L1",
+          "invoice_id": "INV-2026-08507",
+          "description": "Cold-chain storage surcharge without approved temperature-control requirement",
+          "quantity": "1.00",
+          "unit_price": "6100.00",
+          "amount": "6100.00",
+          "sku": "COLD-STORAGE",
+          "purchase_order": "PO-OCS-8507",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Storage condition",
+            "source_status": "recover"
+          }
+        },
+        {
+          "id": "INV-2026-08507-L2",
+          "invoice_id": "INV-2026-08507",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "77900.00",
+          "amount": "77900.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-OCS-8507",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08507",
+          "invoice_id": "INV-2026-08507",
+          "scenario_id": "wps-storage-condition",
+          "category": "storage_condition",
+          "severity": "low",
+          "status": "recover",
+          "summary": "Cold-chain storage surcharge lacks a temperature-control requirement on the approved batch profile.",
+          "overpayment_amount": "6100.00",
+          "evidence_ids": [
+            "ev-inv-2026-08507-01"
+          ],
+          "contract_document_ids": [
+            "contract-sup-007-orchid-clinical-supply-services-agreement"
+          ],
+          "policy_ids": [
+            "policy-invoice-reconciliation-policy"
+          ],
+          "metadata": {
+            "basis_summary": "Clinical supply storage terms + minimum evidence policy.",
+            "display_category": "Storage condition",
+            "source_labels": [
+              "Batch profile"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08507"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08507-01",
+          "title": "Batch profile evidence for INV-2026-08507",
+          "evidence_type": "batch_profile",
+          "invoice_id": "INV-2026-08507",
+          "finding_id": "finding-inv-2026-08507",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08507/batch_profile",
+          "excerpt": "Batch profile supports review of: Cold-chain storage surcharge lacks a temperature-control requirement on the approved batch profile.",
+          "metadata": {
+            "source_label": "Batch profile",
+            "supplier_id": "sup-007",
+            "scenario_id": "wps-storage-condition"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08549",
+      "supplier_id": "sup-014",
+      "scenario_id": "wps-matched-production",
+      "invoice_number": "INV-2026-08549",
+      "invoice_date": "2026-09-14",
+      "due_date": "2026-10-29",
+      "status": "approved",
+      "currency": "USD",
+      "total_amount": "405000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-014-inv-2026-08549.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-014-inv-2026-08549.pdf",
+      "metadata": {
+        "supplier_name": "Atlas Regional Manufacturing",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08549"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08549-L1",
+          "invoice_id": "INV-2026-08549",
+          "description": "Discounted conversion fee under negotiated manufacturing rate table",
+          "quantity": "90000.00",
+          "unit_price": "4.50",
+          "amount": "405000.00",
+          "sku": "OTC-LATAM-22",
+          "purchase_order": "PO-ARM-8549",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Matched conversion",
+            "source_status": "approved"
+          }
+        },
+        {
+          "id": "INV-2026-08549-L2",
+          "invoice_id": "INV-2026-08549",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "0.00",
+          "amount": "0.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-ARM-8549",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08549",
+          "invoice_id": "INV-2026-08549",
+          "scenario_id": "wps-matched-production",
+          "category": "matched_conversion",
+          "severity": "low",
+          "status": "approved",
+          "summary": "Conversion fee aligns to the negotiated manufacturing rate table after volume discount is applied.",
+          "overpayment_amount": "0.00",
+          "evidence_ids": [
+            "ev-inv-2026-08549-01"
+          ],
+          "contract_document_ids": [
+            "contract-sup-014-atlas-regional-manufacturing-sow"
+          ],
+          "policy_ids": [
+            "policy-invoice-reconciliation-policy"
+          ],
+          "metadata": {
+            "basis_summary": "Regional manufacturing rate table + reconciliation policy satisfied.",
+            "display_category": "Matched conversion",
+            "source_labels": [
+              "Rate table"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08549"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08549-01",
+          "title": "Rate table evidence for INV-2026-08549",
+          "evidence_type": "contract",
+          "invoice_id": "INV-2026-08549",
+          "finding_id": "finding-inv-2026-08549",
+          "uri": "data/contracts/source-markdown/sup-014-*",
+          "excerpt": "Rate table supports review of: Conversion fee aligns to the negotiated manufacturing rate table after volume discount is applied.",
+          "metadata": {
+            "source_label": "Rate table",
+            "supplier_id": "sup-014",
+            "scenario_id": "wps-matched-production"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08602",
+      "supplier_id": "sup-001",
+      "scenario_id": "wps-surge-capacity",
+      "invoice_number": "INV-2026-08602",
+      "invoice_date": "2026-09-17",
+      "due_date": "2026-11-01",
+      "status": "open",
+      "currency": "USD",
+      "total_amount": "132000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-001-inv-2026-08602.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-001-inv-2026-08602.pdf",
+      "metadata": {
+        "supplier_name": "Aster Ridge Biomanufacturing",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08602"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08602-L1",
+          "invoice_id": "INV-2026-08602",
+          "description": "Unapproved overtime premium on commercial-scale batch",
+          "quantity": "1.00",
+          "unit_price": "8300.00",
+          "amount": "8300.00",
+          "sku": "RX-4921",
+          "purchase_order": "PO-ARB-8602",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Overtime premium",
+            "source_status": "recover"
+          }
+        },
+        {
+          "id": "INV-2026-08602-L2",
+          "invoice_id": "INV-2026-08602",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "123700.00",
+          "amount": "123700.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-ARB-8602",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08602",
+          "invoice_id": "INV-2026-08602",
+          "scenario_id": "wps-surge-capacity",
+          "category": "overtime_premium",
+          "severity": "low",
+          "status": "recover",
+          "summary": "Unapproved overtime premium appears on a commercial-scale batch that did not have surge authorization.",
+          "overpayment_amount": "8300.00",
+          "evidence_ids": [
+            "ev-inv-2026-08602-01"
+          ],
+          "contract_document_ids": [
+            "contract-sup-001-aster-ridge-biomanufacturing-sow"
+          ],
+          "policy_ids": [
+            "policy-invoice-reconciliation-policy",
+            "policy-invoice-dispute-and-recovery-procedure"
+          ],
+          "metadata": {
+            "basis_summary": "Manufacturing SOW + overtime and surge approval policies.",
+            "display_category": "Overtime premium",
+            "source_labels": [
+              "Production schedule"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08602"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08602-01",
+          "title": "Production schedule evidence for INV-2026-08602",
+          "evidence_type": "production_schedule",
+          "invoice_id": "INV-2026-08602",
+          "finding_id": "finding-inv-2026-08602",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08602/production_schedule",
+          "excerpt": "Production schedule supports review of: Unapproved overtime premium appears on a commercial-scale batch that did not have surge authorization.",
+          "metadata": {
+            "source_label": "Production schedule",
+            "supplier_id": "sup-001",
+            "scenario_id": "wps-surge-capacity"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08644",
+      "supplier_id": "sup-006",
+      "scenario_id": "wps-matched-production",
+      "invoice_number": "INV-2026-08644",
+      "invoice_date": "2026-09-20",
+      "due_date": "2026-11-04",
+      "status": "approved",
+      "currency": "USD",
+      "total_amount": "132000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-006-inv-2026-08644.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-006-inv-2026-08644.pdf",
+      "metadata": {
+        "supplier_name": "Summit Dose Manufacturing",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08644"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08644-L1",
+          "invoice_id": "INV-2026-08644",
+          "description": "Validated cleaning between protected SKU campaigns",
+          "quantity": "1.00",
+          "unit_price": "132000.00",
+          "amount": "132000.00",
+          "sku": "CLEAN-VALID",
+          "purchase_order": "PO-SDM-8644",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Matched cleaning",
+            "source_status": "approved"
+          }
+        },
+        {
+          "id": "INV-2026-08644-L2",
+          "invoice_id": "INV-2026-08644",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "0.00",
+          "amount": "0.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-SDM-8644",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08644",
+          "invoice_id": "INV-2026-08644",
+          "scenario_id": "wps-matched-production",
+          "category": "matched_cleaning",
+          "severity": "low",
+          "status": "approved",
+          "summary": "Validated cleaning charge is expected between protected SKU campaigns and appears in the approved batch plan.",
+          "overpayment_amount": "0.00",
+          "evidence_ids": [
+            "ev-inv-2026-08644-01"
+          ],
+          "contract_document_ids": [
+            "contract-sup-006-summit-dose-manufacturing-sow"
+          ],
+          "policy_ids": [
+            "policy-quality-release-billability-policy"
+          ],
+          "metadata": {
+            "basis_summary": "Manufacturing SOW cleaning terms + quality batch-plan policy satisfied.",
+            "display_category": "Matched cleaning",
+            "source_labels": [
+              "Batch plan"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08644"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08644-01",
+          "title": "Batch plan evidence for INV-2026-08644",
+          "evidence_type": "batch_plan",
+          "invoice_id": "INV-2026-08644",
+          "finding_id": "finding-inv-2026-08644",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08644/batch_plan",
+          "excerpt": "Batch plan supports review of: Validated cleaning charge is expected between protected SKU campaigns and appears in the approved batch plan.",
+          "metadata": {
+            "source_label": "Batch plan",
+            "supplier_id": "sup-006",
+            "scenario_id": "wps-matched-production"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INV-2026-08690",
+      "supplier_id": "sup-002",
+      "scenario_id": "wps-quality-release",
+      "invoice_number": "INV-2026-08690",
+      "invoice_date": "2026-09-23",
+      "due_date": "2026-11-07",
+      "status": "open",
+      "currency": "USD",
+      "total_amount": "112000.00",
+      "html_uri": "data/waypoint/invoices/html/sup-002-inv-2026-08690.html",
+      "pdf_uri": "data/waypoint/invoices/pdf/sup-002-inv-2026-08690.pdf",
+      "metadata": {
+        "supplier_name": "Northstar Fill Finish",
+        "generated_at": "2026-06-16T00:00:00Z",
+        "artifact_uri_status": "synthesized",
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08690"
+      },
+      "lines": [
+        {
+          "id": "INV-2026-08690-L1",
+          "invoice_id": "INV-2026-08690",
+          "description": "Deviation support beyond approved quality hold window",
+          "quantity": "1.00",
+          "unit_price": "5200.00",
+          "amount": "5200.00",
+          "sku": "QA-HOLD",
+          "purchase_order": "PO-NFF-8690",
+          "metadata": {
+            "line_role": "decision_line",
+            "category": "Quality hold",
+            "source_status": "review"
+          }
+        },
+        {
+          "id": "INV-2026-08690-L2",
+          "invoice_id": "INV-2026-08690",
+          "description": "Matched base manufacturing, packaging, quality, or logistics services",
+          "quantity": "1",
+          "unit_price": "106800.00",
+          "amount": "106800.00",
+          "sku": "BASE-SERVICE",
+          "purchase_order": "PO-NFF-8690",
+          "metadata": {
+            "line_role": "supporting_matched_line",
+            "reconciliation_state": "matched"
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "finding-inv-2026-08690",
+          "invoice_id": "INV-2026-08690",
+          "scenario_id": "wps-quality-release",
+          "category": "quality_hold",
+          "severity": "medium",
+          "status": "review",
+          "summary": "Supplier billed deviation support beyond the approved quality hold window, but closure evidence is missing.",
+          "overpayment_amount": "5200.00",
+          "evidence_ids": [
+            "ev-inv-2026-08690-01"
+          ],
+          "contract_document_ids": [
+            "contract-sup-002-northstar-fill-finish-quality-agreement"
+          ],
+          "policy_ids": [
+            "policy-quality-release-billability-policy",
+            "policy-invoice-dispute-and-recovery-procedure"
+          ],
+          "metadata": {
+            "basis_summary": "Quality agreement + hold-window and dispute policies.",
+            "display_category": "Quality hold",
+            "source_labels": [
+              "QA hold log"
+            ],
+            "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08690"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-inv-2026-08690-01",
+          "title": "QA hold log evidence for INV-2026-08690",
+          "evidence_type": "qa_hold_log",
+          "invoice_id": "INV-2026-08690",
+          "finding_id": "finding-inv-2026-08690",
+          "uri": "ledgerfield://operational-evidence/INV-2026-08690/qa_hold_log",
+          "excerpt": "QA hold log supports review of: Supplier billed deviation support beyond the approved quality hold window, but closure evidence is missing.",
+          "metadata": {
+            "source_label": "QA hold log",
+            "supplier_id": "sup-002",
+            "scenario_id": "wps-quality-release"
+          }
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "finding-inv-2026-08034",
+      "invoice_id": "INV-2026-08034",
+      "scenario_id": "wps-quality-release",
+      "category": "quality_deviation",
+      "severity": "high",
+      "status": "escalate",
+      "summary": "Contamination investigation was billed to the sponsor where the deviation record indicates supplier-caused contamination, so the investigation cost is not recoverable and must be escalated.",
+      "overpayment_amount": "111000.00",
+      "evidence_ids": [
+        "ev-inv-2026-08034-01",
+        "ev-inv-2026-08034-02"
+      ],
+      "contract_document_ids": [
+        "contract-sup-009-bluepeak-biologics-capacity-agreement"
+      ],
+      "policy_ids": [
+        "policy-quality-release-billability-policy",
+        "policy-invoice-dispute-and-recovery-procedure"
+      ],
+      "metadata": {
+        "basis_summary": "BluePeak capacity agreement (contamination and deviation costs) + quality release and dispute policies.",
+        "display_category": "Quality deviation",
+        "source_labels": [
+          "deviation record",
+          "capacity agreement"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08034"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08055",
+      "invoice_id": "INV-2026-08055",
+      "scenario_id": "wps-ip-sensitive-work",
+      "category": "ip_sensitive_tooling",
+      "severity": "high",
+      "status": "escalate",
+      "summary": "Off-contract tooling setup references a protected formulation process that is not covered by the current MSA.",
+      "overpayment_amount": "16400.00",
+      "evidence_ids": [
+        "ev-inv-2026-08055-01",
+        "ev-inv-2026-08055-02"
+      ],
+      "contract_document_ids": [
+        "contract-sup-012-pioneer-process-development-sow"
+      ],
+      "policy_ids": [
+        "policy-invoice-reconciliation-policy",
+        "policy-invoice-dispute-and-recovery-procedure"
+      ],
+      "metadata": {
+        "basis_summary": "MSA/IP-sensitive work terms + reconciliation and dispute policies.",
+        "display_category": "IP-sensitive tooling",
+        "source_labels": [
+          "MSA",
+          "invoice PDF"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08055"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08102",
+      "invoice_id": "INV-2026-08102",
+      "scenario_id": "wps-quality-release",
+      "category": "duplicate_qa_charge",
+      "severity": "medium",
+      "status": "recover",
+      "summary": "Duplicate QA release testing appears on the invoice and release log for the same batch lot.",
+      "overpayment_amount": "14200.00",
+      "evidence_ids": [
+        "ev-inv-2026-08102-01"
+      ],
+      "contract_document_ids": [
+        "contract-sup-002-northstar-fill-finish-quality-agreement"
+      ],
+      "policy_ids": [
+        "policy-quality-release-billability-policy",
+        "policy-invoice-dispute-and-recovery-procedure"
+      ],
+      "metadata": {
+        "basis_summary": "Quality agreement + quality release and recovery policy.",
+        "display_category": "Duplicate QA charge",
+        "source_labels": [
+          "QA release log"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08102"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08140",
+      "invoice_id": "INV-2026-08140",
+      "scenario_id": "wps-matched-production",
+      "category": "matched_production",
+      "severity": "low",
+      "status": "approved",
+      "summary": "Base production run matches PO quantity, approved batch record, and contracted conversion fee.",
+      "overpayment_amount": "0.00",
+      "evidence_ids": [
+        "ev-inv-2026-08140-01",
+        "ev-inv-2026-08140-02"
+      ],
+      "contract_document_ids": [
+        "contract-sup-001-aster-ridge-biomanufacturing-sow"
+      ],
+      "policy_ids": [
+        "policy-invoice-reconciliation-policy"
+      ],
+      "metadata": {
+        "basis_summary": "Supplier rate card + invoice reconciliation policy satisfied.",
+        "display_category": "Matched production",
+        "source_labels": [
+          "PO",
+          "batch record"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08140"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08177",
+      "invoice_id": "INV-2026-08177",
+      "scenario_id": "wps-api-handling",
+      "category": "api_handling",
+      "severity": "high",
+      "status": "escalate",
+      "summary": "Unapproved API handling fee lacks a matching batch authorization for the sensitive ingredient.",
+      "overpayment_amount": "92000.00",
+      "evidence_ids": [
+        "ev-inv-2026-08177-01"
+      ],
+      "contract_document_ids": [
+        "contract-sup-004-meridian-api-works-supply-agreement"
+      ],
+      "policy_ids": [
+        "policy-invoice-reconciliation-policy",
+        "policy-invoice-dispute-and-recovery-procedure"
+      ],
+      "metadata": {
+        "basis_summary": "API supply agreement + sensitive-material authorization policy.",
+        "display_category": "API handling",
+        "source_labels": [
+          "Batch record"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08177"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08201",
+      "invoice_id": "INV-2026-08201",
+      "scenario_id": "wps-approved-surge",
+      "category": "approved_surge_work",
+      "severity": "low",
+      "status": "approved",
+      "summary": "Expedited packaging line changeover matches a documented prescription-surge approval.",
+      "overpayment_amount": "0.00",
+      "evidence_ids": [
+        "ev-inv-2026-08201-01"
+      ],
+      "contract_document_ids": [
+        "contract-sup-003-heliopack-pharma-services-packaging-agreement"
+      ],
+      "policy_ids": [
+        "policy-invoice-reconciliation-policy"
+      ],
+      "metadata": {
+        "basis_summary": "Packaging agreement + documented surge approval policy satisfied.",
+        "display_category": "Approved surge work",
+        "source_labels": [
+          "Approval email"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08201"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08244",
+      "invoice_id": "INV-2026-08244",
+      "scenario_id": "wps-ip-sensitive-work",
+      "category": "packaging_changeover",
+      "severity": "medium",
+      "status": "recover",
+      "summary": "Packaging line changeover was billed for an IP-sensitive SKU without an approved purchase order.",
+      "overpayment_amount": "12800.00",
+      "evidence_ids": [
+        "ev-inv-2026-08244-01",
+        "ev-inv-2026-08244-02"
+      ],
+      "contract_document_ids": [
+        "contract-sup-003-heliopack-pharma-services-packaging-agreement"
+      ],
+      "policy_ids": [
+        "policy-invoice-reconciliation-policy",
+        "policy-invoice-dispute-and-recovery-procedure"
+      ],
+      "metadata": {
+        "basis_summary": "Packaging agreement + IP-sensitive changeover approval policy.",
+        "display_category": "Packaging changeover",
+        "source_labels": [
+          "PDF",
+          "production plan"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08244"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08273",
+      "invoice_id": "INV-2026-08273",
+      "scenario_id": "wps-unmatched-invoice",
+      "category": "unmatched_invoice",
+      "severity": "medium",
+      "status": "review",
+      "summary": "Invoice line is missing a PO and batch ID, so it cannot be tied to authorized manufacturing work.",
+      "overpayment_amount": "11900.00",
+      "evidence_ids": [
+        "ev-inv-2026-08273-01"
+      ],
+      "contract_document_ids": [
+        "contract-sup-006-summit-dose-manufacturing-sow"
+      ],
+      "policy_ids": [
+        "policy-invoice-reconciliation-policy"
+      ],
+      "metadata": {
+        "basis_summary": "Manufacturing SOW + minimum PO and batch evidence policy.",
+        "display_category": "Unmatched invoice",
+        "source_labels": [
+          "Supplier portal"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08273"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08305",
+      "invoice_id": "INV-2026-08305",
+      "scenario_id": "wps-quality-release",
+      "category": "approved_quality_work",
+      "severity": "low",
+      "status": "approved",
+      "summary": "Stability testing surcharge matches the quality protocol attached to the approved batch record.",
+      "overpayment_amount": "0.00",
+      "evidence_ids": [
+        "ev-inv-2026-08305-01"
+      ],
+      "contract_document_ids": [
+        "contract-sup-005-crescent-gmp-labs-testing-sow"
+      ],
+      "policy_ids": [
+        "policy-quality-release-billability-policy"
+      ],
+      "metadata": {
+        "basis_summary": "Testing SOW + quality protocol policy satisfied.",
+        "display_category": "Approved quality work",
+        "source_labels": [
+          "QA protocol"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08305"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08338",
+      "invoice_id": "INV-2026-08338",
+      "scenario_id": "wps-ip-sensitive-work",
+      "category": "tech_transfer",
+      "severity": "medium",
+      "status": "escalate",
+      "summary": "Tech transfer support fee references process-support work that requires legal and IP review.",
+      "overpayment_amount": "9600.00",
+      "evidence_ids": [
+        "ev-inv-2026-08338-01",
+        "ev-inv-2026-08338-02"
+      ],
+      "contract_document_ids": [
+        "contract-sup-012-pioneer-process-development-sow"
+      ],
+      "policy_ids": [
+        "policy-invoice-reconciliation-policy",
+        "policy-invoice-dispute-and-recovery-procedure"
+      ],
+      "metadata": {
+        "basis_summary": "Tech-transfer SOW + IP/legal escalation policy.",
+        "display_category": "Tech transfer",
+        "source_labels": [
+          "MSA",
+          "email"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08338"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08392",
+      "invoice_id": "INV-2026-08392",
+      "scenario_id": "wps-quality-release",
+      "category": "batch_reconciliation",
+      "severity": "medium",
+      "status": "review",
+      "summary": "Batch record reconciliation fee begins before the documented deviation closure timestamp.",
+      "overpayment_amount": "7400.00",
+      "evidence_ids": [
+        "ev-inv-2026-08392-01"
+      ],
+      "contract_document_ids": [
+        "contract-sup-011-lumasterile-services-sterilization-agreement"
+      ],
+      "policy_ids": [
+        "policy-quality-release-billability-policy"
+      ],
+      "metadata": {
+        "basis_summary": "Sterilization agreement + quality release timing policy.",
+        "display_category": "Batch reconciliation",
+        "source_labels": [
+          "Deviation log"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08392"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08411",
+      "invoice_id": "INV-2026-08411",
+      "scenario_id": "wps-matched-production",
+      "category": "rate_card_minimum",
+      "severity": "low",
+      "status": "approved",
+      "summary": "Minimum batch charge applied correctly under the supplier rate card.",
+      "overpayment_amount": "0.00",
+      "evidence_ids": [
+        "ev-inv-2026-08411-01"
+      ],
+      "contract_document_ids": [
+        "contract-sup-006-summit-dose-manufacturing-sow"
+      ],
+      "policy_ids": [
+        "policy-invoice-reconciliation-policy"
+      ],
+      "metadata": {
+        "basis_summary": "Supplier rate-card minimum + invoice reconciliation policy satisfied.",
+        "display_category": "Rate-card minimum",
+        "source_labels": [
+          "Supplier contract"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08411"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08462",
+      "invoice_id": "INV-2026-08462",
+      "scenario_id": "wps-duplicate-submission",
+      "category": "duplicate_invoice",
+      "severity": "high",
+      "status": "recover",
+      "summary": "Duplicate invoice number submitted through both EDI and supplier portal.",
+      "overpayment_amount": "28500.00",
+      "evidence_ids": [
+        "ev-inv-2026-08462-01",
+        "ev-inv-2026-08462-02"
+      ],
+      "contract_document_ids": [
+        "contract-sup-008-valence-cold-chain-logistics-agreement"
+      ],
+      "policy_ids": [
+        "policy-invoice-reconciliation-policy",
+        "policy-invoice-dispute-and-recovery-procedure"
+      ],
+      "metadata": {
+        "basis_summary": "Logistics agreement + duplicate submission recovery policy.",
+        "display_category": "Duplicate invoice",
+        "source_labels": [
+          "EDI",
+          "portal"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08462"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08507",
+      "invoice_id": "INV-2026-08507",
+      "scenario_id": "wps-storage-condition",
+      "category": "storage_condition",
+      "severity": "low",
+      "status": "recover",
+      "summary": "Cold-chain storage surcharge lacks a temperature-control requirement on the approved batch profile.",
+      "overpayment_amount": "6100.00",
+      "evidence_ids": [
+        "ev-inv-2026-08507-01"
+      ],
+      "contract_document_ids": [
+        "contract-sup-007-orchid-clinical-supply-services-agreement"
+      ],
+      "policy_ids": [
+        "policy-invoice-reconciliation-policy"
+      ],
+      "metadata": {
+        "basis_summary": "Clinical supply storage terms + minimum evidence policy.",
+        "display_category": "Storage condition",
+        "source_labels": [
+          "Batch profile"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08507"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08549",
+      "invoice_id": "INV-2026-08549",
+      "scenario_id": "wps-matched-production",
+      "category": "matched_conversion",
+      "severity": "low",
+      "status": "approved",
+      "summary": "Conversion fee aligns to the negotiated manufacturing rate table after volume discount is applied.",
+      "overpayment_amount": "0.00",
+      "evidence_ids": [
+        "ev-inv-2026-08549-01"
+      ],
+      "contract_document_ids": [
+        "contract-sup-014-atlas-regional-manufacturing-sow"
+      ],
+      "policy_ids": [
+        "policy-invoice-reconciliation-policy"
+      ],
+      "metadata": {
+        "basis_summary": "Regional manufacturing rate table + reconciliation policy satisfied.",
+        "display_category": "Matched conversion",
+        "source_labels": [
+          "Rate table"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08549"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08602",
+      "invoice_id": "INV-2026-08602",
+      "scenario_id": "wps-surge-capacity",
+      "category": "overtime_premium",
+      "severity": "low",
+      "status": "recover",
+      "summary": "Unapproved overtime premium appears on a commercial-scale batch that did not have surge authorization.",
+      "overpayment_amount": "8300.00",
+      "evidence_ids": [
+        "ev-inv-2026-08602-01"
+      ],
+      "contract_document_ids": [
+        "contract-sup-001-aster-ridge-biomanufacturing-sow"
+      ],
+      "policy_ids": [
+        "policy-invoice-reconciliation-policy",
+        "policy-invoice-dispute-and-recovery-procedure"
+      ],
+      "metadata": {
+        "basis_summary": "Manufacturing SOW + overtime and surge approval policies.",
+        "display_category": "Overtime premium",
+        "source_labels": [
+          "Production schedule"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08602"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08644",
+      "invoice_id": "INV-2026-08644",
+      "scenario_id": "wps-matched-production",
+      "category": "matched_cleaning",
+      "severity": "low",
+      "status": "approved",
+      "summary": "Validated cleaning charge is expected between protected SKU campaigns and appears in the approved batch plan.",
+      "overpayment_amount": "0.00",
+      "evidence_ids": [
+        "ev-inv-2026-08644-01"
+      ],
+      "contract_document_ids": [
+        "contract-sup-006-summit-dose-manufacturing-sow"
+      ],
+      "policy_ids": [
+        "policy-quality-release-billability-policy"
+      ],
+      "metadata": {
+        "basis_summary": "Manufacturing SOW cleaning terms + quality batch-plan policy satisfied.",
+        "display_category": "Matched cleaning",
+        "source_labels": [
+          "Batch plan"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08644"
+      }
+    },
+    {
+      "id": "finding-inv-2026-08690",
+      "invoice_id": "INV-2026-08690",
+      "scenario_id": "wps-quality-release",
+      "category": "quality_hold",
+      "severity": "medium",
+      "status": "review",
+      "summary": "Supplier billed deviation support beyond the approved quality hold window, but closure evidence is missing.",
+      "overpayment_amount": "5200.00",
+      "evidence_ids": [
+        "ev-inv-2026-08690-01"
+      ],
+      "contract_document_ids": [
+        "contract-sup-002-northstar-fill-finish-quality-agreement"
+      ],
+      "policy_ids": [
+        "policy-quality-release-billability-policy",
+        "policy-invoice-dispute-and-recovery-procedure"
+      ],
+      "metadata": {
+        "basis_summary": "Quality agreement + hold-window and dispute policies.",
+        "display_category": "Quality hold",
+        "source_labels": [
+          "QA hold log"
+        ],
+        "source_decision_uri": "data/waypoint/invoice-decisions.json#/INV-2026-08690"
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-inv-2026-08034-01",
+      "title": "deviation record evidence for INV-2026-08034",
+      "evidence_type": "deviation_record",
+      "invoice_id": "INV-2026-08034",
+      "finding_id": "finding-inv-2026-08034",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08034/deviation_record",
+      "excerpt": "deviation record supports review of: Contamination investigation was billed to the sponsor where the deviation record indicates supplier-caused contamination, so the investigation cost is not recoverable and must be escalated.",
+      "metadata": {
+        "source_label": "deviation record",
+        "supplier_id": "sup-009",
+        "scenario_id": "wps-quality-release"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08034-02",
+      "title": "capacity agreement evidence for INV-2026-08034",
+      "evidence_type": "capacity_agreement",
+      "invoice_id": "INV-2026-08034",
+      "finding_id": "finding-inv-2026-08034",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08034/capacity_agreement",
+      "excerpt": "capacity agreement supports review of: Contamination investigation was billed to the sponsor where the deviation record indicates supplier-caused contamination, so the investigation cost is not recoverable and must be escalated.",
+      "metadata": {
+        "source_label": "capacity agreement",
+        "supplier_id": "sup-009",
+        "scenario_id": "wps-quality-release"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08055-01",
+      "title": "MSA evidence for INV-2026-08055",
+      "evidence_type": "contract",
+      "invoice_id": "INV-2026-08055",
+      "finding_id": "finding-inv-2026-08055",
+      "uri": "data/contracts/source-markdown/sup-012-*",
+      "excerpt": "MSA supports review of: Off-contract tooling setup references a protected formulation process that is not covered by the current MSA.",
+      "metadata": {
+        "source_label": "MSA",
+        "supplier_id": "sup-012",
+        "scenario_id": "wps-ip-sensitive-work"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08055-02",
+      "title": "invoice PDF evidence for INV-2026-08055",
+      "evidence_type": "invoice_pdf",
+      "invoice_id": "INV-2026-08055",
+      "finding_id": "finding-inv-2026-08055",
+      "uri": "data/waypoint/invoices/pdf/sup-012-inv-2026-08055.pdf",
+      "excerpt": "invoice PDF supports review of: Off-contract tooling setup references a protected formulation process that is not covered by the current MSA.",
+      "metadata": {
+        "source_label": "invoice PDF",
+        "supplier_id": "sup-012",
+        "scenario_id": "wps-ip-sensitive-work"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08102-01",
+      "title": "QA release log evidence for INV-2026-08102",
+      "evidence_type": "qa_release_log",
+      "invoice_id": "INV-2026-08102",
+      "finding_id": "finding-inv-2026-08102",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08102/qa_release_log",
+      "excerpt": "QA release log supports review of: Duplicate QA release testing appears on the invoice and release log for the same batch lot.",
+      "metadata": {
+        "source_label": "QA release log",
+        "supplier_id": "sup-002",
+        "scenario_id": "wps-quality-release"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08140-01",
+      "title": "PO evidence for INV-2026-08140",
+      "evidence_type": "purchase_order",
+      "invoice_id": "INV-2026-08140",
+      "finding_id": "finding-inv-2026-08140",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08140/po",
+      "excerpt": "PO supports review of: Base production run matches PO quantity, approved batch record, and contracted conversion fee.",
+      "metadata": {
+        "source_label": "PO",
+        "supplier_id": "sup-001",
+        "scenario_id": "wps-matched-production"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08140-02",
+      "title": "batch record evidence for INV-2026-08140",
+      "evidence_type": "batch_record",
+      "invoice_id": "INV-2026-08140",
+      "finding_id": "finding-inv-2026-08140",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08140/batch_record",
+      "excerpt": "batch record supports review of: Base production run matches PO quantity, approved batch record, and contracted conversion fee.",
+      "metadata": {
+        "source_label": "batch record",
+        "supplier_id": "sup-001",
+        "scenario_id": "wps-matched-production"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08177-01",
+      "title": "Batch record evidence for INV-2026-08177",
+      "evidence_type": "batch_record",
+      "invoice_id": "INV-2026-08177",
+      "finding_id": "finding-inv-2026-08177",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08177/batch_record",
+      "excerpt": "Batch record supports review of: Unapproved API handling fee lacks a matching batch authorization for the sensitive ingredient.",
+      "metadata": {
+        "source_label": "Batch record",
+        "supplier_id": "sup-004",
+        "scenario_id": "wps-api-handling"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08201-01",
+      "title": "Approval email evidence for INV-2026-08201",
+      "evidence_type": "email",
+      "invoice_id": "INV-2026-08201",
+      "finding_id": "finding-inv-2026-08201",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08201/approval_email",
+      "excerpt": "Approval email supports review of: Expedited packaging line changeover matches a documented prescription-surge approval.",
+      "metadata": {
+        "source_label": "Approval email",
+        "supplier_id": "sup-003",
+        "scenario_id": "wps-approved-surge"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08244-01",
+      "title": "PDF evidence for INV-2026-08244",
+      "evidence_type": "invoice_pdf",
+      "invoice_id": "INV-2026-08244",
+      "finding_id": "finding-inv-2026-08244",
+      "uri": "data/waypoint/invoices/pdf/sup-003-inv-2026-08244.pdf",
+      "excerpt": "PDF supports review of: Packaging line changeover was billed for an IP-sensitive SKU without an approved purchase order.",
+      "metadata": {
+        "source_label": "PDF",
+        "supplier_id": "sup-003",
+        "scenario_id": "wps-ip-sensitive-work"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08244-02",
+      "title": "production plan evidence for INV-2026-08244",
+      "evidence_type": "production_plan",
+      "invoice_id": "INV-2026-08244",
+      "finding_id": "finding-inv-2026-08244",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08244/production_plan",
+      "excerpt": "production plan supports review of: Packaging line changeover was billed for an IP-sensitive SKU without an approved purchase order.",
+      "metadata": {
+        "source_label": "production plan",
+        "supplier_id": "sup-003",
+        "scenario_id": "wps-ip-sensitive-work"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08273-01",
+      "title": "Supplier portal evidence for INV-2026-08273",
+      "evidence_type": "purchase_order",
+      "invoice_id": "INV-2026-08273",
+      "finding_id": "finding-inv-2026-08273",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08273/supplier_portal",
+      "excerpt": "Supplier portal supports review of: Invoice line is missing a PO and batch ID, so it cannot be tied to authorized manufacturing work.",
+      "metadata": {
+        "source_label": "Supplier portal",
+        "supplier_id": "sup-006",
+        "scenario_id": "wps-unmatched-invoice"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08305-01",
+      "title": "QA protocol evidence for INV-2026-08305",
+      "evidence_type": "qa_protocol",
+      "invoice_id": "INV-2026-08305",
+      "finding_id": "finding-inv-2026-08305",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08305/qa_protocol",
+      "excerpt": "QA protocol supports review of: Stability testing surcharge matches the quality protocol attached to the approved batch record.",
+      "metadata": {
+        "source_label": "QA protocol",
+        "supplier_id": "sup-005",
+        "scenario_id": "wps-quality-release"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08338-01",
+      "title": "MSA evidence for INV-2026-08338",
+      "evidence_type": "contract",
+      "invoice_id": "INV-2026-08338",
+      "finding_id": "finding-inv-2026-08338",
+      "uri": "data/contracts/source-markdown/sup-012-*",
+      "excerpt": "MSA supports review of: Tech transfer support fee references process-support work that requires legal and IP review.",
+      "metadata": {
+        "source_label": "MSA",
+        "supplier_id": "sup-012",
+        "scenario_id": "wps-ip-sensitive-work"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08338-02",
+      "title": "email evidence for INV-2026-08338",
+      "evidence_type": "email",
+      "invoice_id": "INV-2026-08338",
+      "finding_id": "finding-inv-2026-08338",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08338/email",
+      "excerpt": "email supports review of: Tech transfer support fee references process-support work that requires legal and IP review.",
+      "metadata": {
+        "source_label": "email",
+        "supplier_id": "sup-012",
+        "scenario_id": "wps-ip-sensitive-work"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08392-01",
+      "title": "Deviation log evidence for INV-2026-08392",
+      "evidence_type": "deviation_log",
+      "invoice_id": "INV-2026-08392",
+      "finding_id": "finding-inv-2026-08392",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08392/deviation_log",
+      "excerpt": "Deviation log supports review of: Batch record reconciliation fee begins before the documented deviation closure timestamp.",
+      "metadata": {
+        "source_label": "Deviation log",
+        "supplier_id": "sup-011",
+        "scenario_id": "wps-quality-release"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08411-01",
+      "title": "Supplier contract evidence for INV-2026-08411",
+      "evidence_type": "contract",
+      "invoice_id": "INV-2026-08411",
+      "finding_id": "finding-inv-2026-08411",
+      "uri": "data/contracts/source-markdown/sup-006-*",
+      "excerpt": "Supplier contract supports review of: Minimum batch charge applied correctly under the supplier rate card.",
+      "metadata": {
+        "source_label": "Supplier contract",
+        "supplier_id": "sup-006",
+        "scenario_id": "wps-matched-production"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08462-01",
+      "title": "EDI evidence for INV-2026-08462",
+      "evidence_type": "supplier_submission",
+      "invoice_id": "INV-2026-08462",
+      "finding_id": "finding-inv-2026-08462",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08462/edi",
+      "excerpt": "EDI supports review of: Duplicate invoice number submitted through both EDI and supplier portal.",
+      "metadata": {
+        "source_label": "EDI",
+        "supplier_id": "sup-008",
+        "scenario_id": "wps-duplicate-submission"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08462-02",
+      "title": "portal evidence for INV-2026-08462",
+      "evidence_type": "purchase_order",
+      "invoice_id": "INV-2026-08462",
+      "finding_id": "finding-inv-2026-08462",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08462/portal",
+      "excerpt": "portal supports review of: Duplicate invoice number submitted through both EDI and supplier portal.",
+      "metadata": {
+        "source_label": "portal",
+        "supplier_id": "sup-008",
+        "scenario_id": "wps-duplicate-submission"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08507-01",
+      "title": "Batch profile evidence for INV-2026-08507",
+      "evidence_type": "batch_profile",
+      "invoice_id": "INV-2026-08507",
+      "finding_id": "finding-inv-2026-08507",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08507/batch_profile",
+      "excerpt": "Batch profile supports review of: Cold-chain storage surcharge lacks a temperature-control requirement on the approved batch profile.",
+      "metadata": {
+        "source_label": "Batch profile",
+        "supplier_id": "sup-007",
+        "scenario_id": "wps-storage-condition"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08549-01",
+      "title": "Rate table evidence for INV-2026-08549",
+      "evidence_type": "contract",
+      "invoice_id": "INV-2026-08549",
+      "finding_id": "finding-inv-2026-08549",
+      "uri": "data/contracts/source-markdown/sup-014-*",
+      "excerpt": "Rate table supports review of: Conversion fee aligns to the negotiated manufacturing rate table after volume discount is applied.",
+      "metadata": {
+        "source_label": "Rate table",
+        "supplier_id": "sup-014",
+        "scenario_id": "wps-matched-production"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08602-01",
+      "title": "Production schedule evidence for INV-2026-08602",
+      "evidence_type": "production_schedule",
+      "invoice_id": "INV-2026-08602",
+      "finding_id": "finding-inv-2026-08602",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08602/production_schedule",
+      "excerpt": "Production schedule supports review of: Unapproved overtime premium appears on a commercial-scale batch that did not have surge authorization.",
+      "metadata": {
+        "source_label": "Production schedule",
+        "supplier_id": "sup-001",
+        "scenario_id": "wps-surge-capacity"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08644-01",
+      "title": "Batch plan evidence for INV-2026-08644",
+      "evidence_type": "batch_plan",
+      "invoice_id": "INV-2026-08644",
+      "finding_id": "finding-inv-2026-08644",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08644/batch_plan",
+      "excerpt": "Batch plan supports review of: Validated cleaning charge is expected between protected SKU campaigns and appears in the approved batch plan.",
+      "metadata": {
+        "source_label": "Batch plan",
+        "supplier_id": "sup-006",
+        "scenario_id": "wps-matched-production"
+      }
+    },
+    {
+      "id": "ev-inv-2026-08690-01",
+      "title": "QA hold log evidence for INV-2026-08690",
+      "evidence_type": "qa_hold_log",
+      "invoice_id": "INV-2026-08690",
+      "finding_id": "finding-inv-2026-08690",
+      "uri": "ledgerfield://operational-evidence/INV-2026-08690/qa_hold_log",
+      "excerpt": "QA hold log supports review of: Supplier billed deviation support beyond the approved quality hold window, but closure evidence is missing.",
+      "metadata": {
+        "source_label": "QA hold log",
+        "supplier_id": "sup-002",
+        "scenario_id": "wps-quality-release"
+      }
+    }
+  ]
+}

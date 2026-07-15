@@ -1,0 +1,391 @@
+{
+  "metadata_version": "1.0",
+  "generated_at": "2026-06-16T00:00:00Z",
+  "purpose": "Internal Waypoint seed decisions expanded by Ledgerfield into a Waypoint-compatible import payload. These expected outcomes are not supplier-facing document content.",
+  "decisions": [
+    {
+      "invoice_id": "INV-2026-08034",
+      "supplier_id": "sup-009",
+      "scenario_id": "wps-quality-release",
+      "status": "escalate",
+      "category": "Quality deviation",
+      "severity": "high",
+      "overpayment_amount": 111000,
+      "invoice_amount": 985000,
+      "summary": "Contamination investigation was billed to the sponsor where the deviation record indicates supplier-caused contamination, so the investigation cost is not recoverable and must be escalated.",
+      "sources": [
+        "deviation record",
+        "capacity agreement"
+      ],
+      "line": {
+        "description": "Contamination investigation billed where deviation record indicates supplier-caused contamination",
+        "quantity": 1,
+        "unit_price": 111000,
+        "sku": "BP-1026",
+        "purchase_order": "DEV-BP-1026-SUPPLIER"
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08055",
+      "supplier_id": "sup-012",
+      "scenario_id": "wps-ip-sensitive-work",
+      "status": "escalate",
+      "category": "IP-sensitive tooling",
+      "severity": "high",
+      "overpayment_amount": 16400,
+      "invoice_amount": 182000,
+      "summary": "Off-contract tooling setup references a protected formulation process that is not covered by the current MSA.",
+      "sources": [
+        "MSA",
+        "invoice PDF"
+      ],
+      "line": {
+        "description": "Tooling setup for protected formulation process support",
+        "quantity": 1,
+        "unit_price": 16400,
+        "sku": "RX-IP-TOOL",
+        "purchase_order": "PO-IP-REVIEW-PENDING"
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08102",
+      "supplier_id": "sup-002",
+      "scenario_id": "wps-quality-release",
+      "status": "recover",
+      "category": "Duplicate QA charge",
+      "severity": "medium",
+      "overpayment_amount": 14200,
+      "invoice_amount": 168000,
+      "summary": "Duplicate QA release testing appears on the invoice and release log for the same batch lot.",
+      "sources": [
+        "QA release log"
+      ],
+      "line": {
+        "description": "Duplicate QA release testing for batch lot NFF-26-118",
+        "quantity": 1,
+        "unit_price": 14200,
+        "sku": "QA-REL",
+        "purchase_order": "PO-QA-4418"
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08140",
+      "supplier_id": "sup-001",
+      "scenario_id": "wps-matched-production",
+      "status": "approved",
+      "category": "Matched production",
+      "severity": "low",
+      "overpayment_amount": 0,
+      "invoice_amount": 512000,
+      "summary": "Base production run matches PO quantity, approved batch record, and contracted conversion fee.",
+      "sources": [
+        "PO",
+        "batch record"
+      ],
+      "line": {
+        "description": "Base production run for approved commercial tablet batch",
+        "quantity": 125000,
+        "unit_price": 4.096,
+        "sku": "RX-4921",
+        "purchase_order": "PO-ARB-8104"
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08177",
+      "supplier_id": "sup-004",
+      "scenario_id": "wps-api-handling",
+      "status": "escalate",
+      "category": "API handling",
+      "severity": "high",
+      "overpayment_amount": 92000,
+      "invoice_amount": 760000,
+      "summary": "Unapproved API handling fee lacks a matching batch authorization for the sensitive ingredient.",
+      "sources": [
+        "Batch record"
+      ],
+      "line": {
+        "description": "Sensitive API handling fee without batch authorization",
+        "quantity": 1,
+        "unit_price": 92000,
+        "sku": "API-SENS-17",
+        "purchase_order": "PO-MAW-6220"
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08201",
+      "supplier_id": "sup-003",
+      "scenario_id": "wps-approved-surge",
+      "status": "approved",
+      "category": "Approved surge work",
+      "severity": "low",
+      "overpayment_amount": 0,
+      "invoice_amount": 148000,
+      "summary": "Expedited packaging line changeover matches a documented prescription-surge approval.",
+      "sources": [
+        "Approval email"
+      ],
+      "line": {
+        "description": "Approved expedited packaging line changeover",
+        "quantity": 1,
+        "unit_price": 148000,
+        "sku": "PKG-RX-SURGE",
+        "purchase_order": "PO-HPP-9007"
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08244",
+      "supplier_id": "sup-003",
+      "scenario_id": "wps-ip-sensitive-work",
+      "status": "recover",
+      "category": "Packaging changeover",
+      "severity": "medium",
+      "overpayment_amount": 12800,
+      "invoice_amount": 143000,
+      "summary": "Packaging line changeover was billed for an IP-sensitive SKU without an approved purchase order.",
+      "sources": [
+        "PDF",
+        "production plan"
+      ],
+      "line": {
+        "description": "Packaging line changeover for IP-sensitive SKU without approved PO",
+        "quantity": 1,
+        "unit_price": 12800,
+        "sku": "IP-PKG-41",
+        "purchase_order": ""
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08273",
+      "supplier_id": "sup-006",
+      "scenario_id": "wps-unmatched-invoice",
+      "status": "review",
+      "category": "Unmatched invoice",
+      "severity": "medium",
+      "overpayment_amount": 11900,
+      "invoice_amount": 148000,
+      "summary": "Invoice line is missing a PO and batch ID, so it cannot be tied to authorized manufacturing work.",
+      "sources": [
+        "Supplier portal"
+      ],
+      "line": {
+        "description": "Manufacturing support line missing PO and batch ID",
+        "quantity": 1,
+        "unit_price": 11900,
+        "sku": "UNMATCHED",
+        "purchase_order": ""
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08305",
+      "supplier_id": "sup-005",
+      "scenario_id": "wps-quality-release",
+      "status": "approved",
+      "category": "Approved quality work",
+      "severity": "low",
+      "overpayment_amount": 0,
+      "invoice_amount": 96000,
+      "summary": "Stability testing surcharge matches the quality protocol attached to the approved batch record.",
+      "sources": [
+        "QA protocol"
+      ],
+      "line": {
+        "description": "Approved stability testing surcharge under QA protocol",
+        "quantity": 1,
+        "unit_price": 96000,
+        "sku": "STAB-12M",
+        "purchase_order": "PO-CGL-3372"
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08338",
+      "supplier_id": "sup-012",
+      "scenario_id": "wps-ip-sensitive-work",
+      "status": "escalate",
+      "category": "Tech transfer",
+      "severity": "medium",
+      "overpayment_amount": 9600,
+      "invoice_amount": 128000,
+      "summary": "Tech transfer support fee references process-support work that requires legal and IP review.",
+      "sources": [
+        "MSA",
+        "email"
+      ],
+      "line": {
+        "description": "Tech transfer process-support fee pending legal and IP review",
+        "quantity": 1,
+        "unit_price": 9600,
+        "sku": "TT-IP-REVIEW",
+        "purchase_order": "PO-PPD-LEGAL-HOLD"
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08392",
+      "supplier_id": "sup-011",
+      "scenario_id": "wps-quality-release",
+      "status": "review",
+      "category": "Batch reconciliation",
+      "severity": "medium",
+      "overpayment_amount": 7400,
+      "invoice_amount": 96000,
+      "summary": "Batch record reconciliation fee begins before the documented deviation closure timestamp.",
+      "sources": [
+        "Deviation log"
+      ],
+      "line": {
+        "description": "Batch record reconciliation before deviation closure timestamp",
+        "quantity": 1,
+        "unit_price": 7400,
+        "sku": "DEV-REC",
+        "purchase_order": "PO-LSS-4402"
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08411",
+      "supplier_id": "sup-006",
+      "scenario_id": "wps-matched-production",
+      "status": "approved",
+      "category": "Rate-card minimum",
+      "severity": "low",
+      "overpayment_amount": 0,
+      "invoice_amount": 88000,
+      "summary": "Minimum batch charge applied correctly under the supplier rate card.",
+      "sources": [
+        "Supplier contract"
+      ],
+      "line": {
+        "description": "Contracted minimum batch charge under supplier rate card",
+        "quantity": 1,
+        "unit_price": 88000,
+        "sku": "MIN-BATCH",
+        "purchase_order": "PO-SDM-8411"
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08462",
+      "supplier_id": "sup-008",
+      "scenario_id": "wps-duplicate-submission",
+      "status": "recover",
+      "category": "Duplicate invoice",
+      "severity": "high",
+      "overpayment_amount": 28500,
+      "invoice_amount": 190000,
+      "summary": "Duplicate invoice number submitted through both EDI and supplier portal.",
+      "sources": [
+        "EDI",
+        "portal"
+      ],
+      "line": {
+        "description": "Duplicate shipment support invoice submitted through EDI and portal",
+        "quantity": 1,
+        "unit_price": 28500,
+        "sku": "SHIP-SUPPORT",
+        "purchase_order": "PO-VCC-8462"
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08507",
+      "supplier_id": "sup-007",
+      "scenario_id": "wps-storage-condition",
+      "status": "recover",
+      "category": "Storage condition",
+      "severity": "low",
+      "overpayment_amount": 6100,
+      "invoice_amount": 84000,
+      "summary": "Cold-chain storage surcharge lacks a temperature-control requirement on the approved batch profile.",
+      "sources": [
+        "Batch profile"
+      ],
+      "line": {
+        "description": "Cold-chain storage surcharge without approved temperature-control requirement",
+        "quantity": 1,
+        "unit_price": 6100,
+        "sku": "COLD-STORAGE",
+        "purchase_order": "PO-OCS-8507"
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08549",
+      "supplier_id": "sup-014",
+      "scenario_id": "wps-matched-production",
+      "status": "approved",
+      "category": "Matched conversion",
+      "severity": "low",
+      "overpayment_amount": 0,
+      "invoice_amount": 405000,
+      "summary": "Conversion fee aligns to the negotiated manufacturing rate table after volume discount is applied.",
+      "sources": [
+        "Rate table"
+      ],
+      "line": {
+        "description": "Discounted conversion fee under negotiated manufacturing rate table",
+        "quantity": 90000,
+        "unit_price": 4.5,
+        "sku": "OTC-LATAM-22",
+        "purchase_order": "PO-ARM-8549"
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08602",
+      "supplier_id": "sup-001",
+      "scenario_id": "wps-surge-capacity",
+      "status": "recover",
+      "category": "Overtime premium",
+      "severity": "low",
+      "overpayment_amount": 8300,
+      "invoice_amount": 132000,
+      "summary": "Unapproved overtime premium appears on a commercial-scale batch that did not have surge authorization.",
+      "sources": [
+        "Production schedule"
+      ],
+      "line": {
+        "description": "Unapproved overtime premium on commercial-scale batch",
+        "quantity": 1,
+        "unit_price": 8300,
+        "sku": "RX-4921",
+        "purchase_order": "PO-ARB-8602"
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08644",
+      "supplier_id": "sup-006",
+      "scenario_id": "wps-matched-production",
+      "status": "approved",
+      "category": "Matched cleaning",
+      "severity": "low",
+      "overpayment_amount": 0,
+      "invoice_amount": 132000,
+      "summary": "Validated cleaning charge is expected between protected SKU campaigns and appears in the approved batch plan.",
+      "sources": [
+        "Batch plan"
+      ],
+      "line": {
+        "description": "Validated cleaning between protected SKU campaigns",
+        "quantity": 1,
+        "unit_price": 132000,
+        "sku": "CLEAN-VALID",
+        "purchase_order": "PO-SDM-8644"
+      }
+    },
+    {
+      "invoice_id": "INV-2026-08690",
+      "supplier_id": "sup-002",
+      "scenario_id": "wps-quality-release",
+      "status": "review",
+      "category": "Quality hold",
+      "severity": "medium",
+      "overpayment_amount": 5200,
+      "invoice_amount": 112000,
+      "summary": "Supplier billed deviation support beyond the approved quality hold window, but closure evidence is missing.",
+      "sources": [
+        "QA hold log"
+      ],
+      "line": {
+        "description": "Deviation support beyond approved quality hold window",
+        "quantity": 1,
+        "unit_price": 5200,
+        "sku": "QA-HOLD",
+        "purchase_order": "PO-NFF-8690"
+      }
+    }
+  ]
+}

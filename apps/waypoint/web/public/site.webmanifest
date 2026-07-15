@@ -1,0 +1,17 @@
+{
+  "name": "Waypoint",
+  "short_name": "Waypoint",
+  "description": "Data operations workspace",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2e6cfc",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
