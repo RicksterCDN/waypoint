@@ -19,7 +19,7 @@ The first public pass has validated the imported source layout with non-deploy c
 ## Still in progress
 
 - End-to-end cloud deployment should be treated as advanced and still being exercised.
-- Deployment docs and automation are intentionally included early, but should be expected to change as the public setup path is hardened.
+- A root GitHub Actions deployment path now targets the Waypoint app plus the full hosted agent suite. Assurance Orchestrator deploys with WebIQ and FoundryIQ fan-out enabled by default; WorkIQ and FabricIQ fan-out remain off until their tenant-specific data connections are ready.
 - Some package names, CLIs, historical docs, and compatibility paths may still use pre-public internal names.
 - The deployment tooling preserves existing behavior first; public naming and resource cleanup will happen after compatibility is proven.
 - Agent integrations that require live Microsoft 365, Fabric, Foundry, Azure AI Search, or tenant-specific permissions need environment-specific setup.

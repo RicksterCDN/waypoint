@@ -49,10 +49,21 @@ NO_LIVE_EXPERT_ENV = {
     "ASSURANCE_ORCHESTRATOR_EXPERT_INVOCATION_MODE": "",
     "ASSURANCE_ORCHESTRATOR_EXPERT_PROJECT_ENDPOINT": "",
     "ASSURANCE_ORCHESTRATOR_EXPERT_MODEL": "",
+    "ASSURANCE_ORCHESTRATOR_WORKIQ_ENABLED": "true",
+    "ASSURANCE_ORCHESTRATOR_WEBIQ_ENABLED": "true",
+    "ASSURANCE_ORCHESTRATOR_FOUNDRYIQ_ENABLED": "true",
+    "ASSURANCE_ORCHESTRATOR_FABRICIQ_ENABLED": "true",
     "COLLABORATION_EVIDENCE_EXPERT_AGENT_NAME": "",
     "MARKET_EVIDENCE_EXPERT_AGENT_NAME": "",
     "CONTRACT_POLICY_EXPERT_AGENT_NAME": "",
     "OPERATIONS_DATA_EXPERT_AGENT_NAME": "",
+}
+
+ALL_EXPERTS_ENABLED_ENV = {
+    "ASSURANCE_ORCHESTRATOR_WORKIQ_ENABLED": "true",
+    "ASSURANCE_ORCHESTRATOR_WEBIQ_ENABLED": "true",
+    "ASSURANCE_ORCHESTRATOR_FOUNDRYIQ_ENABLED": "true",
+    "ASSURANCE_ORCHESTRATOR_FABRICIQ_ENABLED": "true",
 }
 
 
@@ -606,11 +617,12 @@ class AssuranceOrchestratorWorkflowTests(unittest.TestCase):
 
     def test_live_expert_client_results_are_normalized_with_auth_metadata(self) -> None:
         expert_client = FakeExpertClient()
-        result = run_assurance_orchestrator_invoice_assurance(
-            {"invoice_id": "inv-001"},
-            client=FakeWaypointClient(),
-            expert_client=expert_client,
-        )
+        with patch.dict("os.environ", ALL_EXPERTS_ENABLED_ENV, clear=False):
+            result = run_assurance_orchestrator_invoice_assurance(
+                {"invoice_id": "inv-001"},
+                client=FakeWaypointClient(),
+                expert_client=expert_client,
+            )
 
         self.assertEqual(
             [validator_id for validator_id, _ in expert_client.calls],
@@ -661,11 +673,12 @@ class AssuranceOrchestratorWorkflowTests(unittest.TestCase):
                 }
             }
 
-        result = run_assurance_orchestrator_invoice_assurance(
-            {"invoice_id": "inv-001"},
-            client=FakeWaypointClient(),
-            expert_client=FakeExpertClient(payload),
-        )
+        with patch.dict("os.environ", ALL_EXPERTS_ENABLED_ENV, clear=False):
+            result = run_assurance_orchestrator_invoice_assurance(
+                {"invoice_id": "inv-001"},
+                client=FakeWaypointClient(),
+                expert_client=FakeExpertClient(payload),
+            )
 
         validators = {validator["validator_id"]: validator for validator in result["validators"]}
         workiq = validators["workiq"]
@@ -683,11 +696,12 @@ class AssuranceOrchestratorWorkflowTests(unittest.TestCase):
             del validator_id, arguments
             return {"content": [{"type": "text", "text": "not json"}]}
 
-        result = run_assurance_orchestrator_invoice_assurance(
-            {"invoice_id": "inv-001"},
-            client=FakeWaypointClient(),
-            expert_client=FakeExpertClient(payload),
-        )
+        with patch.dict("os.environ", ALL_EXPERTS_ENABLED_ENV, clear=False):
+            result = run_assurance_orchestrator_invoice_assurance(
+                {"invoice_id": "inv-001"},
+                client=FakeWaypointClient(),
+                expert_client=FakeExpertClient(payload),
+            )
 
         validators = {validator["validator_id"]: validator for validator in result["validators"]}
         self.assertEqual(result["status"], "completed")
@@ -707,11 +721,12 @@ class AssuranceOrchestratorWorkflowTests(unittest.TestCase):
                 }
             }
 
-        result = run_assurance_orchestrator_invoice_assurance(
-            {"invoice_id": "inv-001"},
-            client=FakeWaypointClient(),
-            expert_client=FakeExpertClient(payload),
-        )
+        with patch.dict("os.environ", ALL_EXPERTS_ENABLED_ENV, clear=False):
+            result = run_assurance_orchestrator_invoice_assurance(
+                {"invoice_id": "inv-001"},
+                client=FakeWaypointClient(),
+                expert_client=FakeExpertClient(payload),
+            )
 
         validators = {validator["validator_id"]: validator for validator in result["validators"]}
         self.assertEqual(validators["fabriciq"]["status"], "partial")
@@ -747,6 +762,7 @@ class AssuranceOrchestratorWorkflowTests(unittest.TestCase):
         with patch.dict(
             "os.environ",
             {
+                **ALL_EXPERTS_ENABLED_ENV,
                 "WORKIQ_EXPERT_ENDPOINT": "http://localhost:8091",
                 "WEBIQ_EXPERT_ENDPOINT": "http://localhost:8092",
                 "FOUNDRYIQ_EXPERT_ENDPOINT": "http://localhost:8093",
@@ -888,6 +904,7 @@ class AssuranceOrchestratorWorkflowTests(unittest.TestCase):
         with patch.dict(
             "os.environ",
             {
+                **ALL_EXPERTS_ENABLED_ENV,
                 "WORKIQ_EXPERT_ENDPOINT": "http://localhost:8091",
                 "WEBIQ_EXPERT_ENDPOINT": "",
                 "FOUNDRYIQ_EXPERT_ENDPOINT": "",
@@ -913,6 +930,7 @@ class AssuranceOrchestratorWorkflowTests(unittest.TestCase):
         with patch.dict(
             "os.environ",
             {
+                **ALL_EXPERTS_ENABLED_ENV,
                 "WORKIQ_EXPERT_ENDPOINT": "http://localhost:8091",
                 "WEBIQ_EXPERT_ENDPOINT": "",
                 "FOUNDRYIQ_EXPERT_ENDPOINT": "",
@@ -930,6 +948,53 @@ class AssuranceOrchestratorWorkflowTests(unittest.TestCase):
         self.assertEqual(validators["workiq"]["status"], "failed")
         self.assertEqual(validators["workiq"]["execution_path"], "responses_agent")
         self.assertEqual(validators["webiq"]["execution_path"], "placeholder")
+
+    def test_disabled_expert_lanes_are_skipped(self) -> None:
+        prompts: list[tuple[str, str]] = []
+
+        def fake_run(agent_client, prompt: str) -> str:
+            prompts.append((agent_client._endpoint.name, prompt))
+            return __import__("json").dumps(
+                {
+                    "agent": f"{agent_client._endpoint.name}-expert",
+                    "plane": agent_client._endpoint.name,
+                    "evidence": [
+                        {
+                            "claim": f"{agent_client._endpoint.name} evidence was gathered.",
+                            "source_ref": f"{agent_client._endpoint.name}-source-001",
+                            "confidence": 0.82,
+                        }
+                    ],
+                    "summary": f"{agent_client._endpoint.name} expert completed.",
+                }
+            )
+
+        with patch.dict(
+            "os.environ",
+            {
+                "WORKIQ_EXPERT_ENDPOINT": "http://localhost:8091",
+                "WEBIQ_EXPERT_ENDPOINT": "http://localhost:8092",
+                "FOUNDRYIQ_EXPERT_ENDPOINT": "http://localhost:8093",
+                "FABRICIQ_EXPERT_ENDPOINT": "http://localhost:8094",
+                "ASSURANCE_ORCHESTRATOR_WORKIQ_ENABLED": "false",
+                "ASSURANCE_ORCHESTRATOR_WEBIQ_ENABLED": "true",
+                "ASSURANCE_ORCHESTRATOR_FOUNDRYIQ_ENABLED": "true",
+                "ASSURANCE_ORCHESTRATOR_FABRICIQ_ENABLED": "false",
+            },
+            clear=False,
+        ), patch("expert_clients._ResponsesAgentClient.run", fake_run):
+            result = run_assurance_orchestrator_invoice_assurance(
+                {"invoice_id": "inv-001"},
+                client=FakeWaypointClient(),
+            )
+
+        self.assertCountEqual([name for name, _ in prompts], ["webiq", "foundryiq"])
+        validators = {validator["validator_id"]: validator for validator in result["validators"]}
+        self.assertCountEqual(validators.keys(), ["webiq", "foundryiq"])
+        self.assertEqual(
+            {validator["execution_path"] for validator in validators.values()},
+            {"responses_agent"},
+        )
 
     def test_toolbox_expert_client_discovers_tools_by_descriptor(self) -> None:
         async def run_discovery() -> list[str | None]:

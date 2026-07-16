@@ -79,6 +79,18 @@ EXPERT_ENDPOINT_ENV = {
     "foundryiq": "FOUNDRYIQ_EXPERT_ENDPOINT",
     "fabriciq": "FABRICIQ_EXPERT_ENDPOINT",
 }
+EXPERT_ENABLED_ENV = {
+    "workiq": "ASSURANCE_ORCHESTRATOR_WORKIQ_ENABLED",
+    "webiq": "ASSURANCE_ORCHESTRATOR_WEBIQ_ENABLED",
+    "foundryiq": "ASSURANCE_ORCHESTRATOR_FOUNDRYIQ_ENABLED",
+    "fabriciq": "ASSURANCE_ORCHESTRATOR_FABRICIQ_ENABLED",
+}
+EXPERT_ENABLED_DEFAULTS = {
+    "workiq": False,
+    "webiq": True,
+    "foundryiq": True,
+    "fabriciq": False,
+}
 WAYPOINT_RECORDER_ENDPOINT_ENV = "WAYPOINT_RECORDER_ENDPOINT"
 
 # Each downstream call (an expert evidence gather, or the waypoint-recorder handoff) is a
@@ -215,11 +227,23 @@ class _PromptExpertSpec:
 
 
 def _resolve_endpoint(name: str, env_var: str) -> _AgentEndpoint | None:
+    if name in EXPERT_ENABLED_ENV and not is_expert_enabled(name):
+        return None
     url = _usable_env(env_var)
     if not url:
         return None
     scope = _usable_env("EXPERT_AGENT_SCOPE") or DEFAULT_AGENT_SCOPE
     return _AgentEndpoint(name=name, url=url.rstrip("/"), scope=scope)
+
+
+def is_expert_enabled(name: str) -> bool:
+    env_var = EXPERT_ENABLED_ENV.get(name)
+    if env_var is None:
+        return True
+    raw = _usable_env(env_var)
+    if raw is None:
+        return EXPERT_ENABLED_DEFAULTS.get(name, True)
+    return raw.strip().lower() in {"1", "true", "yes", "on", "enabled"}
 
 
 class _ResponsesAgentClient:
@@ -348,10 +372,14 @@ class FoundryPromptExpertClient:
         return cls(project_endpoint, model=_usable_env(PROMPT_EXPERT_MODEL_ENV))
 
     async def resolve_tool_name(self, validator_id: str) -> str | None:
+        if not is_expert_enabled(validator_id):
+            return None
         spec = self._resolve_spec(validator_id)
         return f"{spec.agent_name}.agent_reference" if spec else None
 
     async def call_validator(self, validator_id: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        if not is_expert_enabled(validator_id):
+            raise RuntimeError(f"{validator_id}-expert is disabled by configuration.")
         spec = self._resolve_spec(validator_id)
         if spec is None:
             raise ValueError(f"No prompt expert is registered for validator '{validator_id}'.")
@@ -928,7 +956,7 @@ def build_expert_tools() -> list[FunctionTool]:
         "fabriciq": consult_operations_data_expert,
     }
     for name, func in consult_funcs.items():
-        if _usable_env(EXPERT_ENDPOINT_ENV[name]):
+        if is_expert_enabled(name) and _usable_env(EXPERT_ENDPOINT_ENV[name]):
             tools.append(tool(func))
     if _usable_env(WAYPOINT_RECORDER_ENDPOINT_ENV):
         tools.append(tool(enroll_assurance_batch))
@@ -1097,6 +1125,8 @@ def _load_prompt_expert_specs() -> dict[str, _PromptExpertSpec]:
 
     specs: dict[str, _PromptExpertSpec] = {}
     for validator_id, prompt_path in PROMPT_EXPERT_PATHS.items():
+        if not is_expert_enabled(validator_id):
+            continue
         prompt = load_prompty(prompt_path) if prompt_path.exists() else None
         metadata = prompt.metadata if prompt is not None and isinstance(prompt.metadata, dict) else {}
         forge = metadata.get("forge", {}) if isinstance(metadata.get("forge"), dict) else {}

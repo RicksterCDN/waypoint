@@ -28,6 +28,7 @@ Waypoint is Caldova's system of record for that assurance process. It helps team
 
 - `docs/status.md` explains what has been validated and what is still in progress.
 - `docs/getting-started.md` contains the current local validation path.
+- `docs/deployment.md` explains the repeatable GitHub Actions deployment path.
 - `docs/architecture.md` explains the app, corpus, agents, evals, optimization, and deployment layers.
 - `docs/data-disclaimer.md` describes the synthetic Caldova data set.
 - `docs/compatibility.md` explains why a few package and CLI names still use compatibility names.

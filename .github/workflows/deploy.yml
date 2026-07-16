@@ -1,0 +1,531 @@
+name: Deploy Azure
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_app:
+        description: Deploy the Waypoint web/API application.
+        required: false
+        type: boolean
+        default: true
+      deploy_agents:
+        description: Deploy the full hosted agent suite.
+        required: false
+        type: boolean
+        default: true
+      provision_agents:
+        description: Run azd provision for the Foundry agent project before deploying agents.
+        required: false
+        type: boolean
+        default: true
+      seed_data:
+        description: Generate and import the Waypoint seed after the app deploys.
+        required: false
+        type: boolean
+        default: true
+      fabric_provision_enabled:
+        description: Provision Fabric/OneLake resources. Leave off unless FabricIQ is being exercised.
+        required: false
+        type: boolean
+        default: false
+      workiq_enabled:
+        description: Enable the WorkIQ fan-out lane in Assurance Orchestrator.
+        required: false
+        type: boolean
+        default: false
+      webiq_enabled:
+        description: Enable the WebIQ fan-out lane in Assurance Orchestrator.
+        required: false
+        type: boolean
+        default: true
+      foundryiq_enabled:
+        description: Enable the FoundryIQ fan-out lane in Assurance Orchestrator.
+        required: false
+        type: boolean
+        default: true
+      fabriciq_enabled:
+        description: Enable the FabricIQ fan-out lane in Assurance Orchestrator.
+        required: false
+        type: boolean
+        default: false
+      azd_env_name:
+        description: azd environment name for the Foundry agents.
+        required: false
+        type: string
+        default: waypoint-agents
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-azure
+  cancel-in-progress: false
+
+env:
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'swedencentral' }}
+  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'rg-waypoint' }}
+  AZD_ENV_NAME: ${{ inputs.azd_env_name }}
+
+jobs:
+  validate:
+    name: Validate configuration
+    runs-on: ubuntu-latest
+    outputs:
+      azure_client_id: ${{ steps.required.outputs.azure_client_id }}
+      azure_tenant_id: ${{ steps.required.outputs.azure_tenant_id }}
+      azure_subscription_id: ${{ steps.required.outputs.azure_subscription_id }}
+    steps:
+      - name: Check required repository variables
+        id: required
+        env:
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          set -euo pipefail
+          missing=()
+          for var in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
+            if [ -z "${!var:-}" ]; then
+              missing+=("$var")
+            fi
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Missing required repository variables: ${missing[*]}"
+            exit 1
+          fi
+          {
+            echo "azure_client_id=$AZURE_CLIENT_ID"
+            echo "azure_tenant_id=$AZURE_TENANT_ID"
+            echo "azure_subscription_id=$AZURE_SUBSCRIPTION_ID"
+          } >> "$GITHUB_OUTPUT"
+
+  keyvault:
+    name: Ensure deployment Key Vault
+    runs-on: ubuntu-latest
+    needs: validate
+    outputs:
+      key_vault_name: ${{ steps.kv.outputs.kv_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ needs.validate.outputs.azure_client_id }}
+          tenant-id: ${{ needs.validate.outputs.azure_tenant_id }}
+          subscription-id: ${{ needs.validate.outputs.azure_subscription_id }}
+
+      - name: Ensure resource group
+        run: az group create --name "$AZURE_RESOURCE_GROUP" --location "$AZURE_LOCATION" --output none
+
+      - name: Generate-once deployment secrets
+        id: kv
+        env:
+          AZURE_CLIENT_ID: ${{ needs.validate.outputs.azure_client_id }}
+          AZURE_SUBSCRIPTION_ID: ${{ needs.validate.outputs.azure_subscription_id }}
+          DEPLOY_KEY_VAULT_NAME: ${{ vars.DEPLOY_KEY_VAULT_NAME }}
+        run: |
+          set -euo pipefail
+          if [ -n "${DEPLOY_KEY_VAULT_NAME:-}" ]; then
+            kv_name="$DEPLOY_KEY_VAULT_NAME"
+          else
+            kv_hash="$(printf '%s' "$AZURE_SUBSCRIPTION_ID" | sha256sum | cut -c1-6)"
+            kv_name="kv-waypoint-${kv_hash}"
+          fi
+          sp_object_id="$(az ad sp show --id "$AZURE_CLIENT_ID" --query id -o tsv 2>/dev/null || true)"
+          KV_NAME="$kv_name" \
+            STATE_RG="$AZURE_RESOURCE_GROUP" \
+            AZURE_LOCATION="$AZURE_LOCATION" \
+            SP_OBJECT_ID="$sp_object_id" \
+            bash tools/deploy/scripts/keyvault.sh
+          echo "kv_name=$kv_name" >> "$GITHUB_OUTPUT"
+
+  msal:
+    name: Ensure Waypoint MSAL app
+    runs-on: ubuntu-latest
+    needs: validate
+    outputs:
+      msal_tenant_id: ${{ steps.msal.outputs.msal_tenant_id }}
+      msal_client_id: ${{ steps.msal.outputs.msal_client_id }}
+      msal_writer_app_role: ${{ steps.msal.outputs.msal_writer_app_role }}
+      msal_reader_app_role: ${{ steps.msal.outputs.msal_reader_app_role }}
+      msal_admin_app_role: ${{ steps.msal.outputs.msal_admin_app_role }}
+      msal_allowed_app_ids: ${{ steps.msal.outputs.msal_allowed_app_ids }}
+      api_app_id_uri: ${{ steps.msal.outputs.api_app_id_uri }}
+      api_default_scope: ${{ steps.msal.outputs.api_default_scope }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ needs.validate.outputs.azure_client_id }}
+          tenant-id: ${{ needs.validate.outputs.azure_tenant_id }}
+          subscription-id: ${{ needs.validate.outputs.azure_subscription_id }}
+
+      - name: Ensure app registration
+        id: msal
+        env:
+          AZURE_TENANT_ID: ${{ needs.validate.outputs.azure_tenant_id }}
+          MSAL_CLIENT_ID: ${{ vars.WAYPOINT_MSAL_CLIENT_ID }}
+          MSAL_DISPLAY_NAME: ${{ vars.WAYPOINT_MSAL_DISPLAY_NAME || 'waypoint' }}
+          MSAL_ALLOWED_APP_IDS: ${{ vars.WAYPOINT_MSAL_ALLOWED_APP_IDS }}
+        run: bash tools/deploy/scripts/msal.sh ensure
+
+  corpus-seed:
+    name: Generate Waypoint seed
+    runs-on: ubuntu-latest
+    if: ${{ inputs.seed_data }}
+    outputs:
+      artifact_name: waypoint-seed
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Generate seed
+        working-directory: modules/corpus
+        run: |
+          uv sync
+          uv run ledgerfield generate-waypoint-seed | tee counts.json
+          uv run python -m json.tool data/waypoint/waypoint-seed.json > /dev/null
+
+      - name: Upload seed artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: waypoint-seed
+          path: |
+            modules/corpus/data/waypoint/waypoint-seed.json
+            modules/corpus/counts.json
+          if-no-files-found: error
+
+  deploy-app:
+    name: Deploy Waypoint app
+    runs-on: ubuntu-latest
+    if: ${{ inputs.deploy_app }}
+    needs: [validate, keyvault, msal]
+    outputs:
+      api_fqdn: ${{ steps.outputs.outputs.api_fqdn }}
+      web_fqdn: ${{ steps.outputs.outputs.web_fqdn }}
+      api_base_url: ${{ steps.outputs.outputs.api_base_url }}
+      web_base_url: ${{ steps.outputs.outputs.web_base_url }}
+      api_default_scope: ${{ needs.msal.outputs.api_default_scope }}
+    env:
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_GENERATE_ASPNET_CERTIFICATE: false
+      NUGET_XMLDOC_MODE: skip
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install Aspire CLI
+        run: curl -sSL https://aspire.dev/install.sh | bash
+
+      - name: Add Aspire to PATH
+        run: echo "$HOME/.aspire/bin" >> "$GITHUB_PATH"
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ needs.validate.outputs.azure_client_id }}
+          tenant-id: ${{ needs.validate.outputs.azure_tenant_id }}
+          subscription-id: ${{ needs.validate.outputs.azure_subscription_id }}
+
+      - name: Deploy with Aspire
+        working-directory: apps/waypoint
+        env:
+          KEY_VAULT_NAME: ${{ needs.keyvault.outputs.key_vault_name }}
+          BUILD_VERSION: ${{ github.run_number }}.${{ github.run_attempt }}
+          Azure__TenantId: ${{ needs.validate.outputs.azure_tenant_id }}
+          Azure__SubscriptionId: ${{ needs.validate.outputs.azure_subscription_id }}
+          Azure__Location: ${{ env.AZURE_LOCATION }}
+          Azure__ResourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
+          Azure__AllowResourceGroupCreation: true
+          Waypoint__ApiKeyAuth__Enabled: true
+          Waypoint__Msal__TenantId: ${{ needs.msal.outputs.msal_tenant_id }}
+          Waypoint__Msal__ClientId: ${{ needs.msal.outputs.msal_client_id }}
+          Waypoint__Msal__WriterAppRole: ${{ needs.msal.outputs.msal_writer_app_role }}
+          Waypoint__Msal__ReaderAppRole: ${{ needs.msal.outputs.msal_reader_app_role }}
+          Waypoint__Msal__AdminAppRole: ${{ needs.msal.outputs.msal_admin_app_role }}
+          Waypoint__Msal__AllowedAppIds: ${{ needs.msal.outputs.msal_allowed_app_ids }}
+          Waypoint__Postgres__ProvisionEnabled: true
+          Waypoint__Postgres__ServerName: ${{ vars.WAYPOINT_POSTGRES_SERVER_NAME }}
+          Waypoint__Postgres__FirewallRulesJson: ${{ vars.WAYPOINT_POSTGRES_FIREWALL_RULES_JSON || '[{"name":"AllowAllAzureServicesAndResourcesWithinAzureIps","startIpAddress":"0.0.0.0","endIpAddress":"0.0.0.0"}]' }}
+          Waypoint__Fabric__ProvisionEnabled: ${{ inputs.fabric_provision_enabled }}
+          Waypoint__Fabric__SkuName: ${{ vars.WAYPOINT_FABRIC_SKU_NAME || 'F2' }}
+          Waypoint__Fabric__AdministratorMembersJson: ${{ vars.WAYPOINT_FABRIC_ADMIN_MEMBERS_JSON || '[]' }}
+        run: |
+          set -euo pipefail
+          pg_app="$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name postgres-app-password --query value -o tsv)"
+          pg_admin="$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name postgres-admin-password --query value -o tsv)"
+          api_keys="$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name waypoint-api-keys --query value -o tsv)"
+          if [ -z "${Waypoint__Postgres__ServerName:-}" ]; then
+            pg_hash="$(printf '%s' "${Azure__SubscriptionId}" | sha256sum | cut -c1-8)"
+            export Waypoint__Postgres__ServerName="waypoint-pg-${pg_hash}"
+          fi
+          echo "::add-mask::$pg_app"
+          echo "::add-mask::$pg_admin"
+          echo "::add-mask::$api_keys"
+          export Parameters__postgres_app_password="$pg_app"
+          export Parameters__postgres_admin_password="$pg_admin"
+          export Parameters__api_keys="$api_keys"
+          aspire deploy --non-interactive
+
+      - name: Apply deployed MSAL redirect
+        env:
+          MSAL_CLIENT_ID: ${{ needs.msal.outputs.msal_client_id }}
+        run: |
+          set -euo pipefail
+          web_fqdn="$(az containerapp show --name web --resource-group "$AZURE_RESOURCE_GROUP" --query properties.configuration.ingress.fqdn -o tsv)"
+          WEB_FQDN="$web_fqdn" MSAL_CLIENT_ID="$MSAL_CLIENT_ID" bash tools/deploy/scripts/msal.sh redirect
+          az containerapp update \
+            --name web \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --set-env-vars "WAYPOINT_MSAL_REDIRECT_URI=https://${web_fqdn}/login" \
+            --output none
+
+      - name: Capture app outputs
+        id: outputs
+        run: |
+          set -euo pipefail
+          api_fqdn="$(az containerapp show --name api --resource-group "$AZURE_RESOURCE_GROUP" --query properties.configuration.ingress.fqdn -o tsv)"
+          web_fqdn="$(az containerapp show --name web --resource-group "$AZURE_RESOURCE_GROUP" --query properties.configuration.ingress.fqdn -o tsv)"
+          {
+            echo "api_fqdn=$api_fqdn"
+            echo "web_fqdn=$web_fqdn"
+            echo "api_base_url=https://$api_fqdn"
+            echo "web_base_url=https://$web_fqdn"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "## Waypoint app"
+            echo ""
+            echo "- API: https://$api_fqdn"
+            echo "- Web: https://$web_fqdn"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  seed-import:
+    name: Import Waypoint seed
+    runs-on: ubuntu-latest
+    if: ${{ inputs.seed_data && inputs.deploy_app }}
+    needs: [validate, keyvault, corpus-seed, deploy-app]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ needs.validate.outputs.azure_client_id }}
+          tenant-id: ${{ needs.validate.outputs.azure_tenant_id }}
+          subscription-id: ${{ needs.validate.outputs.azure_subscription_id }}
+
+      - name: Download seed artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: waypoint-seed
+          path: seed
+
+      - name: Import seed
+        env:
+          SEED_FILE: seed/modules/corpus/data/waypoint/waypoint-seed.json
+          API_FQDN: ${{ needs['deploy-app'].outputs.api_fqdn }}
+          KV_NAME: ${{ needs.keyvault.outputs.key_vault_name }}
+        run: bash tools/deploy/scripts/seed_import.sh
+
+  deploy-agents:
+    name: Deploy ${{ matrix.agent }}
+    runs-on: ubuntu-latest
+    if: |
+      always() &&
+      inputs.deploy_agents &&
+      needs.validate.result == 'success' &&
+      needs.keyvault.result == 'success' &&
+      (needs['deploy-app'].result == 'success' || needs['deploy-app'].result == 'skipped')
+    needs: [validate, keyvault, deploy-app]
+    strategy:
+      fail-fast: false
+      matrix:
+        agent:
+          - invoice-analyst
+          - assurance-orchestrator
+          - collaboration-evidence-expert
+          - contract-policy-expert
+          - market-evidence-expert
+          - operations-data-expert
+          - waypoint-recorder
+    defaults:
+      run:
+        working-directory: modules/agents
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Azure Developer CLI
+        uses: Azure/setup-azd@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install azd AI Agents extension
+        run: azd ext install azure.ai.agents
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ needs.validate.outputs.azure_client_id }}
+          tenant-id: ${{ needs.validate.outputs.azure_tenant_id }}
+          subscription-id: ${{ needs.validate.outputs.azure_subscription_id }}
+
+      - name: Configure azd environment
+        env:
+          AZURE_CLIENT_ID: ${{ needs.validate.outputs.azure_client_id }}
+          AZURE_TENANT_ID: ${{ needs.validate.outputs.azure_tenant_id }}
+          AZURE_SUBSCRIPTION_ID: ${{ needs.validate.outputs.azure_subscription_id }}
+          AZURE_AI_PROJECT_ENDPOINT: ${{ vars.AZURE_AI_PROJECT_ENDPOINT }}
+          AZURE_AI_PROJECT_ID: ${{ vars.AZURE_AI_PROJECT_ID }}
+          AZURE_AI_ACCOUNT_NAME: ${{ vars.AZURE_AI_ACCOUNT_NAME }}
+          AZURE_AI_PROJECT_NAME: ${{ vars.AZURE_AI_PROJECT_NAME }}
+          WAYPOINT_API_BASE_URL_FROM_APP: ${{ needs['deploy-app'].outputs.api_base_url }}
+          WAYPOINT_API_BASE_URL_FROM_VARS: ${{ vars.WAYPOINT_API_BASE_URL }}
+          WAYPOINT_API_SCOPE_FROM_APP: ${{ needs['deploy-app'].outputs.api_default_scope }}
+          WAYPOINT_API_SCOPE_FROM_VARS: ${{ vars.WAYPOINT_API_SCOPE }}
+        run: |
+          set -euo pipefail
+          azd config set auth.useAzCliAuth true
+          azd config set defaults.subscription "$AZURE_SUBSCRIPTION_ID"
+          azd config set alpha.deployment.stacks off
+          azd env select "$AZD_ENV_NAME" || azd env new "$AZD_ENV_NAME" --location "$AZURE_LOCATION" --subscription "$AZURE_SUBSCRIPTION_ID" --no-prompt
+          azd env set AZURE_TENANT_ID "$AZURE_TENANT_ID"
+          azd env set AZURE_SUBSCRIPTION_ID "$AZURE_SUBSCRIPTION_ID"
+          azd env set AZURE_CLIENT_ID "$AZURE_CLIENT_ID"
+          azd env set AZURE_LOCATION "$AZURE_LOCATION"
+          azd env set ENABLE_HOSTED_AGENTS true
+          azd env set AZURE_AI_MODEL_DEPLOYMENT_NAME "${{ vars.AZURE_AI_MODEL_DEPLOYMENT_NAME || 'gpt-5-mini' }}"
+          azd env set MODEL_NAME "${{ vars.MODEL_NAME || vars.AZURE_AI_MODEL_DEPLOYMENT_NAME || 'gpt-5-mini' }}"
+          azd env set MODEL_VERSION "${{ vars.MODEL_VERSION || '2026-04-24' }}"
+          azd env set MODEL_SKU_NAME "${{ vars.MODEL_SKU_NAME || 'GlobalStandard' }}"
+          azd env set MODEL_CAPACITY "${{ vars.MODEL_CAPACITY || '200' }}"
+          azd env set AZURE_AI_EMBEDDING_DEPLOYMENT_NAME "${{ vars.AZURE_AI_EMBEDDING_DEPLOYMENT_NAME || 'text-embedding-3-large' }}"
+          azd env set EMBEDDING_MODEL_NAME "${{ vars.EMBEDDING_MODEL_NAME || 'text-embedding-3-large' }}"
+          azd env set EMBEDDING_MODEL_VERSION "${{ vars.EMBEDDING_MODEL_VERSION || '1' }}"
+          azd env set EMBEDDING_MODEL_SKU_NAME "${{ vars.EMBEDDING_MODEL_SKU_NAME || 'Standard' }}"
+          azd env set EMBEDDING_MODEL_CAPACITY "${{ vars.EMBEDDING_MODEL_CAPACITY || '50' }}"
+          azd env set CONTENT_UNDERSTANDING_COMPLETION_DEPLOYMENT_NAME "${{ vars.CONTENT_UNDERSTANDING_COMPLETION_DEPLOYMENT_NAME || 'gpt-4.1' }}"
+          azd env set CONTENT_UNDERSTANDING_COMPLETION_MODEL_NAME "${{ vars.CONTENT_UNDERSTANDING_COMPLETION_MODEL_NAME || 'gpt-4.1' }}"
+          azd env set CONTENT_UNDERSTANDING_COMPLETION_MODEL_VERSION "${{ vars.CONTENT_UNDERSTANDING_COMPLETION_MODEL_VERSION || '2025-04-14' }}"
+          azd env set CONTENT_UNDERSTANDING_COMPLETION_MODEL_SKU_NAME "${{ vars.CONTENT_UNDERSTANDING_COMPLETION_MODEL_SKU_NAME || 'GlobalStandard' }}"
+          azd env set CONTENT_UNDERSTANDING_COMPLETION_MODEL_CAPACITY "${{ vars.CONTENT_UNDERSTANDING_COMPLETION_MODEL_CAPACITY || '50' }}"
+          azd env set ASSURANCE_ORCHESTRATOR_WORKIQ_ENABLED "${{ inputs.workiq_enabled }}"
+          azd env set ASSURANCE_ORCHESTRATOR_WEBIQ_ENABLED "${{ inputs.webiq_enabled }}"
+          azd env set ASSURANCE_ORCHESTRATOR_FOUNDRYIQ_ENABLED "${{ inputs.foundryiq_enabled }}"
+          azd env set ASSURANCE_ORCHESTRATOR_FABRICIQ_ENABLED "${{ inputs.fabriciq_enabled }}"
+          if [ -n "${AZURE_AI_PROJECT_ENDPOINT:-}" ]; then
+            azd env set AZURE_AI_PROJECT_ENDPOINT "$AZURE_AI_PROJECT_ENDPOINT"
+          fi
+          if [ -n "${AZURE_AI_PROJECT_ID:-}" ]; then
+            azd env set AZURE_AI_PROJECT_ID "$AZURE_AI_PROJECT_ID"
+          fi
+          if [ -n "${AZURE_AI_ACCOUNT_NAME:-}" ] && [ -n "${AZURE_AI_PROJECT_NAME:-}" ]; then
+            azd env set USE_EXISTING_AI_PROJECT true
+            azd env set AZURE_RESOURCE_GROUP "$AZURE_RESOURCE_GROUP"
+            azd env set AZURE_AI_ACCOUNT_NAME "$AZURE_AI_ACCOUNT_NAME"
+            azd env set AZURE_AI_PROJECT_NAME "$AZURE_AI_PROJECT_NAME"
+          fi
+          wp_base="${WAYPOINT_API_BASE_URL_FROM_APP:-$WAYPOINT_API_BASE_URL_FROM_VARS}"
+          wp_scope="${WAYPOINT_API_SCOPE_FROM_APP:-$WAYPOINT_API_SCOPE_FROM_VARS}"
+          if [ -n "$wp_base" ]; then azd env set WAYPOINT_API_BASE_URL "$wp_base"; fi
+          if [ -n "$wp_scope" ]; then azd env set WAYPOINT_API_SCOPE "$wp_scope"; fi
+
+      - name: Provision Foundry infrastructure
+        if: ${{ inputs.provision_agents }}
+        run: azd provision --no-prompt
+        timeout-minutes: 45
+
+      - name: Resolve Foundry project endpoint
+        id: endpoint
+        run: |
+          set -euo pipefail
+          endpoint="$(azd env get-value AZURE_AI_PROJECT_ENDPOINT 2>/dev/null | grep -v 'not found' || true)"
+          if [ -z "$endpoint" ]; then
+            echo "::error::AZURE_AI_PROJECT_ENDPOINT is unavailable. Run with provision_agents=true or set AZURE_AI_PROJECT_ENDPOINT/AZURE_AI_PROJECT_ID repository variables."
+            exit 1
+          fi
+          echo "endpoint=$endpoint" >> "$GITHUB_OUTPUT"
+
+      - name: Configure orchestrator endpoints
+        if: ${{ matrix.agent == 'assurance-orchestrator' }}
+        env:
+          FOUNDRY_PROJECT_ENDPOINT: ${{ steps.endpoint.outputs.endpoint }}
+        run: |
+          set -euo pipefail
+          base="${FOUNDRY_PROJECT_ENDPOINT%/}"
+          azd env set WORKIQ_EXPERT_ENDPOINT "$base/agents/collaboration-evidence-expert"
+          azd env set WEBIQ_EXPERT_ENDPOINT "$base/agents/market-evidence-expert"
+          azd env set FOUNDRYIQ_EXPERT_ENDPOINT "$base/agents/contract-policy-expert"
+          azd env set FABRICIQ_EXPERT_ENDPOINT "$base/agents/operations-data-expert"
+          azd env set WAYPOINT_RECORDER_ENDPOINT "$base/agents/waypoint-recorder"
+
+      - name: Create FoundryIQ toolbox
+        if: ${{ matrix.agent == 'contract-policy-expert' }}
+        env:
+          FOUNDRY_PROJECT_ENDPOINT: ${{ steps.endpoint.outputs.endpoint }}
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet 'azure-ai-projects>=2.1.0,<3' azure-identity
+          kb_mcp="$(azd env get-value AZURE_AI_SEARCH_KB_MCP_CONNECTION_NAME 2>/dev/null | grep -v 'not found' || true)"
+          if [ -z "$kb_mcp" ]; then
+            echo "::error::AZURE_AI_SEARCH_KB_MCP_CONNECTION_NAME is missing; FoundryIQ cannot be deployed with its contracts knowledge-base toolbox."
+            exit 1
+          fi
+          AZURE_AI_SEARCH_KB_MCP_CONNECTION_NAME="$kb_mcp" \
+            python scripts/create_toolbox.py --agent contract-policy-expert | tee /tmp/toolbox.log
+          endpoint="$(grep '^TOOLBOX_MCP_ENDPOINT=' /tmp/toolbox.log | cut -d= -f2-)"
+          if [ -z "$endpoint" ]; then
+            echo "::error::Toolbox script did not emit TOOLBOX_MCP_ENDPOINT."
+            exit 1
+          fi
+          azd env set TOOLBOX_MCP_ENDPOINT "$endpoint"
+
+      - name: Deploy hosted agent
+        run: |
+          set +e
+          max_attempts=3
+          attempt=1
+          while [ "$attempt" -le "$max_attempts" ]; do
+            echo "::group::azd deploy ${{ matrix.agent }} attempt $attempt / $max_attempts"
+            azd deploy "${{ matrix.agent }}" --no-prompt 2>&1 | tee /tmp/azd-deploy.log
+            azd_exit=${PIPESTATUS[0]}
+            echo "::endgroup::"
+            if [ "$azd_exit" -eq 0 ]; then
+              exit 0
+            fi
+            if grep -qE "(InvalidRange|streaming remote build logs \(HTTP 416\)|failed retrieving package result details|failed to get tenant ID for subscription)" /tmp/azd-deploy.log; then
+              attempt=$((attempt + 1))
+              sleep $((10 * attempt))
+              continue
+            fi
+            exit "$azd_exit"
+          done
+          exit 1
+        timeout-minutes: 45
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          {
+            echo "## Hosted agent"
+            echo ""
+            echo "- Agent: \`${{ matrix.agent }}\`"
+            echo "- Project endpoint: \`${{ steps.endpoint.outputs.endpoint }}\`"
+            if [ "${{ matrix.agent }}" = "assurance-orchestrator" ]; then
+              echo "- Fan-out lanes: WorkIQ=${{ inputs.workiq_enabled }}, WebIQ=${{ inputs.webiq_enabled }}, FoundryIQ=${{ inputs.foundryiq_enabled }}, FabricIQ=${{ inputs.fabriciq_enabled }}"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

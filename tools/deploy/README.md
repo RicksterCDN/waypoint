@@ -2,6 +2,9 @@
 
 This folder contains the deployment orchestration for the Caldova Waypoint reference environment. It wires together the Waypoint app, synthetic corpus, agent fleet, Microsoft Fabric/OneLake resources, Foundry resources, Key Vault, MSAL/OIDC setup, seed import, and post-deploy agent/app configuration.
 
+> [!NOTE]
+> The current GitHub Actions entry point is the root workflow at `.github/workflows/deploy.yml`. It deploys the Waypoint app plus the full hosted agent suite, while the Assurance Orchestrator fan-out starts with only WebIQ (`market-evidence-expert`) and FoundryIQ (`contract-policy-expert`) enabled. Treat the scripts in this folder as lower-level building blocks and compatibility helpers for broader deployment work.
+
 > [!IMPORTANT]
 > Deployment is the main remaining public-readiness caveat. The scripts and workflow contracts are included so readers can inspect the intended production-style shape, but the full cloud path is still being exercised end-to-end. Treat this folder as advanced until `docs/status.md` says deployment validation is complete.
 

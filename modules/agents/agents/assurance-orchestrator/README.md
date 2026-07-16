@@ -93,6 +93,11 @@ results into a shared finding shape before synthesis:
 | **WorkIQ** | Validate invoice claims against work communications and collaboration artifacts. | Email threads, Teams messages, meeting notes, approvals, supplier correspondence, exception discussions. |
 | **Foundry IQ** | Ground policy, contract, and supplier-document interpretation in indexed knowledge. | Invoice reconciliation policy, dispute/recovery procedure, supplier MSAs, SOWs, rate cards, quality agreements. |
 
+The deploy workflow ships the full hosted agent suite. Assurance Orchestrator can still
+turn each lane on or off with `ASSURANCE_ORCHESTRATOR_<IQ>_ENABLED`; the default
+GitHub Actions deployment starts WebIQ and FoundryIQ on, with WorkIQ and FabricIQ
+off until their tenant-specific data connections are ready.
+
 ### Ledgerfield reconciliation vocabulary
 
 Use Ledgerfield terminology consistently:

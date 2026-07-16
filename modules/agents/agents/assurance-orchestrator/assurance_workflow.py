@@ -22,7 +22,7 @@ from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 
-from expert_clients import FoundryPromptExpertClient, HostedResponsesExpertClient
+from expert_clients import FoundryPromptExpertClient, HostedResponsesExpertClient, is_expert_enabled
 from telemetry import rft_reference_attributes, set_span_attribute, trace_span
 from waypoint_client import WaypointReadOnlyClient
 
@@ -617,6 +617,7 @@ def _reset_workflow_running_guard() -> None:
 async def _run_workflow(workflow_input: AssuranceOrchestratorWorkflowInput) -> dict[str, Any]:
     request = workflow_input.request
     invoice_ids = [item.invoice_id for item in request.items if item.invoice_id]
+    enabled_validator_ids = _enabled_validator_ids()
     attrs = rft_reference_attributes(
         agent_name="assurance-orchestrator",
         task_family=request.request_type,
@@ -625,16 +626,13 @@ async def _run_workflow(workflow_input: AssuranceOrchestratorWorkflowInput) -> d
             "discover_work",
             "resolve_context",
             "deterministic_reconciliation",
-            "webiq_validation",
-            "fabriciq_validation",
-            "workiq_validation",
-            "foundryiq_validation",
+            *[f"{validator_id}_validation" for validator_id in enabled_validator_ids],
             "prepare_waypoint_write_plan",
         ],
         grader_reference={
             "read_only": True,
             "side_effects_performed": False,
-            "expected_validator_count": len(EXPERT_TOOL_SPECS),
+            "expected_validator_count": len(enabled_validator_ids),
         },
     )
     attrs.update(
@@ -974,12 +972,20 @@ async def fan_out_validators(
     retry_policy: RetryPolicy,
     steps: list[StepRecord],
 ) -> list[ValidatorResult]:
-    validators: list[tuple[str, Callable[[], Any]]] = [
-        ("webiq_validation", lambda: webiq_validation(targets, contexts, checks, expert_client)),
-        ("fabriciq_validation", lambda: fabriciq_validation(targets, contexts, checks, expert_client)),
-        ("workiq_validation", lambda: workiq_validation(targets, contexts, checks, expert_client)),
-        ("foundryiq_validation", lambda: foundryiq_validation(targets, contexts, checks, expert_client)),
-    ]
+    validators: list[tuple[str, Callable[[], Any]]] = []
+    for validator_id, validator in (
+        ("webiq", webiq_validation),
+        ("fabriciq", fabriciq_validation),
+        ("workiq", workiq_validation),
+        ("foundryiq", foundryiq_validation),
+    ):
+        if is_expert_enabled(validator_id):
+            validators.append(
+                (
+                    f"{validator_id}_validation",
+                    lambda validator=validator: validator(targets, contexts, checks, expert_client),
+                )
+            )
     results = await asyncio.gather(
         *(
             _run_with_retry(
@@ -993,6 +999,10 @@ async def fan_out_validators(
         )
     )
     return [result for result in results if isinstance(result, ValidatorResult)]
+
+
+def _enabled_validator_ids() -> list[str]:
+    return [validator_id for validator_id in EXPERT_TOOL_SPECS if is_expert_enabled(validator_id)]
 
 
 @step

@@ -1,6 +1,6 @@
 # Getting started
 
-This guide focuses on the local validation path. Cloud deployment and live service wiring are documented separately and should be treated as advanced while the repository is being prepared for public use.
+This guide focuses on the local validation path. The current cloud deployment entry point is documented in `docs/deployment.md`.
 
 ## Prerequisites
 
@@ -22,7 +22,8 @@ Start with the root README, then read:
 5. `modules/agents/README.md` for the agent fleet.
 6. `modules/evals/README.md` for quality gates.
 7. `modules/optimization/README.md` for improvement workflows.
-8. `tools/deploy/README.md` for deployment orchestration.
+8. `docs/deployment.md` for the current GitHub Actions deployment path.
+9. `tools/deploy/README.md` for lower-level deployment orchestration scripts.
 
 ## Validate the app lanes
 
