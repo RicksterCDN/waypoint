@@ -24,6 +24,13 @@ import run_harness
 from assurance_workflow import RetryPolicy, WorkTarget, fan_out_validators
 from finalize_outbox import FinalizeOutbox
 
+ALL_EXPERTS_ENABLED_ENV = {
+    "ASSURANCE_ORCHESTRATOR_WORKIQ_ENABLED": "true",
+    "ASSURANCE_ORCHESTRATOR_WEBIQ_ENABLED": "true",
+    "ASSURANCE_ORCHESTRATOR_FOUNDRYIQ_ENABLED": "true",
+    "ASSURANCE_ORCHESTRATOR_FABRICIQ_ENABLED": "true",
+}
+
 
 def _result(
     invoice_id: str = "INV-1",
@@ -266,18 +273,19 @@ class FanOutParallelismTests(unittest.TestCase):
         contexts = [{"invoice_id": "INV-1", "invoice": {"id": "INV-1"}}]
         checks = [{"invoice_id": "INV-1", "status": "matched"}]
 
-        started = time.perf_counter()
-        validators = _run(
-            fan_out_validators(
-                targets,
-                contexts,
-                checks,
-                expert_client=BarrierExpertClient(),
-                retry_policy=RetryPolicy(),
-                steps=[],
+        with patch.dict("os.environ", ALL_EXPERTS_ENABLED_ENV, clear=False):
+            started = time.perf_counter()
+            validators = _run(
+                fan_out_validators(
+                    targets,
+                    contexts,
+                    checks,
+                    expert_client=BarrierExpertClient(),
+                    retry_policy=RetryPolicy(),
+                    steps=[],
+                )
             )
-        )
-        elapsed = time.perf_counter() - started
+            elapsed = time.perf_counter() - started
 
         self.assertEqual(len(validators), 4)
         self.assertGreaterEqual(concurrency["peak"], 2)  # lanes overlapped
