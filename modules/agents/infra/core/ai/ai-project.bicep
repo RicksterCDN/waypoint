@@ -6,12 +6,13 @@ param tags object = {}
 @description('Main location for the resources')
 param location string
 
+@description('Location for Azure AI Search. May differ from the Foundry account location.')
+param searchLocation string = location
+
 var resourceToken = uniqueString(subscription().id, resourceGroup().id, location)
 
 @description('Name of the project')
 param aiFoundryProjectName string
-
-param deployments deploymentsType
 
 @description('Id of the user or app to assign application roles')
 param principalId string
@@ -119,67 +120,21 @@ module applicationInsights '../monitor/applicationinsights.bicep' = if (shouldCr
   }
 }
 
-// Always create a new AI Account for now (simplified approach)
-// TODO: Add support for existing accounts in a future version
-resource aiAccount 'Microsoft.CognitiveServices/accounts@2025-09-01' = {
+// Account and project creation are bootstrapped before this template because
+// the provider rejects their PUTs during full-template ARM validation even
+// though the same direct resource PUTs succeed for the deployment principal.
+// This module owns all managed child resources and role reconciliation.
+resource aiAccount 'Microsoft.CognitiveServices/accounts@2025-09-01' existing = {
   name: !empty(existingAiAccountName) ? existingAiAccountName : 'ai-account-${resourceToken}'
-  location: location
-  tags: tags
-  sku: {
-    name: 'S0'
-  }
-  kind: 'AIServices'
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    allowProjectManagement: true
-    customSubDomainName: !empty(existingAiAccountName) ? existingAiAccountName : 'ai-account-${resourceToken}'
-    networkAcls: {
-      defaultAction: 'Allow'
-      virtualNetworkRules: []
-      ipRules: []
-    }
-    publicNetworkAccess: 'Enabled'
-    disableLocalAuth: true
-  }
 
-  @batchSize(1)
-  resource seqDeployments 'deployments' = [
-    for dep in (deployments ?? []): {
-      name: dep.name
-      properties: {
-        model: dep.model
-      }
-      sku: dep.sku
-    }
-  ]
-
-  resource project 'projects@2026-03-01' = {
+  resource project 'projects@2026-03-01' existing = {
     name: aiFoundryProjectName
-    location: location
-    kind: 'AIServices'
-    sku: {
-      name: 'S0'
-    }
-    identity: {
-      type: 'SystemAssigned'
-    }
-    properties: {
-      displayName: aiFoundryProjectName
-    }
-    dependsOn: [
-      seqDeployments
-    ]
   }
 
-  resource aiFoundryAccountCapabilityHost 'capabilityHosts@2025-10-01-preview' = if (enableHostedAgents && enableCapabilityHost) {
+  resource aiFoundryAccountCapabilityHost 'capabilityHosts@2025-12-01' = if (enableHostedAgents && enableCapabilityHost) {
     name: 'agents'
     properties: {
       capabilityHostKind: 'Agents'
-      // IMPORTANT: this is required to enable hosted agents deployment
-      // if no BYO Net is provided
-      enablePublicHostingEnvironment: true
     }
   }
 }
@@ -233,11 +188,10 @@ module aiConnections './connection.bicep' = [
 // `projects/storage/*`. The fix is to grant both:
 //   - Foundry User                            (project scope, data actions
 //                                              for agent + storage reads)
-//   - Azure AI Account Owner                  (account scope, full data +
-//                                              role management on this
-//                                              Foundry account)
-// at the ACCOUNT scope. This matches the assignments the portal makes when
-// you create a Foundry account through the UI as Subscription Owner.
+//   - Foundry Project Manager                 (account scope, publish hosted
+//                                              agents + limited role management)
+// at the ACCOUNT scope. Foundry Account Owner is not sufficient for publishing
+// hosted agents because it lacks the required project data actions.
 //
 // `additionalAdmins` repeats the same two grants for peer admins so you do
 // not have to bootstrap each teammate by hand. Each entry must be
@@ -245,7 +199,7 @@ module aiConnections './connection.bicep' = [
 // ---------------------------------------------------------------------------
 
 var foundryUserRoleId = '53ca6127-db72-4b80-b1b0-d745d6d5456d' // Foundry User
-var azureAIAccountOwnerRoleId = 'e47c6f54-e4a2-4754-9501-8e0985b135e1' // Azure AI Account Owner
+var foundryProjectManagerRoleId = 'eadc314b-1a2d-4efa-be10-5d325db5065e' // Foundry Project Manager
 var cognitiveServicesUserRoleId = 'a97b65f3-24c7-4388-baec-2e87135dc908' // Cognitive Services User (data-plane: Content Safety, OpenAI, etc.)
 
 resource localUserFoundryUserAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
@@ -258,13 +212,13 @@ resource localUserFoundryUserAssignment 'Microsoft.Authorization/roleAssignments
   }
 }
 
-resource localUserAccountOwnerAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource localUserProjectManagerAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: aiAccount
-  name: guid(aiAccount.id, principalId, azureAIAccountOwnerRoleId)
+  name: guid(aiAccount.id, principalId, foundryProjectManagerRoleId)
   properties: {
     principalId: principalId
     principalType: principalType
-    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', azureAIAccountOwnerRoleId)
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', foundryProjectManagerRoleId)
   }
 }
 
@@ -280,22 +234,32 @@ resource additionalAdminFoundryUserAssignments 'Microsoft.Authorization/roleAssi
   }
 ]
 
-resource additionalAdminAccountOwnerAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
+resource additionalAdminProjectManagerAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
   for admin in additionalAdmins: {
     scope: aiAccount
-    name: guid(aiAccount.id, admin.principalId, azureAIAccountOwnerRoleId)
+    name: guid(aiAccount.id, admin.principalId, foundryProjectManagerRoleId)
     properties: {
       principalId: admin.principalId
       principalType: admin.principalType
-      roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', azureAIAccountOwnerRoleId)
+      roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', foundryProjectManagerRoleId)
     }
   }
 ]
 
-// Grant the AI project's system-assigned managed identity (which the hosted
-// agent runtime authenticates as) `Cognitive Services User` on the parent
-// account. This unlocks Content Safety data-plane actions used by the
-// LangChain `AzureContentModerationMiddleware`, plus OpenAI inference calls.
+// The hosted-agent platform uses the project managed identity while creating
+// agent runtime resources. Foundry User is required for that project data-plane
+// access; Cognitive Services User additionally enables direct Content Safety
+// and OpenAI calls from the runtime.
+resource projectMIFoundryUserAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: aiAccount
+  name: guid(aiAccount.id, aiAccount::project.id, foundryUserRoleId)
+  properties: {
+    principalId: aiAccount::project.identity.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', foundryUserRoleId)
+  }
+}
+
 resource projectMICognitiveServicesUserAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: aiAccount
   name: guid(aiAccount.id, aiAccount::project.id, cognitiveServicesUserRoleId)
@@ -422,7 +386,7 @@ module azureAiSearch '../search/azure_ai_search.bicep' = if (hasSearchConnection
     aiProjectName: aiAccount::project.name
     principalId: principalId
     principalType: principalType
-    location: location
+    location: searchLocation
   }
 }
 
@@ -458,6 +422,9 @@ output dependentResources object = {
     loginServer: hasAcrConnection
       ? acr!.outputs.containerRegistryLoginServer
       : ((hasExistingAcr || hasExistingAcrConnection) ? existingContainerRegistryEndpoint : '')
+    resourceId: hasAcrConnection
+      ? acr!.outputs.containerRegistryResourceId
+      : ((hasExistingAcr || hasExistingAcrConnection) ? existingContainerRegistryResourceId : '')
     connectionName: hasAcrConnection
       ? acr!.outputs.containerRegistryConnectionName
       : (hasExistingAcrConnection ? existingAcrConnectionName : (hasExistingAcr ? 'acr-${resourceToken}' : ''))
@@ -487,32 +454,6 @@ output dependentResources object = {
     connectionName: hasStorageConnection ? storage!.outputs.storageConnectionName : ''
   }
 }
-
-type deploymentsType = {
-  @description('Specify the name of cognitive service account deployment.')
-  name: string
-
-  @description('Required. Properties of Cognitive Services account deployment model.')
-  model: {
-    @description('Required. The name of Cognitive Services account deployment model.')
-    name: string
-
-    @description('Required. The format of Cognitive Services account deployment model.')
-    format: string
-
-    @description('Required. The version of Cognitive Services account deployment model.')
-    version: string
-  }
-
-  @description('The resource model definition representing SKU.')
-  sku: {
-    @description('Required. The name of the resource model definition representing SKU.')
-    name: string
-
-    @description('The capacity of the resource model definition representing SKU.')
-    capacity: int
-  }
-}[]?
 
 type dependentResourcesType = {
   @description('The type of dependent resource to create')

@@ -124,8 +124,8 @@ on:
 
 # NOTE: M365 / Teams listing is intentionally NOT a CI input. The Foundry
 # publish API requires a user-delegated token and rejects app-only SP tokens.
-# Run `make publish <agent>` from a developer laptop instead. Post-deploy
-# evals are owned by .github/workflows/evals.yml (scheduled + manual).
+# Run `make publish <agent>` from a developer laptop instead. Foundry-native
+# evaluation contracts are operated separately from deployment.
 
 
 concurrency:
@@ -149,16 +149,17 @@ env:
   MODEL_VERSION: ${{ vars.MODEL_VERSION || '2026-04-24' }}
   MODEL_SKU_NAME: ${{ vars.MODEL_SKU_NAME || 'GlobalStandard' }}
   MODEL_CAPACITY: ${{ vars.MODEL_CAPACITY || '200' }}
+  AZURE_AI_SEARCH_KB_CHAT_DEPLOYMENT_NAME: ${{ vars.AZURE_AI_SEARCH_KB_CHAT_DEPLOYMENT_NAME || 'gpt-5-mini' }}
+  AZURE_AI_SEARCH_KB_CHAT_MODEL_NAME: ${{ vars.AZURE_AI_SEARCH_KB_CHAT_MODEL_NAME || 'gpt-5-mini' }}
+  AZURE_AI_SEARCH_KB_CHAT_MODEL_VERSION: ${{ vars.AZURE_AI_SEARCH_KB_CHAT_MODEL_VERSION || '2025-08-07' }}
+  AZURE_AI_SEARCH_KB_CHAT_MODEL_FORMAT: ${{ vars.AZURE_AI_SEARCH_KB_CHAT_MODEL_FORMAT || 'OpenAI' }}
+  AZURE_AI_SEARCH_KB_CHAT_MODEL_SKU_NAME: ${{ vars.AZURE_AI_SEARCH_KB_CHAT_MODEL_SKU_NAME || 'GlobalStandard' }}
+  AZURE_AI_SEARCH_KB_CHAT_MODEL_CAPACITY: ${{ vars.AZURE_AI_SEARCH_KB_CHAT_MODEL_CAPACITY || '200' }}
   AZURE_AI_EMBEDDING_DEPLOYMENT_NAME: ${{ vars.AZURE_AI_EMBEDDING_DEPLOYMENT_NAME || 'text-embedding-3-large' }}
   EMBEDDING_MODEL_NAME: ${{ vars.EMBEDDING_MODEL_NAME || 'text-embedding-3-large' }}
   EMBEDDING_MODEL_VERSION: ${{ vars.EMBEDDING_MODEL_VERSION || '1' }}
   EMBEDDING_MODEL_SKU_NAME: ${{ vars.EMBEDDING_MODEL_SKU_NAME || 'Standard' }}
   EMBEDDING_MODEL_CAPACITY: ${{ vars.EMBEDDING_MODEL_CAPACITY || '50' }}
-  CONTENT_UNDERSTANDING_COMPLETION_DEPLOYMENT_NAME: ${{ vars.CONTENT_UNDERSTANDING_COMPLETION_DEPLOYMENT_NAME || 'gpt-4.1' }}
-  CONTENT_UNDERSTANDING_COMPLETION_MODEL_NAME: ${{ vars.CONTENT_UNDERSTANDING_COMPLETION_MODEL_NAME || 'gpt-4.1' }}
-  CONTENT_UNDERSTANDING_COMPLETION_MODEL_VERSION: ${{ vars.CONTENT_UNDERSTANDING_COMPLETION_MODEL_VERSION || '2025-04-14' }}
-  CONTENT_UNDERSTANDING_COMPLETION_MODEL_SKU_NAME: ${{ vars.CONTENT_UNDERSTANDING_COMPLETION_MODEL_SKU_NAME || 'GlobalStandard' }}
-  CONTENT_UNDERSTANDING_COMPLETION_MODEL_CAPACITY: ${{ vars.CONTENT_UNDERSTANDING_COMPLETION_MODEL_CAPACITY || '50' }}
 
 jobs:
   discover:
@@ -167,7 +168,7 @@ jobs:
     outputs:
       agents: ${{ steps.list.outputs.agents }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.0
         with:
           repository: caldova/waypoint
           ref: ${{ inputs.source_ref || github.ref }}
@@ -175,7 +176,7 @@ jobs:
           fetch-depth: 0   # need history for `git diff`
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v6.3.0
         with:
           python-version: "3.12"
 
@@ -251,7 +252,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.0
         with:
           repository: caldova/waypoint
           ref: ${{ inputs.source_ref || github.ref }}
@@ -274,10 +275,10 @@ jobs:
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Install Azure Developer CLI
-        uses: Azure/setup-azd@v2
+        uses: Azure/setup-azd@v2.3.0
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v6.3.0
         with:
           python-version: "3.12"
 
@@ -285,7 +286,7 @@ jobs:
         run: azd ext install azure.ai.agents
 
       - name: Azure login (OIDC)
-        uses: azure/login@v3
+        uses: azure/login@v3.0.0
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
@@ -309,16 +310,17 @@ jobs:
           azd env set MODEL_VERSION "$MODEL_VERSION"
           azd env set MODEL_SKU_NAME "$MODEL_SKU_NAME"
           azd env set MODEL_CAPACITY "$MODEL_CAPACITY"
+          azd env set AZURE_AI_SEARCH_KB_CHAT_DEPLOYMENT_NAME "$AZURE_AI_SEARCH_KB_CHAT_DEPLOYMENT_NAME"
+          azd env set AZURE_AI_SEARCH_KB_CHAT_MODEL_NAME "$AZURE_AI_SEARCH_KB_CHAT_MODEL_NAME"
+          azd env set AZURE_AI_SEARCH_KB_CHAT_MODEL_VERSION "$AZURE_AI_SEARCH_KB_CHAT_MODEL_VERSION"
+          azd env set AZURE_AI_SEARCH_KB_CHAT_MODEL_FORMAT "$AZURE_AI_SEARCH_KB_CHAT_MODEL_FORMAT"
+          azd env set AZURE_AI_SEARCH_KB_CHAT_MODEL_SKU_NAME "$AZURE_AI_SEARCH_KB_CHAT_MODEL_SKU_NAME"
+          azd env set AZURE_AI_SEARCH_KB_CHAT_MODEL_CAPACITY "$AZURE_AI_SEARCH_KB_CHAT_MODEL_CAPACITY"
           azd env set AZURE_AI_EMBEDDING_DEPLOYMENT_NAME "$AZURE_AI_EMBEDDING_DEPLOYMENT_NAME"
           azd env set EMBEDDING_MODEL_NAME "$EMBEDDING_MODEL_NAME"
           azd env set EMBEDDING_MODEL_VERSION "$EMBEDDING_MODEL_VERSION"
           azd env set EMBEDDING_MODEL_SKU_NAME "$EMBEDDING_MODEL_SKU_NAME"
           azd env set EMBEDDING_MODEL_CAPACITY "$EMBEDDING_MODEL_CAPACITY"
-          azd env set CONTENT_UNDERSTANDING_COMPLETION_DEPLOYMENT_NAME "$CONTENT_UNDERSTANDING_COMPLETION_DEPLOYMENT_NAME"
-          azd env set CONTENT_UNDERSTANDING_COMPLETION_MODEL_NAME "$CONTENT_UNDERSTANDING_COMPLETION_MODEL_NAME"
-          azd env set CONTENT_UNDERSTANDING_COMPLETION_MODEL_VERSION "$CONTENT_UNDERSTANDING_COMPLETION_MODEL_VERSION"
-          azd env set CONTENT_UNDERSTANDING_COMPLETION_MODEL_SKU_NAME "$CONTENT_UNDERSTANDING_COMPLETION_MODEL_SKU_NAME"
-          azd env set CONTENT_UNDERSTANDING_COMPLETION_MODEL_CAPACITY "$CONTENT_UNDERSTANDING_COMPLETION_MODEL_CAPACITY"
 
           # WebIQ expert grounds on Azure "Grounding with Bing Search", provisioned
           # by bicep (core/search/bing_grounding.bicep) with its key auto-read via
@@ -393,7 +395,7 @@ jobs:
       !(github.event_name == 'workflow_dispatch' && inputs.skip_provision == true)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.0
         with:
           repository: caldova/waypoint
           ref: ${{ inputs.source_ref || github.ref }}
@@ -417,10 +419,10 @@ jobs:
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Install Azure Developer CLI
-        uses: Azure/setup-azd@v2
+        uses: Azure/setup-azd@v2.3.0
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v6.3.0
         with:
           python-version: "3.12"
 
@@ -428,7 +430,7 @@ jobs:
         run: azd ext install azure.ai.agents
 
       - name: Azure login (OIDC)
-        uses: azure/login@v3
+        uses: azure/login@v3.0.0
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
@@ -456,16 +458,17 @@ jobs:
           azd env set MODEL_VERSION "$MODEL_VERSION"
           azd env set MODEL_SKU_NAME "$MODEL_SKU_NAME"
           azd env set MODEL_CAPACITY "$MODEL_CAPACITY"
+          azd env set AZURE_AI_SEARCH_KB_CHAT_DEPLOYMENT_NAME "$AZURE_AI_SEARCH_KB_CHAT_DEPLOYMENT_NAME"
+          azd env set AZURE_AI_SEARCH_KB_CHAT_MODEL_NAME "$AZURE_AI_SEARCH_KB_CHAT_MODEL_NAME"
+          azd env set AZURE_AI_SEARCH_KB_CHAT_MODEL_VERSION "$AZURE_AI_SEARCH_KB_CHAT_MODEL_VERSION"
+          azd env set AZURE_AI_SEARCH_KB_CHAT_MODEL_FORMAT "$AZURE_AI_SEARCH_KB_CHAT_MODEL_FORMAT"
+          azd env set AZURE_AI_SEARCH_KB_CHAT_MODEL_SKU_NAME "$AZURE_AI_SEARCH_KB_CHAT_MODEL_SKU_NAME"
+          azd env set AZURE_AI_SEARCH_KB_CHAT_MODEL_CAPACITY "$AZURE_AI_SEARCH_KB_CHAT_MODEL_CAPACITY"
           azd env set AZURE_AI_EMBEDDING_DEPLOYMENT_NAME "$AZURE_AI_EMBEDDING_DEPLOYMENT_NAME"
           azd env set EMBEDDING_MODEL_NAME "$EMBEDDING_MODEL_NAME"
           azd env set EMBEDDING_MODEL_VERSION "$EMBEDDING_MODEL_VERSION"
           azd env set EMBEDDING_MODEL_SKU_NAME "$EMBEDDING_MODEL_SKU_NAME"
           azd env set EMBEDDING_MODEL_CAPACITY "$EMBEDDING_MODEL_CAPACITY"
-          azd env set CONTENT_UNDERSTANDING_COMPLETION_DEPLOYMENT_NAME "$CONTENT_UNDERSTANDING_COMPLETION_DEPLOYMENT_NAME"
-          azd env set CONTENT_UNDERSTANDING_COMPLETION_MODEL_NAME "$CONTENT_UNDERSTANDING_COMPLETION_MODEL_NAME"
-          azd env set CONTENT_UNDERSTANDING_COMPLETION_MODEL_VERSION "$CONTENT_UNDERSTANDING_COMPLETION_MODEL_VERSION"
-          azd env set CONTENT_UNDERSTANDING_COMPLETION_MODEL_SKU_NAME "$CONTENT_UNDERSTANDING_COMPLETION_MODEL_SKU_NAME"
-          azd env set CONTENT_UNDERSTANDING_COMPLETION_MODEL_CAPACITY "$CONTENT_UNDERSTANDING_COMPLETION_MODEL_CAPACITY"
 
           # WebIQ expert grounds on Azure "Grounding with Bing Search", provisioned
           # by bicep (key auto-read via listKeys()) — no secret or URL to seed here.
@@ -580,6 +583,14 @@ jobs:
             echo "No infra/ changes between $BASE and $HEAD."
           fi
 
+      - name: Bootstrap Foundry parent account
+        if: |
+          (github.event_name == 'workflow_dispatch' && inputs.provision == true) ||
+          ((github.event_name == 'push' || github.event_name == 'pull_request') &&
+            steps.infra_changes.outputs.changed == 'true')
+        run: bash scripts/bootstrap_foundry_account.sh
+        timeout-minutes: 10
+
       - name: Provision Azure resources
         # Run once, before per-agent deploys, to avoid parallel infra races.
         # Only fires when explicitly requested (dispatch with provision=true)
@@ -657,7 +668,7 @@ jobs:
       contracts_kb_indexer: ${{ steps.coords.outputs.indexer }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.0
         with:
           repository: caldova/waypoint
           ref: ${{ inputs.source_ref || github.ref }}
@@ -680,10 +691,10 @@ jobs:
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Install Azure Developer CLI
-        uses: Azure/setup-azd@v2
+        uses: Azure/setup-azd@v2.3.0
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v6.3.0
         with:
           python-version: "3.12"
 
@@ -691,7 +702,7 @@ jobs:
         run: azd ext install azure.ai.agents
 
       - name: Azure login (OIDC)
-        uses: azure/login@v3
+        uses: azure/login@v3.0.0
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
@@ -719,21 +730,8 @@ jobs:
           azd env set AZURE_TENANT_ID       "${{ vars.AZURE_TENANT_ID }}"
           azd env set AZURE_SUBSCRIPTION_ID "${{ vars.AZURE_SUBSCRIPTION_ID }}"
           azd env set AZURE_CLIENT_ID       "${{ vars.AZURE_CLIENT_ID }}"
-          # AI Teammate blueprint client secret for assurance-orchestrator.
-          # agent.yaml binds ${ASSURANCE_ORCHESTRATOR_BLUEPRINT_CLIENT_SECRET}
-          # into CONNECTIONS__SERVICE_CONNECTION__SETTINGS__CLIENTSECRET, which
-          # the MSAL confidential-client agentic-token flow behind /api/messages
-          # requires (Teams direct chat AND digital-worker email). CI has no
-          # remote azd state, so inject it from the repo Actions secret before
-          # `azd deploy`. Guard on non-empty so runs without the secret don't
-          # shadow a local .env with "" (which surfaces as an opaque -60018 at
-          # hire-chat time — see docs/AI_TEAMMATE.md).
-          orch_bp_secret="${{ secrets.ASSURANCE_ORCHESTRATOR_BLUEPRINT_CLIENT_SECRET }}"
-          if [ -n "$orch_bp_secret" ]; then
-            azd env set ASSURANCE_ORCHESTRATOR_BLUEPRINT_CLIENT_SECRET "$orch_bp_secret"
-          fi
-          # Same blueprint-secret requirement for invoice-analyst's Teams
-          # chat surface. agent.yaml binds ${INVOICE_ANALYST_BLUEPRINT_CLIENT_SECRET}
+          # invoice-analyst is the sole Activity-protocol agent. Its manifest binds
+          # ${INVOICE_ANALYST_BLUEPRINT_CLIENT_SECRET}
           # into CONNECTIONS__SERVICE_CONNECTION__SETTINGS__CLIENTSECRET.
           analyst_bp_secret="${{ secrets.INVOICE_ANALYST_BLUEPRINT_CLIENT_SECRET }}"
           if [ -n "$analyst_bp_secret" ]; then
@@ -774,8 +772,6 @@ jobs:
           azd env set CONTENT_UNDERSTANDING_API_VERSION "2025-11-01"
           azd env set CONTENT_UNDERSTANDING_ANALYZER_ID "prebuilt-invoice"
           azd env set CONTENT_UNDERSTANDING_SCOPE "https://cognitiveservices.azure.com/.default"
-          azd env set CONTENT_UNDERSTANDING_COMPLETION_DEPLOYMENT_NAME "$CONTENT_UNDERSTANDING_COMPLETION_DEPLOYMENT_NAME"
-          azd env set CONTENT_UNDERSTANDING_COMPLETION_MODEL_NAME "$CONTENT_UNDERSTANDING_COMPLETION_MODEL_NAME"
           # Waypoint API base URL + scope are waypoint DEPLOY OUTPUTS (not self-computable
           # by forge). The keystone umbrella passes them as workflow_call inputs (fresh,
           # authoritative — waypoint-deploy runs BEFORE forge-deploy). For STANDALONE forge
@@ -1048,6 +1044,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Discover blueprint client id for ${{ matrix.agent }}
+        if: matrix.agent == 'invoice-analyst'
         # The Microsoft 365 AI Teammate /api/messages mount in
         # agents/<name>/activity_protocol.py only activates when the
         # container env var CONNECTIONS__SERVICE_CONNECTION__SETTINGS__CLIENTID
@@ -1305,11 +1302,13 @@ jobs:
           # model AND serve project-endpoint reads from the Playground.
           grant "instance_identity" "$INSTANCE_PRINCIPAL_ID" "$COGNITIVE_SERVICES_USER" "Cognitive Services User"
           grant "instance_identity" "$INSTANCE_PRINCIPAL_ID" "$FOUNDRY_USER" "Foundry User"
-          # blueprint only needs Cognitive Services User for Bot Service auth.
-          grant "blueprint" "$BLUEPRINT_PRINCIPAL_ID" "$COGNITIVE_SERVICES_USER" "Cognitive Services User"
+          if [ "$AGENT" = "invoice-analyst" ]; then
+            grant "blueprint" "$BLUEPRINT_PRINCIPAL_ID" "$COGNITIVE_SERVICES_USER" "Cognitive Services User"
+          fi
         timeout-minutes: 3
 
       - name: Ensure agent endpoint protocols + auth scheme for ${{ matrix.agent }}
+        if: matrix.agent == 'invoice-analyst'
         # Runs on EVERY deploy (not just publish) because `azd deploy` can
         # reset an agent's `agent_endpoint.protocols` to `["responses"]` only.
         # When that happens, Bot Service POSTs to `/protocols/activityprotocol`
@@ -1357,9 +1356,8 @@ jobs:
           #      from this account's ACR (sanity check that azd deploy
           #      pushed a new image, not that Foundry re-used a stale one).
           #
-          # Real end-to-end coverage of the container path is exercised
-          # by post-deploy evals (.github/workflows/evals.yml) and by
-          # manual "what can you do?" testing in Teams against a hire.
+          # Real end-to-end coverage of the container path is exercised by
+          # the root deployment acceptance run and direct hosted-agent smoke.
           set +e
           set -u
           echo "Smoke-testing ${AGENT} via Foundry control plane…"
@@ -1455,15 +1453,10 @@ jobs:
               sleep 15
               continue
             fi
-            echo "::warning::Agent ${AGENT} v${VERSION} is active (control plane 200) but never surfaced an ACR image digest (image field empty) after ${max_img_polls} polls. Treating as a soft pass: azd reported the container was packaged, published and the version reached active. Container-path is covered by post-deploy evals."
+            echo "::warning::Agent ${AGENT} v${VERSION} is active (control plane 200) but never surfaced an ACR image digest (image field empty) after ${max_img_polls} polls. Treating as a soft pass: azd reported the container was packaged, published and the version reached active. Exercise the hosted response through the root deployment acceptance run."
             break
           done
         timeout-minutes: 8
-
-      # Post-deploy evals run from .github/workflows/evals.yml on a schedule
-      # (and can be triggered manually there). They intentionally do not run
-      # in this workflow to keep deploys fast and to keep eval failures from
-      # blocking deploys.
 
       - name: Tail recent logs on failure
         if: failure()
@@ -1481,7 +1474,7 @@ jobs:
         #
         # Listing in the Microsoft 365 Copilot agent store is a separate
         # step (`make publish AGENT=<name>` from a developer laptop).
-        if: github.event_name == 'workflow_dispatch' && inputs.publish == true
+        if: github.event_name == 'workflow_dispatch' && inputs.publish == true && matrix.agent == 'invoice-analyst'
         env:
           AGENT_NAME: ${{ matrix.agent }}
           PROJECT_ENDPOINT: ${{ steps.endpoint.outputs.endpoint }}
@@ -1585,19 +1578,19 @@ jobs:
       (needs.deploy.result == 'success' || needs.deploy.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.0
         with:
           repository: caldova/waypoint
           ref: ${{ inputs.source_ref || github.ref }}
           token: ${{ secrets.REPO_TOKEN || github.token }}
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v6.3.0
         with:
           python-version: "3.12"
 
       - name: Azure login (OIDC)
-        uses: azure/login@v3
+        uses: azure/login@v3.0.0
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}

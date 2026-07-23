@@ -15,9 +15,11 @@ export function loader() {
       process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
   );
   const isDev = process.env.NODE_ENV === "development";
+  const repository =
+    process.env.WAYPOINT_GITHUB_REPOSITORY || process.env.GITHUB_REPOSITORY || "caldova/waypoint";
 
   const otelConfig = {
-    serviceName: process.env.OTEL_SERVICE_NAME || "starter-web",
+    serviceName: process.env.OTEL_SERVICE_NAME || "waypoint-web",
     resourceAttributes: process.env.OTEL_RESOURCE_ATTRIBUTES || undefined,
     tracesSampler: process.env.OTEL_TRACES_SAMPLER || undefined,
     otlpHttpEndpoint: hasOtlpEndpoint ? "/otlp/v1/traces" : undefined,
@@ -36,6 +38,14 @@ export function loader() {
     env: {
       DEV: isDev,
       localMode: isDev,
+    },
+    qualityOperations: {
+      repositoryUrl:
+        process.env.WAYPOINT_GITHUB_REPOSITORY_URL || `https://github.com/${repository}`,
+      workflowFile:
+        process.env.WAYPOINT_QUALITY_WORKFLOW_FILE || "agent-quality-operations.yml",
+      rftEnvironment:
+        process.env.WAYPOINT_RFT_APPROVAL_ENVIRONMENT || "quality-rft-submit",
     },
     buildVersion: typeof __BUILD_VERSION__ !== "undefined" ? __BUILD_VERSION__ : "unknown",
   };

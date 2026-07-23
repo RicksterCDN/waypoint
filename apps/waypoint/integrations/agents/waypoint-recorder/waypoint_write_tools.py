@@ -35,13 +35,21 @@ from telemetry import rft_reference_attributes, operation_id, set_span_attribute
 
 logger = logging.getLogger("waypoint_recorder.waypoint_write_tools")
 
-_PLANES = ("workiq", "webiq", "foundryiq", "fabriciq")
+_EXPERT_AGENT_BY_PLANE = {
+    "workiq": "collaboration-evidence-expert",
+    "webiq": "market-evidence-expert",
+    "foundryiq": "contract-policy-expert",
+    "fabriciq": "operations-data-expert",
+}
 
 _RESULT_SHAPE = """{
   "invoice_id": "INV-2026-08034",
   "decision": "approve|recover|escalate|review",
   "reasoning": "Why this decision, citing the fused evidence.",
   "confidence": 0.0,
+  "confidence_basis": "model_supplied|expert_evidence_mean|calibration_artifact",
+  "confidence_calibrated": false,
+  "confidence_calibration_id": "optional reviewed calibration artifact id",
   "money_at_risk": 0.0,
   "finding_id": "optional finding id",
   "title": "optional case title",
@@ -183,11 +191,12 @@ def _waypoint_record_assurance_inner(result_json: str) -> str:
     experts = [
         str(lane.get("agent") or lane.get("plane") or "")
         for lane in fanout
-        if lane and _lane_is_grounded(lane)
+        if lane and _lane_is_expert(lane) and _lane_is_grounded(lane)
     ]
     experts = [name for name in experts if name]
 
     confidence = _float(result.get("confidence"))
+    confidence_attribution = _confidence_attribution(result)
     classification = str(result.get("classification") or "standard")
     summary = str(result.get("summary") or "").strip()
 
@@ -217,6 +226,7 @@ def _waypoint_record_assurance_inner(result_json: str) -> str:
         "invoice_number": invoice_number,
         "decision": decision,
         "confidence": confidence,
+        **confidence_attribution,
         "money_at_risk": money_at_risk,
         "finding_count": grounding["finding_count"],
         "experts_consulted": experts,
@@ -275,6 +285,7 @@ def _waypoint_record_assurance_inner(result_json: str) -> str:
                 "expert_evidence": fanout,
                 "invoice_number": invoice_number,
                 "decision_governance": decision_governance,
+                **confidence_attribution,
             },
         )
         correlation["waypoint_recommendation_id"] = _id(recommendation)
@@ -688,19 +699,35 @@ def _lane_is_grounded(lane: dict[str, Any]) -> bool:
     )
 
 
+def _lane_is_expert(lane: dict[str, Any]) -> bool:
+    plane = str(lane.get("plane") or "").strip().lower()
+    agent = str(lane.get("agent") or "").strip().lower()
+    return _EXPERT_AGENT_BY_PLANE.get(plane) == agent
+
+
 def _normalize_fanout(raw: Any, grounding: dict[str, Any]) -> list[dict[str, Any]]:
-    """Use the model-provided fan-out when present; otherwise synthesize one from the
-    grounded corpus so the run always carries a per-plane evidence trail."""
+    """Keep only canonical expert lanes from the orchestrator's runtime fan-out.
+
+    Grounded invoice context is not proof that an optional expert ran, so missing or
+    malformed fan-out must not be synthesized into expert participation.
+    """
+    del grounding
     lanes = _as_list(raw)
     cleaned: list[dict[str, Any]] = []
     for lane in lanes:
         if not isinstance(lane, dict):
             continue
+        plane = str(lane.get("plane") or "").strip().lower()
+        agent = str(lane.get("agent") or "").strip().lower()
+        expected_agent = _EXPERT_AGENT_BY_PLANE.get(plane)
+        if expected_agent != agent:
+            logger.warning("discarding non-expert fan-out lane agent=%r plane=%r", agent, plane)
+            continue
         evidence = [_clean_claim(c) for c in _as_list(lane.get("evidence")) if isinstance(c, dict)]
         cleaned.append(
             {
-                "agent": str(lane.get("agent") or lane.get("plane") or "").strip(),
-                "plane": str(lane.get("plane") or "").strip(),
+                "agent": expected_agent,
+                "plane": plane,
                 "summary": str(lane.get("summary") or "").strip(),
                 "output_quality": str(lane.get("output_quality") or "").strip(),
                 "unsupported": _str_list(lane.get("unsupported")),
@@ -708,68 +735,7 @@ def _normalize_fanout(raw: Any, grounding: dict[str, Any]) -> list[dict[str, Any
             }
         )
     cleaned = [lane for lane in cleaned if lane["evidence"] or lane["summary"]]
-    if cleaned:
-        return cleaned
-    return _synthesize_fanout(grounding)
-
-
-def _synthesize_fanout(grounding: dict[str, Any]) -> list[dict[str, Any]]:
-    findings = grounding.get("findings") or []
-    evidence = grounding.get("evidence") or []
-    foundry_claims = []
-    for finding in findings:
-        overpay = _float(finding.get("overpayment_amount"))
-        supports = "recover" if overpay > 0 else "review"
-        for doc_id in _str_list(finding.get("contract_document_ids")):
-            foundry_claims.append(
-                {
-                    "claim": f"Governing contract document {doc_id} applies to this charge.",
-                    "supports": supports,
-                    "source_ref": doc_id,
-                    "classification": "confidential",
-                    "confidence": 0.8,
-                }
-            )
-        for policy_id in _str_list(finding.get("policy_ids")):
-            foundry_claims.append(
-                {
-                    "claim": f"Policy {policy_id} governs billability for this finding.",
-                    "supports": supports,
-                    "source_ref": policy_id,
-                    "classification": "standard",
-                    "confidence": 0.8,
-                }
-            )
-    workiq_claims = [
-        {
-            "claim": str(ev.get("excerpt") or ev.get("title") or "Supporting evidence reference"),
-            "supports": "review",
-            "source_ref": str(ev.get("uri") or ev.get("id") or ""),
-            "classification": "standard",
-            "confidence": 0.6,
-        }
-        for ev in evidence
-    ]
-    lanes = {
-        "fabriciq": ("operations-data-expert", "FabricIQ is temporarily stubbed; no Fabric, OneLake, warehouse, or semantic-model source was queried.", []),
-        "foundryiq": ("contract-policy-expert", "Contract clauses and governing policies.", foundry_claims),
-        "workiq": ("collaboration-evidence-expert", "Workplace correspondence and evidence references.", workiq_claims),
-        "webiq": ("market-evidence-expert", "External corroboration; no contradicting public signal found.", []),
-    }
-    out: list[dict[str, Any]] = []
-    for plane in _PLANES:
-        agent, plane_summary, claims = lanes[plane]
-        out.append(
-            {
-                "agent": agent,
-                "plane": plane,
-                "summary": plane_summary,
-                "output_quality": "unknown",
-                "unsupported": [],
-                "evidence": claims,
-            }
-        )
-    return out
+    return cleaned
 
 
 def _clean_claim(claim: dict[str, Any]) -> dict[str, Any]:
@@ -837,6 +803,9 @@ def _normalize_result_contract(result: dict[str, Any]) -> dict[str, Any]:
         return result
 
     metadata = recommendation.get("metadata") if isinstance(recommendation.get("metadata"), dict) else {}
+    confidence_calibrated = recommendation.get("confidence_calibrated")
+    if confidence_calibrated is None:
+        confidence_calibrated = metadata.get("confidence_calibrated")
     normalized = {
         "invoice_id": result.get("invoice_id"),
         "invoice_number": result.get("invoice_number"),
@@ -844,6 +813,18 @@ def _normalize_result_contract(result: dict[str, Any]) -> dict[str, Any]:
         "decision": recommendation.get("decision"),
         "reasoning": recommendation.get("reasoning"),
         "confidence": recommendation.get("confidence"),
+        "confidence_basis": recommendation.get("confidence_basis") or metadata.get("confidence_basis"),
+        "confidence_calibrated": confidence_calibrated,
+        "confidence_calibration_id": (
+            recommendation.get("confidence_calibration_id")
+            or metadata.get("confidence_calibration_id")
+            or metadata.get("calibration_artifact_id")
+        ),
+        "confidence_calibration_version": (
+            recommendation.get("confidence_calibration_version")
+            or metadata.get("confidence_calibration_version")
+            or metadata.get("calibration_version")
+        ),
         "money_at_risk": recommendation.get("money_at_risk"),
         "finding_id": result.get("finding_id"),
         "title": result.get("title"),
@@ -891,6 +872,52 @@ def _float(value: Any) -> float:
         return float(value)
     except (TypeError, ValueError):
         return 0.0
+
+
+def _confidence_attribution(result: dict[str, Any]) -> dict[str, Any]:
+    """Preserve confidence provenance without letting model text self-calibrate."""
+    metadata = result.get("metadata") if isinstance(result.get("metadata"), dict) else {}
+    basis = _opt(result.get("confidence_basis")) or _opt(metadata.get("confidence_basis"))
+    if not basis:
+        basis = "model_supplied" if "confidence" in result else "not_provided"
+
+    calibration_id = (
+        _opt(result.get("confidence_calibration_id"))
+        or _opt(metadata.get("confidence_calibration_id"))
+        or _opt(result.get("calibration_artifact_id"))
+        or _opt(metadata.get("calibration_artifact_id"))
+    )
+    calibration_version = (
+        _opt(result.get("confidence_calibration_version"))
+        or _opt(metadata.get("confidence_calibration_version"))
+        or _opt(result.get("calibration_version"))
+        or _opt(metadata.get("calibration_version"))
+    )
+    calibrated_value = result.get("confidence_calibrated")
+    if calibrated_value is None:
+        calibrated_value = metadata.get("confidence_calibrated")
+    calibrated = _bool(calibrated_value)
+    if calibrated and not (calibration_id or calibration_version):
+        logger.warning("ignoring calibrated confidence without calibration artifact provenance")
+        calibrated = False
+
+    attribution: dict[str, Any] = {
+        "confidence_basis": basis,
+        "confidence_calibrated": calibrated,
+    }
+    if calibration_id:
+        attribution["confidence_calibration_id"] = calibration_id
+    if calibration_version:
+        attribution["confidence_calibration_version"] = calibration_version
+    return attribution
+
+
+def _bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return False
 
 
 def _str_list(value: Any) -> list[str]:

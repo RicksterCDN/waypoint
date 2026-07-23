@@ -48,13 +48,13 @@ def main() -> int:
     parser.add_argument("--scope", default=os.getenv("CONTENT_UNDERSTANDING_SCOPE", DEFAULT_SCOPE))
     parser.add_argument(
         "--completion-model",
-        default=os.getenv("CONTENT_UNDERSTANDING_COMPLETION_MODEL_NAME", "gpt-4.1"),
+        default=os.getenv("CONTENT_UNDERSTANDING_COMPLETION_MODEL_NAME", "gpt-5.5"),
     )
     parser.add_argument(
         "--completion-deployment",
         default=os.getenv("CONTENT_UNDERSTANDING_COMPLETION_DEPLOYMENT_NAME")
         or os.getenv("CONTENT_UNDERSTANDING_GPT_DEPLOYMENT")
-        or "gpt-4.1",
+        or "gpt-5.5",
     )
     parser.add_argument(
         "--embedding-deployment",
@@ -211,12 +211,13 @@ def _hosted_agent_env_summary(project_endpoint: str, agent_name: str) -> dict[st
 
 
 def _az_access_token(scope: str) -> str:
+    resource = scope.removesuffix(".default")
     result = _run_az(
         [
             "account",
             "get-access-token",
-            "--scope",
-            scope,
+            "--resource",
+            resource,
             "--query",
             "accessToken",
             "-o",

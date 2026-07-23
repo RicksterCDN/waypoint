@@ -23,7 +23,7 @@ from app.modules.cases.schemas import AssuranceCaseCreate
 from app.modules.cases.service import CasesService
 from app.modules.records.schemas import FindingValidationCreate
 from app.modules.records.service import WaypointService
-from app.modules.runs.schemas import AgentRunCreate
+from app.modules.runs.schemas import AgentRunCreate, AgentRunUpdate
 from app.modules.runs.service import RunsService
 
 if sys.platform == "win32":
@@ -329,16 +329,51 @@ async def test_postgres_finding_validations_are_append_only():
 
 
 @pytest.mark.asyncio
-async def test_invoice_decision_feed_excludes_run_less_invoices(client: AsyncClient):
+async def test_invoice_decision_feed_includes_run_less_invoices_without_expected_outcomes(
+    client: AsyncClient,
+):
     override_settings(Settings(local_auth_enabled=True, default_seed_enabled=True))
 
     response = await client.get("/api/invoice-decisions")
 
     assert response.status_code == 200
     decisions = response.json()
-    # Fully-agentic feed: the default seed invoice has no agent case, so it is hidden entirely
-    # (no seed-placeholder rows). With 0 agent cases anywhere the feed is empty, not an error.
-    assert decisions == []
+    assert len(decisions) == 1
+    row = decisions[0]
+    assert row["invoice_id"] == "inv-2026-08034"
+    assert row["decision"] == "Not run"
+    assert row["reasoning"] == "Ready for assurance."
+    assert row["status"] == "not_started"
+    assert row["has_agent_decision"] is False
+    assert row["has_active_run"] is False
+    assert row["category"] == ""
+    assert row["severity"] == ""
+    assert row["overpayment_amount"] == "0"
+    assert row["evidence_count"] == 0
+    assert row["contract_document_ids"] == []
+    assert row["policy_ids"] == []
+
+    run_response = await client.post(
+        "/api/runs",
+        json={
+            "name": "assurance:INV-2026-08034",
+            "status": "running",
+            "metadata": {
+                "invoice_id": "inv-2026-08034",
+                "invoice_number": "INV-2026-08034",
+            },
+        },
+    )
+    assert run_response.status_code == 201
+
+    pending = (await client.get("/api/invoice-decisions")).json()[0]
+    assert pending["decision"] == "Pending"
+    assert pending["reasoning"] == "Assurance review is in progress."
+    assert pending["status"] == "pending"
+    assert pending["has_active_run"] is True
+    assert pending["category"] == ""
+    assert pending["overpayment_amount"] == "0"
+    assert pending["evidence_count"] == 0
 
 
 @pytest.mark.asyncio
@@ -614,8 +649,7 @@ async def test_configured_ledgerfield_seed_path_imports_on_startup(tmp_path):
     )
     invoices = await WaypointService(repository).list_invoices()
 
-    # The configured seed replaces the default seed on startup. The decision feed is now
-    # fully-agentic (run-gated), so verify the import via the raw invoice list instead.
+    # The configured seed replaces the default seed on startup.
     assert any(invoice.invoice_number == "INV-CONFIGURED" for invoice in invoices)
     assert not any(invoice.invoice_number == "INV-2026-08034" for invoice in invoices)
     reset_waypoint_repository_for_tests()
@@ -971,6 +1005,7 @@ async def test_invoice_assurance_surfaces_agent_decision_and_draft(client: Async
                 "Review governing capacity contract for approval and credit provisions.",
             ],
             "metadata": {
+                "confidence_calibrated": True,
                 "expert_evidence": [
                     {
                         "agent": "webiq-expert",
@@ -1088,6 +1123,7 @@ async def test_invoice_decision_feed_reflects_newest_agent_run(client: AsyncClie
             "confidence": "0.86",
             "money_at_risk": "18750",
             "metadata": {
+                "confidence_calibrated": True,
                 "expert_evidence": [
                     {
                         "agent": "contract",
@@ -1128,6 +1164,7 @@ async def test_invoice_decision_feed_reflects_newest_agent_run(client: AsyncClie
     # the register must NOT echo that as reasoning — agent_title is None and the
     # register falls through to the descriptive finding summary.
     assert row["confidence"] == "0.86"
+    assert row["confidence_calibrated"] is True
     assert row["agent_title"] is None
     assert row["reasoning"] == (
         "Contamination investigation charge is billed although the deviation "
@@ -1135,6 +1172,31 @@ async def test_invoice_decision_feed_reflects_newest_agent_run(client: AsyncClie
     )
     assert row["agent_plane_count"] == 2
     assert row["agent_source_count"] == 3
+
+    uncalibrated_case = (
+        await client.post(
+            "/api/cases",
+            json={"invoice_id": "inv-2026-08034", "summary": "Newest uncalibrated run."},
+        )
+    ).json()
+    await client.post(
+        f"/api/cases/{uncalibrated_case['id']}/recommendations",
+        json={
+            "decision": "review",
+            "reasoning": "Fallback retrieval score is not calibrated decision confidence.",
+            "confidence": "0.99",
+            "money_at_risk": "0",
+            "metadata": {
+                "confidence_basis": "expert_evidence_mean",
+                "confidence_calibrated": False,
+            },
+        },
+    )
+
+    decisions = (await client.get("/api/invoice-decisions")).json()
+    row = next(d for d in decisions if d["invoice_id"] == "inv-2026-08034")
+    assert row["confidence"] == "0.99"
+    assert row["confidence_calibrated"] is False
 
 
 @pytest.mark.asyncio
@@ -1283,6 +1345,24 @@ async def test_agent_run_open_is_deduped_by_invoice_name(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_concurrent_agent_run_opens_reuse_one_active_anchor():
+    repository = repository_module.InMemoryWaypointRepository()
+    service = RunsService(repository)
+    create = AgentRunCreate(
+        name="assurance:INV-CONCURRENT",
+        status="running",
+        idempotency_key="open-inv-concurrent",
+    )
+
+    runs = await asyncio.gather(
+        *(service.create_agent_run(create, actor="agent") for _ in range(20))
+    )
+
+    assert len({run.id for run in runs}) == 1
+    assert len(await repository.list_agent_runs()) == 1
+
+
+@pytest.mark.asyncio
 async def test_agent_run_open_after_terminal_creates_new_run(client: AsyncClient):
     """A finalized (non-active) run does not get reused; a new open creates a fresh anchor."""
     override_settings(Settings(local_auth_enabled=True, default_seed_enabled=True))
@@ -1359,6 +1439,84 @@ async def test_agent_run_reuse_backfills_operation_id(client: AsyncClient):
     )
     assert second.json()["id"] == first_id
     assert second.json()["app_insights_operation_id"] == "op-enriched"
+
+
+@pytest.mark.asyncio
+async def test_agent_run_backfill_does_not_overwrite_concurrent_finalize():
+    """A terminal finalize racing W3 backfill wins while the correlation id is still enriched."""
+
+    class _FinalizeDuringBackfillRepo(repository_module.InMemoryWaypointRepository):
+        def __init__(self) -> None:
+            super().__init__()
+            self._finalized = False
+
+        async def compare_and_swap_agent_run(self, run, expected):
+            if not self._finalized:
+                self._finalized = True
+                current = self.agent_runs[run.id]
+                self.agent_runs[run.id] = current.model_copy(
+                    update={"status": "completed", "updated_at": datetime.now(UTC)}
+                )
+            return await super().compare_and_swap_agent_run(run, expected)
+
+    repository = _FinalizeDuringBackfillRepo()
+    await repository.initialize(load_default_seed=False)
+    service = RunsService(repository)
+    first = await service.create_agent_run(
+        AgentRunCreate(name="assurance:INV-BACKFILL-RACE"),
+        actor="backfill-test@example.com",
+    )
+
+    reused = await service.create_agent_run(
+        AgentRunCreate(
+            name=first.name,
+            app_insights_operation_id="op-concurrent-finalize",
+        ),
+        actor="backfill-test@example.com",
+    )
+
+    assert reused.status == "completed"
+    assert reused.app_insights_operation_id == "op-concurrent-finalize"
+    stored = await repository.get_agent_run(first.id)
+    assert stored is not None
+    assert stored.status == "completed"
+    assert stored.app_insights_operation_id == "op-concurrent-finalize"
+
+
+@pytest.mark.asyncio
+async def test_agent_run_finalize_preserves_concurrent_backfill():
+    """A terminal finalize retries against and preserves W3 enrichment."""
+
+    class _BackfillDuringFinalizeRepo(repository_module.InMemoryWaypointRepository):
+        def __init__(self) -> None:
+            super().__init__()
+            self._enriched = False
+
+        async def compare_and_swap_agent_run(self, run, expected):
+            if not self._enriched:
+                self._enriched = True
+                current = self.agent_runs[run.id]
+                self.agent_runs[run.id] = current.model_copy(
+                    update={
+                        "app_insights_operation_id": "op-raced-backfill",
+                        "updated_at": datetime.now(UTC),
+                    }
+                )
+            return await super().compare_and_swap_agent_run(run, expected)
+
+    repository = _BackfillDuringFinalizeRepo()
+    await repository.initialize(load_default_seed=False)
+    service = RunsService(repository)
+    opened = await service.create_agent_run(
+        AgentRunCreate(name="assurance:INV-FINALIZE-RACE"),
+        actor="finalize-test@example.com",
+    )
+
+    finalized = await service.update_agent_run(opened.id, AgentRunUpdate(status="completed"))
+
+    assert finalized is not None
+    assert finalized.status == "completed"
+    assert finalized.app_insights_operation_id == "op-raced-backfill"
 
 
 def test_run_reaper_ttl_defaults_above_orchestrator_bound():

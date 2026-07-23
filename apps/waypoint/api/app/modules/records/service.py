@@ -1,5 +1,6 @@
 """Business logic for Waypoint invoice assurance data."""
 
+import asyncio
 import hashlib
 import json
 from collections.abc import Iterable
@@ -40,6 +41,7 @@ class _AgentAttribution:
     decision_label: str | None = None
     money_at_risk: Decimal | None = None
     confidence: Decimal | None = None
+    confidence_calibrated: bool = False
     title: str | None = None
     source_count: int = 0
     plane_count: int = 0
@@ -105,7 +107,12 @@ class WaypointService:
         document = await self.repository.get_contract_document(document_id)
         if not document:
             return None
-        return build_contract_document_detail(document, self.onelake, include_content)
+        return await asyncio.to_thread(
+            build_contract_document_detail,
+            document,
+            self.onelake,
+            include_content,
+        )
 
     @trace
     async def get_policy(self, policy_id: str) -> Policy | None:
@@ -120,7 +127,12 @@ class WaypointService:
         policy = await self.repository.get_policy(policy_id)
         if not policy:
             return None
-        return build_policy_detail(policy, self.onelake, include_content)
+        return await asyncio.to_thread(
+            build_policy_detail,
+            policy,
+            self.onelake,
+            include_content,
+        )
 
     @trace
     async def get_invoice_pdf(self, invoice_id: str) -> ResolvedBytes | None:
@@ -137,7 +149,11 @@ class WaypointService:
             return None
         if self.onelake is None:
             return ResolvedBytes(data=None, content_source="uri-only", path=detail.pdf_uri)
-        return self.onelake.resolve_document_bytes(detail.pdf_uri, "invoice-pdf")
+        return await asyncio.to_thread(
+            self.onelake.resolve_document_bytes,
+            detail.pdf_uri,
+            "invoice-pdf",
+        )
 
     @trace
     async def list_invoices(
@@ -158,13 +174,12 @@ class WaypointService:
                 continue
             attribution = await self._resolve_agent_attribution(detail.id)
             has_active_run = detail.id in active_keys or detail.invoice_number in active_keys
-            # Fully-agentic feed: an invoice surfaces once an agent run has produced a
-            # recommendation, OR while a run is still in flight (shown as "Pending" with no
-            # decision or amount so the money totals stay decision-only). Run-less invoices with
-            # neither a recorded decision nor an active run stay hidden.
-            if not attribution.has_agent_decision and not has_active_run:
-                continue
-            finding = detail.findings[0] if detail.findings else None
+            # The register includes the complete invoice work queue so every imported invoice can
+            # be selected for assurance. Seed findings are expected outcomes, not runtime evidence;
+            # withhold them until an agent recommendation exists.
+            finding = (
+                detail.findings[0] if attribution.has_agent_decision and detail.findings else None
+            )
             basis_summary = _basis_summary(finding) if finding else None
             meaningful_title = _meaningful_case_title(attribution.title, detail.invoice_number)
             evidence = (
@@ -183,7 +198,7 @@ class WaypointService:
             elif has_active_run:
                 decision_label = "Pending"
             else:
-                decision_label = _decision_label(finding.status) if finding else "Review"
+                decision_label = "Not run"
             if attribution.has_agent_decision:
                 overpayment_amount = (
                     attribution.money_at_risk
@@ -203,9 +218,21 @@ class WaypointService:
                     scenario_name=detail.scenario.name if detail.scenario else None,
                     decision=decision_label,
                     category=finding.category if finding else "",
-                    reasoning=finding.summary if finding else (meaningful_title or ""),
+                    reasoning=(
+                        finding.summary
+                        if finding
+                        else (
+                            "Assurance review is in progress."
+                            if has_active_run
+                            else "Ready for assurance."
+                        )
+                    ),
                     severity=finding.severity if finding else "",
-                    status=finding.status if finding else "open",
+                    status=(
+                        finding.status
+                        if finding
+                        else ("pending" if has_active_run else "not_started")
+                    ),
                     currency=detail.currency,
                     overpayment_amount=overpayment_amount,
                     overpayment_display=_format_money(overpayment_amount, detail.currency),
@@ -224,6 +251,7 @@ class WaypointService:
                     agent_run_at=attribution.run_at,
                     agent_case_id=attribution.case_id,
                     confidence=attribution.confidence,
+                    confidence_calibrated=attribution.confidence_calibrated,
                     agent_title=meaningful_title,
                     agent_source_count=attribution.source_count,
                     agent_plane_count=attribution.plane_count,
@@ -272,11 +300,13 @@ class WaypointService:
         if latest is None:
             return _AgentAttribution()
         plane_count, source_count = _expert_evidence_counts(latest.metadata)
+        confidence_calibrated = latest.metadata.get("confidence_calibrated") is True
         return _AgentAttribution(
             has_agent_decision=True,
             decision_label=_agent_decision_label(latest.decision),
             money_at_risk=latest.money_at_risk,
             confidence=latest.confidence,
+            confidence_calibrated=confidence_calibrated,
             title=newest.title,
             source_count=source_count,
             plane_count=plane_count,

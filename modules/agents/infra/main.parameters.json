@@ -5,6 +5,9 @@
       "resourceGroupName": {
         "value": "${AZURE_RESOURCE_GROUP}"
       },
+      "resourceGroupLocation": {
+        "value": "${AZURE_RESOURCE_GROUP_LOCATION}"
+      },
       "environmentName": {
         "value": "${AZURE_ENV_NAME}"
       },
@@ -20,6 +23,9 @@
       "aiDeploymentsLocation": {
         "value": "${AZURE_LOCATION}"
       },
+      "searchLocation": {
+        "value": "${AZURE_AI_SEARCH_LOCATION=${AZURE_LOCATION}}"
+      },
       "principalId": {
         "value": "${AZURE_PRINCIPAL_ID}"
       },
@@ -33,10 +39,10 @@
         "value": "${AI_PROJECT_DEPLOYMENTS=[]}"
       },
       "modelDeploymentName": {
-        "value": "${AZURE_AI_MODEL_DEPLOYMENT_NAME=gpt-5-mini}"
+        "value": "${AZURE_AI_MODEL_DEPLOYMENT_NAME=gpt-5.5}"
       },
       "modelName": {
-        "value": "${MODEL_NAME=gpt-5-mini}"
+        "value": "${MODEL_NAME=gpt-5.5}"
       },
       "modelVersion": {
         "value": "${MODEL_VERSION=2026-04-24}"
@@ -49,6 +55,24 @@
       },
       "modelCapacity": {
         "value": "${MODEL_CAPACITY=200}"
+      },
+      "kbChatDeploymentName": {
+        "value": "${AZURE_AI_SEARCH_KB_CHAT_DEPLOYMENT_NAME=gpt-5-mini}"
+      },
+      "kbChatModelName": {
+        "value": "${AZURE_AI_SEARCH_KB_CHAT_MODEL_NAME=gpt-5-mini}"
+      },
+      "kbChatModelVersion": {
+        "value": "${AZURE_AI_SEARCH_KB_CHAT_MODEL_VERSION=2025-08-07}"
+      },
+      "kbChatModelFormat": {
+        "value": "${AZURE_AI_SEARCH_KB_CHAT_MODEL_FORMAT=OpenAI}"
+      },
+      "kbChatModelSkuName": {
+        "value": "${AZURE_AI_SEARCH_KB_CHAT_MODEL_SKU_NAME=GlobalStandard}"
+      },
+      "kbChatModelCapacity": {
+        "value": "${AZURE_AI_SEARCH_KB_CHAT_MODEL_CAPACITY=200}"
       },
       "embeddingDeploymentName": {
         "value": "${AZURE_AI_EMBEDDING_DEPLOYMENT_NAME=text-embedding-3-large}"
@@ -64,21 +88,6 @@
       },
       "embeddingModelCapacity": {
         "value": "${EMBEDDING_MODEL_CAPACITY=50}"
-      },
-      "contentUnderstandingCompletionDeploymentName": {
-        "value": "${CONTENT_UNDERSTANDING_COMPLETION_DEPLOYMENT_NAME=gpt-4.1}"
-      },
-      "contentUnderstandingCompletionModelName": {
-        "value": "${CONTENT_UNDERSTANDING_COMPLETION_MODEL_NAME=gpt-4.1}"
-      },
-      "contentUnderstandingCompletionModelVersion": {
-        "value": "${CONTENT_UNDERSTANDING_COMPLETION_MODEL_VERSION=2025-04-14}"
-      },
-      "contentUnderstandingCompletionModelSkuName": {
-        "value": "${CONTENT_UNDERSTANDING_COMPLETION_MODEL_SKU_NAME=GlobalStandard}"
-      },
-      "contentUnderstandingCompletionModelCapacity": {
-        "value": "${CONTENT_UNDERSTANDING_COMPLETION_MODEL_CAPACITY=50}"
       },
       "aiProjectConnectionsJson": {
         "value": "${AI_PROJECT_CONNECTIONS=[]}"
@@ -101,6 +110,9 @@
       "workiqMcpServerUrl": {
         "value": "${WORKIQ_MCP_SERVER_URL=}"
       },
+      "enableWorkiqConnections": {
+        "value": "${ENABLE_WORKIQ_CONNECTIONS=true}"
+      },
       "enableMonitoring": {
         "value": "${ENABLE_MONITORING=true}"
       },
@@ -108,7 +120,7 @@
         "value": "${ENABLE_HOSTED_AGENTS=false}"
       },
       "enableCapabilityHost": {
-        "value": "${ENABLE_CAPABILITY_HOST=true}"
+        "value": true
       },
       "enableSearch": {
         "value": "${ENABLE_SEARCH=true}"

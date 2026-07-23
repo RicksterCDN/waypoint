@@ -66,6 +66,7 @@ SET_REPO_CONFIG="true"
 # privilege. ON by default; opt out with --no-graph-grants.
 GRANT_GRAPH="true"
 WAYPOINT_APP_NAME="waypoint"
+AZD_ENV_NAME="waypoint-agents"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -84,6 +85,7 @@ while [[ $# -gt 0 ]]; do
     --graph-grants) GRANT_GRAPH="true"; shift 1 ;;
     --no-graph-grants) GRANT_GRAPH="false"; shift 1 ;;
     --waypoint-app-name) WAYPOINT_APP_NAME="$2"; shift 2 ;;
+    --azd-env-name) AZD_ENV_NAME="$2"; shift 2 ;;
     -h|--help)
       sed -n '1,51p' "$0"
       exit 0
@@ -110,9 +112,19 @@ az account set --subscription "$SUBSCRIPTION_ID"
 
 TENANT_ID="$(az account show --query tenantId -o tsv)"
 SCOPE="/subscriptions/${SUBSCRIPTION_ID}"
+SUBJECT_PREFIX="repo:${OWNER}/${REPO}"
+if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+  IMMUTABLE_PREFIX="$(
+    gh api "repos/${OWNER}/${REPO}/actions/oidc/customization/sub" \
+      --jq '.sub_claim_prefix // empty' 2>/dev/null || true
+  )"
+  if [[ -n "$IMMUTABLE_PREFIX" ]]; then
+    SUBJECT_PREFIX="$IMMUTABLE_PREFIX"
+  fi
+fi
 
 echo "Looking up app registration: ${APP_NAME}"
-APP_JSON="$(az ad app list --display-name "$APP_NAME" --query '[0]' -o json)"
+APP_JSON="$(az ad app list --filter "displayName eq '${APP_NAME}'" --query '[0]' -o json)"
 APP_ID="$(echo "$APP_JSON" | jq -r '.appId // empty')"
 APP_OBJECT_ID="$(echo "$APP_JSON" | jq -r '.id // empty')"
 
@@ -148,9 +160,12 @@ echo "Service principal object id: ${SP_OBJECT_ID}"
 ensure_fed_cred_subject() {
   local name="$1" subject="$2" desc="$3"
   echo "Ensuring federated credential: ${name}  (subject: ${subject})"
-  local count
-  count="$(az ad app federated-credential list --id "$APP_OBJECT_ID" --query "[?name=='${name}'] | length(@)" -o tsv)"
-  if [[ "$count" != "0" ]]; then
+  local current_subject
+  current_subject="$(
+    az ad app federated-credential list --id "$APP_OBJECT_ID" \
+      --query "[?name=='${name}'] | [0].subject" -o tsv
+  )"
+  if [[ "$current_subject" == "$subject" ]]; then
     echo "  already exists"
     return 0
   fi
@@ -164,9 +179,17 @@ ensure_fed_cred_subject() {
   "description": "${desc}"
 }
 EOF
-  az ad app federated-credential create --id "$APP_OBJECT_ID" --parameters "$tmp" >/dev/null
+  if [[ -n "$current_subject" ]]; then
+    az ad app federated-credential update \
+      --id "$APP_OBJECT_ID" \
+      --federated-credential-id "$name" \
+      --parameters "$tmp" >/dev/null
+    echo "  updated"
+  else
+    az ad app federated-credential create --id "$APP_OBJECT_ID" --parameters "$tmp" >/dev/null
+    echo "  created"
+  fi
   rm -f "$tmp"
-  echo "  created"
 }
 # -----------------------------------------------------------------------------
 
@@ -174,12 +197,12 @@ EOF
 if [[ -n "$ENVIRONMENT" ]]; then
   ensure_fed_cred_subject \
     "github-${OWNER}-${REPO}-env-${ENVIRONMENT}" \
-    "repo:${OWNER}/${REPO}:environment:${ENVIRONMENT}" \
+    "${SUBJECT_PREFIX}:environment:${ENVIRONMENT}" \
     "GitHub Actions OIDC for ${OWNER}/${REPO} (env ${ENVIRONMENT})"
 else
   ensure_fed_cred_subject \
     "github-${OWNER}-${REPO}-branch-${BRANCH}" \
-    "repo:${OWNER}/${REPO}:ref:refs/heads/${BRANCH}" \
+    "${SUBJECT_PREFIX}:ref:refs/heads/${BRANCH}" \
     "GitHub Actions OIDC for ${OWNER}/${REPO} (branch ${BRANCH})"
 fi
 
@@ -187,7 +210,7 @@ fi
 if [[ "$ADD_PULL_REQUEST" == "true" ]]; then
   ensure_fed_cred_subject \
     "github-${OWNER}-${REPO}-pull-request" \
-    "repo:${OWNER}/${REPO}:pull_request" \
+    "${SUBJECT_PREFIX}:pull_request" \
     "GitHub Actions OIDC for ${OWNER}/${REPO} (pull_request)"
 fi
 
@@ -250,7 +273,7 @@ if [[ "$GRANT_GRAPH" == "true" ]]; then
 
   # Ensure the waypoint app reg exists, then make the deploy SP an owner of it.
   echo "Ensuring waypoint app registration + deploy-SP ownership: ${WAYPOINT_APP_NAME}"
-  WP_JSON="$(az ad app list --display-name "$WAYPOINT_APP_NAME" --query '[0]' -o json)"
+  WP_JSON="$(az ad app list --filter "displayName eq '${WAYPOINT_APP_NAME}'" --query '[0]' -o json)"
   WP_APP_ID="$(echo "$WP_JSON" | jq -r '.appId // empty')"
   WP_OBJ_ID="$(echo "$WP_JSON" | jq -r '.id // empty')"
   if [[ -z "$WP_APP_ID" ]]; then
@@ -269,6 +292,23 @@ if [[ "$GRANT_GRAPH" == "true" ]]; then
     else
       echo "  deploy SP already owns ${WAYPOINT_APP_NAME}"
     fi
+    WP_EXISTING_TAGS="$(az ad app show --id "$WP_APP_ID" --query tags -o json 2>/dev/null || echo '[]')"
+    WP_TAG_BODY="$(AZD_ENV_NAME="$AZD_ENV_NAME" REPOSITORY="${OWNER}/${REPO}" python3 - "$WP_EXISTING_TAGS" <<'PY'
+import json, os, sys
+tags = set(json.loads(sys.argv[1] or "[]"))
+tags.update({
+    "waypoint-managed",
+    f"waypoint-environment={os.environ['AZD_ENV_NAME']}",
+    f"waypoint-repository={os.environ['REPOSITORY']}",
+})
+print(json.dumps({"tags": sorted(tags)}))
+PY
+)"
+    az rest --method PATCH \
+      --url "https://graph.microsoft.com/v1.0/applications/${WP_OBJ_ID}" \
+      --headers "Content-Type=application/json" \
+      --body "$WP_TAG_BODY" >/dev/null
+    echo "  tagged ${WAYPOINT_APP_NAME} for environment-scoped teardown"
   fi
 fi
 

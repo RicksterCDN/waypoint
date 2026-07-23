@@ -57,6 +57,7 @@ interface InvoiceDecision {
   agent_run_at: string | null;
   agent_case_id: string | null;
   confidence: string | null;
+  confidence_calibrated: boolean;
   agent_title: string | null;
   agent_source_count: number;
   agent_plane_count: number;
@@ -151,7 +152,11 @@ interface CaseRecommendation {
   proposed_next_actions: string[];
   created_by: string;
   created_at: string;
-  metadata: { expert_evidence?: FanoutLane[]; waypoint_run_id?: string };
+  metadata: {
+    expert_evidence?: FanoutLane[];
+    waypoint_run_id?: string;
+    confidence_calibrated?: boolean;
+  };
 }
 
 interface CaseDraft {
@@ -173,6 +178,38 @@ interface AgentRunRef {
   created_at: string;
   metadata: { decision?: string; fanout?: FanoutLane[] };
 }
+
+interface AssuranceRunTriggerResult {
+  reused: boolean;
+  run: {
+    id: string;
+    status: string;
+  };
+  foundry_response_id: string | null;
+}
+
+type BatchAssuranceOutcome = "accepted" | "reused" | "not_found" | "start_failed";
+
+interface BatchAssuranceItemResult {
+  invoice_id: string;
+  invoice_number: string | null;
+  outcome: BatchAssuranceOutcome;
+  run_id: string | null;
+  run_status: string | null;
+  foundry_response_id: string | null;
+}
+
+interface BatchAssuranceResult {
+  items: BatchAssuranceItemResult[];
+  total: number;
+  accepted: number;
+  reused: number;
+  not_found: number;
+  start_failed: number;
+}
+
+const MAX_BATCH_ASSURANCE_INVOICES = 25;
+const BATCH_ASSURANCE_CONCURRENCY = 4;
 
 interface AgentCaseEntry {
   case: AssuranceCase;
@@ -271,6 +308,7 @@ function decisionColor(decision: string): string {
     case "Review":
       return "#2563eb"; // blue — pending human adjudication
     case "Closed":
+    case "Not run":
       return "#64748b"; // slate
     default:
       return "#d97706"; // amber — in-flight/pending
@@ -331,6 +369,15 @@ export default function Invoices() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [agentContext, setAgentContext] = useState<AgentContext | null>(null);
   const [agentLoading, setAgentLoading] = useState(false);
+  const [triggeringInvoiceId, setTriggeringInvoiceId] = useState<string | null>(null);
+  const [triggerError, setTriggerError] = useState<string | null>(null);
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [batchConfirmOpen, setBatchConfirmOpen] = useState(false);
+  const [batchLoading, setBatchLoading] = useState(false);
+  const [batchError, setBatchError] = useState<string | null>(null);
+  const [batchResult, setBatchResult] = useState<BatchAssuranceResult | null>(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const deepLinkAppliedRef = useRef(false);
@@ -503,6 +550,39 @@ export default function Invoices() {
       cancelled = true;
     };
   }, [auth.status, selectedDecision]);
+
+  const triggerAssurance = useCallback(
+    async (decision: InvoiceDecision) => {
+      setTriggeringInvoiceId(decision.invoice_id);
+      setTriggerError(null);
+      try {
+        const response = await tracedFetch(
+          "triggerInvoiceAssurance",
+          `/api/invoices/${encodeURIComponent(decision.invoice_id)}/assurance-runs`,
+          { method: "POST" },
+        );
+        if (!response.ok) {
+          const body = (await response.json().catch(() => null)) as { detail?: string } | null;
+          throw new Error(body?.detail || `Unable to start assurance (${response.status}).`);
+        }
+        const result = (await response.json()) as AssuranceRunTriggerResult;
+        await fetchDecisions();
+        const params = new URLSearchParams({
+          invoice: decision.invoice_number || decision.invoice_id,
+          run: result.run.id,
+        });
+        if (result.reused) {
+          params.set("reused", "true");
+        }
+        navigate(`/activity?${params.toString()}`);
+      } catch (err) {
+        setTriggerError(err instanceof Error ? err.message : "Unable to start assurance.");
+      } finally {
+        setTriggeringInvoiceId(null);
+      }
+    },
+    [fetchDecisions, navigate],
+  );
 
   useEffect(() => {
     if (auth.status !== "authenticated" || !selectedDecision) {
@@ -716,14 +796,25 @@ export default function Invoices() {
     () => visible.filter((row) => row.decision === "Escalate").length,
     [visible],
   );
-  // In-flight rows (a run is working the invoice but no decision is recorded yet). Kept out of
-  // the Invoices / Escalations / Recoverable outcome tiles so the money numbers stay stable, and
-  // surfaced in their own "Pending" counter instead.
+  // Keep in-flight and unreviewed invoices out of decision metrics while retaining them in the
+  // complete selectable work queue.
   const pendingCount = useMemo(
     () => visible.filter((row) => row.has_active_run && !row.has_agent_decision).length,
     [visible],
   );
-  const decidedCount = visible.length - pendingCount;
+  const reviewedCount = useMemo(
+    () => visible.filter((row) => row.has_agent_decision).length,
+    [visible],
+  );
+  const unreviewedCount = visible.length - reviewedCount - pendingCount;
+  const selectedRows = useMemo(
+    () => decisions.filter((row) => selectedInvoiceIds.has(row.invoice_id)),
+    [decisions, selectedInvoiceIds],
+  );
+  const allVisibleSelected =
+    visible.length > 0 && visible.every((row) => selectedInvoiceIds.has(row.invoice_id));
+  const someVisibleSelected = visible.some((row) => selectedInvoiceIds.has(row.invoice_id));
+  const batchSelectionTooLarge = selectedRows.length > MAX_BATCH_ASSURANCE_INVOICES;
 
   const filtersActive =
     decisionFilter !== "all" ||
@@ -753,6 +844,91 @@ export default function Invoices() {
     [navigate],
   );
 
+  const toggleInvoiceSelection = useCallback((invoiceId: string) => {
+    setSelectedInvoiceIds((current) => {
+      const next = new Set(current);
+      if (next.has(invoiceId)) {
+        next.delete(invoiceId);
+      } else {
+        next.add(invoiceId);
+      }
+      return next;
+    });
+    setBatchError(null);
+  }, []);
+
+  const toggleVisibleSelection = useCallback(() => {
+    setSelectedInvoiceIds((current) => {
+      const next = new Set(current);
+      if (visible.every((row) => next.has(row.invoice_id))) {
+        for (const row of visible) {
+          next.delete(row.invoice_id);
+        }
+      } else {
+        for (const row of visible) {
+          next.add(row.invoice_id);
+        }
+      }
+      return next;
+    });
+    setBatchError(null);
+  }, [visible]);
+
+  const triggerBatchAssurance = useCallback(async () => {
+    const invoiceIds = selectedRows.map((row) => row.invoice_id);
+    if (
+      invoiceIds.length === 0 ||
+      invoiceIds.length > MAX_BATCH_ASSURANCE_INVOICES
+    ) {
+      return;
+    }
+
+    setBatchLoading(true);
+    setBatchError(null);
+    try {
+      const response = await tracedFetch(
+        "triggerBatchInvoiceAssurance",
+        "/api/invoices/assurance-runs/batch",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ invoice_ids: invoiceIds }),
+        },
+      );
+      if (!response.ok) {
+        throw new Error(`Unable to start batch assurance (${response.status}).`);
+      }
+      const result = (await response.json()) as BatchAssuranceResult;
+      setBatchResult(result);
+      setBatchConfirmOpen(false);
+      setSelectedInvoiceIds(new Set());
+      await fetchDecisions();
+    } catch (err) {
+      setBatchError(
+        err instanceof Error ? err.message : "Unable to start batch assurance.",
+      );
+    } finally {
+      setBatchLoading(false);
+    }
+  }, [fetchDecisions, selectedRows]);
+
+  const openBatchActivity = useCallback(() => {
+    const item = batchResult?.items.find(
+      (candidate) =>
+        (candidate.outcome === "accepted" || candidate.outcome === "reused") &&
+        candidate.run_id,
+    );
+    if (!item) {
+      navigate("/activity");
+      return;
+    }
+    const params = new URLSearchParams({
+      invoice: item.invoice_number || item.invoice_id,
+      run: item.run_id as string,
+    });
+    navigate(`/activity?${params.toString()}`);
+  }, [batchResult, navigate]);
+
   return (
     <RequireAuth>
       <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-950">
@@ -772,11 +948,11 @@ export default function Invoices() {
                       Supplier invoice register
                     </p>
                     <h1 className="mt-1 text-xl font-semibold tracking-tight">
-                      Invoices reviewed by Waypoint
+                      Supplier invoices
                     </h1>
                     <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
-                      Every supplier invoice we&apos;ve scanned, with its decision, basis, and
-                      recoverable overpayment. Filter the register to decide where to act.
+                      The complete invoice work queue. Select any unreviewed invoices to run
+                      assurance, then inspect recorded decisions, evidence, and recovery.
                     </p>
                   </div>
                   <div
@@ -784,7 +960,7 @@ export default function Invoices() {
                   >
                     <InfoTile
                       label={filtersActive ? "Shown" : "Invoices"}
-                      value={loading ? "..." : String(decidedCount)}
+                      value={loading ? "..." : String(visible.length)}
                     />
                     {pendingCount > 0 ? (
                       <InfoTile
@@ -820,13 +996,17 @@ export default function Invoices() {
                   <HiSparkles className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
                   {loading
                     ? "Loading supplier invoice decisions from the Waypoint API…"
-                    : `${formatMoney(totalOverpayment)} recoverable across ${decidedCount} invoice${
-                        decidedCount === 1 ? "" : "s"
+                    : `${formatMoney(totalOverpayment)} recoverable across ${reviewedCount} reviewed invoice${
+                        reviewedCount === 1 ? "" : "s"
                       } · ${escalationCount} escalation${
                         escalationCount === 1 ? "" : "s"
                       }${
                         pendingCount > 0
                           ? ` · ${pendingCount} pending`
+                          : ""
+                      }${
+                        unreviewedCount > 0
+                          ? ` · ${unreviewedCount} ready to run`
                           : ""
                       }. Human approvals and citations stay attached to every recommendation.`}
                 </p>
@@ -867,15 +1047,26 @@ export default function Invoices() {
                       ? `Showing ${visible.length} of ${decisions.length}`
                       : `${decisions.length} invoice${decisions.length === 1 ? "" : "s"}`}
                 </span>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                  onClick={fetchDecisions}
-                  disabled={loading || auth.status !== "authenticated"}
-                >
-                  <HiRefresh className={loading ? "h-3.5 w-3.5 animate-spin" : "h-3.5 w-3.5"} />
-                  Refresh
-                </button>
+                <div className="flex items-center gap-2">
+                  {!loading && visible.length > 0 ? (
+                    <button
+                      type="button"
+                      className="min-h-9 rounded-md border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      onClick={toggleVisibleSelection}
+                    >
+                      {allVisibleSelected ? "Clear visible" : "Select visible"}
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={fetchDecisions}
+                    disabled={loading || auth.status !== "authenticated"}
+                  >
+                    <HiRefresh className={loading ? "h-3.5 w-3.5 animate-spin" : "h-3.5 w-3.5"} />
+                    Refresh
+                  </button>
+                </div>
               </div>
 
               <div className="min-h-0 flex-1 overflow-auto">
@@ -883,13 +1074,14 @@ export default function Invoices() {
                   <p className="px-3 py-6 text-sm text-slate-500">Loading invoices…</p>
                 ) : decisions.length === 0 ? (
                   <p className="px-3 py-6 text-sm text-slate-500">
-                    No invoice decisions yet.
+                    No invoices are available.
                   </p>
                 ) : visible.length === 0 ? (
                   <NoMatches onReset={resetFilters} />
                 ) : (
                   <table className="w-full table-fixed text-left text-[13px]">
                     <colgroup>
+                      <col className="w-[44px]" />
                       <col className="w-[170px]" />
                       <col />
                       <col className="w-[100px]" />
@@ -901,6 +1093,23 @@ export default function Invoices() {
                     </colgroup>
                     <thead className="sticky top-0 z-10 bg-slate-50 text-[11px] uppercase tracking-[0.16em] text-slate-500 shadow-[0_1px_0_rgba(0,0,0,0.06)]">
                       <tr>
+                        <th className="p-0" scope="col">
+                          <label
+                            className="inline-flex h-11 w-11 cursor-pointer items-center justify-center"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <SelectionCheckbox
+                              checked={allVisibleSelected}
+                              mixed={someVisibleSelected && !allVisibleSelected}
+                              label={
+                                allVisibleSelected
+                                  ? "Clear all visible invoices"
+                                  : "Select all visible invoices"
+                              }
+                              onChange={toggleVisibleSelection}
+                            />
+                          </label>
+                        </th>
                         <th className="px-3 py-2" scope="col">Invoice</th>
                         <th className="px-3 py-2" scope="col">Reasoning</th>
                         <th className="px-3 py-2" scope="col">Decision</th>
@@ -921,6 +1130,7 @@ export default function Invoices() {
                           key={row.invoice_id}
                           className={[
                             "cursor-pointer hover:bg-slate-50",
+                            selectedInvoiceIds.has(row.invoice_id) ? "bg-indigo-50/60" : "",
                             selectedDecision?.invoice_id === row.invoice_id ? "bg-blue-50/70" : "",
                           ].join(" ")}
                           onClick={() => openRow(row)}
@@ -933,6 +1143,19 @@ export default function Invoices() {
                           tabIndex={0}
                           aria-selected={selectedDecision?.invoice_id === row.invoice_id}
                         >
+                          <td className="p-0">
+                            <label
+                              className="inline-flex h-11 w-11 cursor-pointer items-center justify-center"
+                              onClick={(event) => event.stopPropagation()}
+                              onKeyDown={(event) => event.stopPropagation()}
+                            >
+                              <SelectionCheckbox
+                                checked={selectedInvoiceIds.has(row.invoice_id)}
+                                label={`Select invoice ${row.invoice_number}`}
+                                onChange={() => toggleInvoiceSelection(row.invoice_id)}
+                              />
+                            </label>
+                          </td>
                           <td className="px-3 py-2.5">
                             <span className="block truncate font-semibold">{row.invoice_number}</span>
                             {row.supplier_name ? (
@@ -997,7 +1220,11 @@ export default function Invoices() {
                             <BasisPills basisTypes={row.basis_types} />
                           </td>
                           <td className="px-3 py-2.5">
-                            <ConfidenceBadge confidence={row.confidence} />
+                            <ConfidenceBadge
+                              confidence={row.confidence}
+                              calibrated={row.confidence_calibrated}
+                              hasDecision={row.has_agent_decision}
+                            />
                           </td>
                           <td className="px-3 py-2.5 text-slate-600">
                             <SourceCount
@@ -1006,7 +1233,7 @@ export default function Invoices() {
                             />
                           </td>
                           <td className="px-3 py-2.5 font-semibold text-emerald-700">
-                            {row.has_active_run && !row.has_agent_decision
+                            {!row.has_agent_decision
                               ? <span className="text-slate-400">—</span>
                               : row.overpayment_display}
                           </td>
@@ -1016,6 +1243,17 @@ export default function Invoices() {
                   </table>
                 )}
               </div>
+              {selectedRows.length > 0 || batchResult || batchError ? (
+                <BatchAssuranceBar
+                  selectedCount={selectedRows.length}
+                  selectionTooLarge={batchSelectionTooLarge}
+                  result={batchResult}
+                  error={batchError}
+                  onReview={() => setBatchConfirmOpen(true)}
+                  onClear={() => setSelectedInvoiceIds(new Set())}
+                  onViewActivity={openBatchActivity}
+                />
+              ) : null}
             </section>
 
             <aside className="flex min-h-0 flex-col gap-2 overflow-auto">
@@ -1036,6 +1274,16 @@ export default function Invoices() {
                 loading={detailLoading}
                 agentContext={agentContext}
                 agentLoading={agentLoading}
+                triggering={triggeringInvoiceId === selectedDecision.invoice_id}
+                triggerError={triggerError}
+                onRunAssurance={() => void triggerAssurance(selectedDecision)}
+                onViewActivity={() =>
+                  navigate(
+                    `/activity?invoice=${encodeURIComponent(
+                      selectedDecision.invoice_number || selectedDecision.invoice_id,
+                    )}`,
+                  )
+                }
                 onOpenDocument={openDocumentPreview}
                 onOpenPdf={(uri) =>
                   setPreview({
@@ -1049,6 +1297,21 @@ export default function Invoices() {
               />
             ) : null}
 
+            {batchConfirmOpen ? (
+              <BatchAssuranceConfirmation
+                rows={selectedRows}
+                loading={batchLoading}
+                error={batchError}
+                onConfirm={() => void triggerBatchAssurance()}
+                onClose={() => {
+                  if (!batchLoading) {
+                    setBatchConfirmOpen(false);
+                    setBatchError(null);
+                  }
+                }}
+              />
+            ) : null}
+
             {preview ? (
               <DocumentPreviewModal preview={preview} onClose={() => setPreview(null)} />
             ) : previewLoading ? (
@@ -1058,6 +1321,261 @@ export default function Invoices() {
         </div>
       </div>
     </RequireAuth>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Batch assurance
+// ---------------------------------------------------------------------------
+
+function SelectionCheckbox({
+  checked,
+  mixed = false,
+  label,
+  onChange,
+}: {
+  checked: boolean;
+  mixed?: boolean;
+  label: string;
+  onChange: () => void;
+}) {
+  const checkboxRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (checkboxRef.current) {
+      checkboxRef.current.indeterminate = mixed;
+    }
+  }, [mixed]);
+
+  return (
+    <input
+      ref={checkboxRef}
+      type="checkbox"
+      checked={checked}
+      aria-label={label}
+      onChange={onChange}
+      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+    />
+  );
+}
+
+function BatchAssuranceBar({
+  selectedCount,
+  selectionTooLarge,
+  result,
+  error,
+  onReview,
+  onClear,
+  onViewActivity,
+}: {
+  selectedCount: number;
+  selectionTooLarge: boolean;
+  result: BatchAssuranceResult | null;
+  error: string | null;
+  onReview: () => void;
+  onClear: () => void;
+  onViewActivity: () => void;
+}) {
+  const hasActivityRuns = Boolean(
+    result?.items.some(
+      (item) =>
+        (item.outcome === "accepted" || item.outcome === "reused") && item.run_id,
+    ),
+  );
+
+  return (
+    <div
+      className="sticky bottom-0 z-20 border-t border-slate-200 bg-white/95 px-3 py-2.5 shadow-[0_-4px_14px_rgba(15,23,42,0.08)] backdrop-blur"
+      aria-live="polite"
+    >
+      {selectedCount > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-slate-900">
+              {selectedCount} invoice{selectedCount === 1 ? "" : "s"} selected
+            </p>
+            <p
+              className={`text-xs ${
+                selectionTooLarge ? "font-medium text-rose-700" : "text-slate-500"
+              }`}
+            >
+              {selectionTooLarge
+                ? `Reduce the selection to ${MAX_BATCH_ASSURANCE_INVOICES} invoices or fewer.`
+                : `Batch limit ${MAX_BATCH_ASSURANCE_INVOICES} · up to ${BATCH_ASSURANCE_CONCURRENCY} starts at once`}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="rounded-md px-3 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"
+              onClick={onClear}
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={onReview}
+              disabled={selectionTooLarge}
+            >
+              <HiSparkles className="h-4 w-4" aria-hidden="true" />
+              Review batch
+            </button>
+          </div>
+        </div>
+      ) : result ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+              <HiCheckCircle className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+              Batch request processed
+            </p>
+            <p className="mt-0.5 text-xs text-slate-600">
+              {result.accepted} started · {result.reused} reused · {result.not_found} not found ·{" "}
+              {result.start_failed} failed to start
+            </p>
+          </div>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={onViewActivity}
+            disabled={!hasActivityRuns}
+          >
+            View Activity
+            <HiExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </div>
+      ) : error ? (
+        <p className="text-sm text-rose-700" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function BatchAssuranceConfirmation({
+  rows,
+  loading,
+  error,
+  onConfirm,
+  onClose,
+}: {
+  rows: InvoiceDecision[];
+  loading: boolean;
+  error: string | null;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  const totalAtRisk = rows.reduce(
+    (sum, row) => sum + overpaymentAmount(row),
+    0,
+  );
+
+  useEffect(() => {
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape" && !loading) {
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [loading, onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="batch-assurance-title"
+      aria-describedby="batch-assurance-guidance"
+      onClick={loading ? undefined : onClose}
+    >
+      <section
+        className="w-full max-w-lg overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 p-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-700">
+              Batch assurance
+            </p>
+            <h2 id="batch-assurance-title" className="mt-1 text-xl font-semibold">
+              Start assurance for {rows.length} invoice{rows.length === 1 ? "" : "s"}?
+            </h2>
+          </div>
+          <button
+            type="button"
+            className="rounded-md p-1 text-slate-400 hover:bg-slate-50 disabled:opacity-50"
+            onClick={onClose}
+            disabled={loading}
+          >
+            <HiX className="h-5 w-5" aria-hidden="true" />
+            <span className="sr-only">Close batch confirmation</span>
+          </button>
+        </div>
+
+        <div className="space-y-4 p-4">
+          <div
+            id="batch-assurance-guidance"
+            className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm leading-5 text-blue-950"
+          >
+            Each newly accepted invoice starts a hosted agent orchestration and may incur usage
+            cost. Active runs are reused automatically. Waypoint starts at most{" "}
+            {BATCH_ASSURANCE_CONCURRENCY} invoices concurrently and accepts up to{" "}
+            {MAX_BATCH_ASSURANCE_INVOICES} per batch.
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-slate-500">Current recoverable amount</span>
+            <span className="font-semibold text-emerald-700">{formatMoney(totalAtRisk)}</span>
+          </div>
+
+          <ul className="max-h-40 divide-y divide-slate-100 overflow-auto rounded-lg border border-slate-200">
+            {rows.map((row) => (
+              <li
+                key={row.invoice_id}
+                className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
+              >
+                <span className="truncate font-medium text-slate-800">{row.invoice_number}</span>
+                <span className="truncate text-slate-500">{row.supplier_name}</span>
+              </li>
+            ))}
+          </ul>
+
+          {error ? (
+            <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700" role="alert">
+              {error}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50 px-4 py-3">
+          <button
+            type="button"
+            className="rounded-md px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 disabled:opacity-50"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
+            onClick={onConfirm}
+            disabled={loading}
+            autoFocus
+          >
+            {loading ? (
+              <HiRefresh className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <HiSparkles className="h-4 w-4" aria-hidden="true" />
+            )}
+            {loading ? "Starting batch…" : "Start batch assurance"}
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -1287,7 +1805,7 @@ function InsightsSidebar({
   const decisionMix = useMemo(() => {
     const counts = new Map<string, number>();
     for (const row of rows) {
-      if (row.decision === "Pending") {
+      if (row.decision === "Pending" || row.decision === "Not run") {
         continue;
       }
       counts.set(row.decision, (counts.get(row.decision) ?? 0) + 1);
@@ -1336,7 +1854,7 @@ function InsightsSidebar({
 
   const trend = useMemo(() => buildRecoveryTrend(rows), [rows]);
 
-  const total = rows.length;
+  const total = decisionMix.reduce((sum, item) => sum + item.count, 0);
   const recoverySupplierMax = recoveryBySupplier[0]?.amount ?? 0;
 
   return (
@@ -1534,6 +2052,10 @@ function DecisionDrawer({
   loading,
   agentContext,
   agentLoading,
+  triggering,
+  triggerError,
+  onRunAssurance,
+  onViewActivity,
   onOpenDocument,
   onOpenPdf,
   onClose,
@@ -1543,6 +2065,10 @@ function DecisionDrawer({
   loading: boolean;
   agentContext: AgentContext | null;
   agentLoading: boolean;
+  triggering: boolean;
+  triggerError: string | null;
+  onRunAssurance: () => void;
+  onViewActivity: () => void;
   onOpenDocument: (type: "contract" | "policy", id: string) => void;
   onOpenPdf: (uri: string) => void;
   onClose: () => void;
@@ -1554,7 +2080,7 @@ function DecisionDrawer({
     setSelectedCaseId(null);
   }, [decision.invoice_id]);
 
-  const finding = detail?.findings[0];
+  const finding = decision.has_agent_decision ? detail?.findings[0] : undefined;
   const entries = agentContext?.entries ?? [];
   const selectedEntry =
     entries.find((entry) => entry.case.id === selectedCaseId) ?? entries[0] ?? null;
@@ -1568,9 +2094,9 @@ function DecisionDrawer({
   const moneyAtRisk = newestRecommendation
     ? formatAgentMoney(newestRecommendation.money_at_risk)
     : decision.overpayment_display;
-  const confidencePct = newestRecommendation
-    ? Math.round(Number(newestRecommendation.confidence) * 100)
-    : null;
+  const newestConfidence = parseConfidenceScore(newestRecommendation?.confidence);
+  const newestConfidenceCalibrated =
+    newestRecommendation?.metadata.confidence_calibrated === true;
   const headerDecision = newestRecommendation
     ? agentDecisionToLabel(newestRecommendation.decision)
     : decision.decision;
@@ -1604,12 +2130,43 @@ function DecisionDrawer({
           </div>
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
             <DecisionPill decision={headerDecision} />
-            <SummaryChip tone="emerald">{moneyAtRisk} at risk</SummaryChip>
-            {confidencePct !== null ? (
-              <SummaryChip tone="slate">{confidencePct}% confidence</SummaryChip>
+            {decision.has_agent_decision ? (
+              <>
+                <SummaryChip tone="emerald">{moneyAtRisk} at risk</SummaryChip>
+                {newestConfidence !== null ? (
+                  <SummaryChip
+                    tone="slate"
+                    title={confidenceTitle(newestConfidenceCalibrated)}
+                  >
+                    {confidenceText(newestConfidence, newestConfidenceCalibrated)}
+                  </SummaryChip>
+                ) : (
+                  <SummaryChip tone="slate">Confidence not available</SummaryChip>
+                )}
+                <SummaryChip tone="slate">{decision.category}</SummaryChip>
+                <SummaryChip tone="slate">{decision.evidence_count} evidence</SummaryChip>
+              </>
             ) : null}
-            <SummaryChip tone="slate">{decision.category}</SummaryChip>
-            <SummaryChip tone="slate">{decision.evidence_count} evidence</SummaryChip>
+          </div>
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={decision.has_active_run ? onViewActivity : onRunAssurance}
+              disabled={triggering}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
+            >
+              <HiSparkles className={triggering ? "h-4 w-4 animate-pulse" : "h-4 w-4"} />
+              {triggering
+                ? "Starting assurance…"
+                : decision.has_active_run
+                  ? "View active run"
+                  : "Run assurance"}
+            </button>
+            {triggerError ? (
+              <p className="mt-2 text-sm text-rose-700" role="alert">
+                {triggerError}
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -1618,25 +2175,37 @@ function DecisionDrawer({
         <div className="min-h-0 flex-1 overflow-auto">
           {tab === "decision" ? (
             <div className="space-y-5 p-4">
-              <AgentDecisionSummary
-                entries={entries}
-                selectedEntry={selectedEntry}
-                onSelectCase={setSelectedCaseId}
-                loading={agentLoading}
-              />
+              {decision.has_agent_decision ? (
+                <>
+                  <AgentDecisionSummary
+                    entries={entries}
+                    selectedEntry={selectedEntry}
+                    onSelectCase={setSelectedCaseId}
+                    loading={agentLoading}
+                  />
 
-              <section>
-                <h3 className="font-semibold">Finding</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-700">
-                  {finding?.summary ?? decision.reasoning}
-                </p>
-              </section>
+                  <section>
+                    <h3 className="font-semibold">Finding</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      {finding?.summary ?? decision.reasoning}
+                    </p>
+                  </section>
 
-              <BasisGlance
-                decision={decision}
-                finding={finding}
-                onViewDocuments={() => setTab("documents")}
-              />
+                  <BasisGlance
+                    decision={decision}
+                    finding={finding}
+                    onViewDocuments={() => setTab("documents")}
+                  />
+                </>
+              ) : (
+                <section className="rounded-md border border-blue-100 bg-blue-50/60 p-4">
+                  <h3 className="font-semibold text-slate-900">Ready for assurance</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Run assurance to generate a governed decision, grounded evidence, and any
+                    recoverable amount for this invoice.
+                  </p>
+                </section>
+              )}
             </div>
           ) : null}
 
@@ -1671,7 +2240,7 @@ function DecisionDrawer({
                   <section>
                     <h3 className="font-semibold">Evidence references</h3>
                     <ol className="mt-2 space-y-2">
-                      {(detail?.evidence ?? []).map((item) => (
+                      {(decision.has_agent_decision ? detail?.evidence ?? [] : []).map((item) => (
                         <li
                           key={item.id}
                           className="rounded-md border border-slate-100 p-2 text-sm"
@@ -1774,9 +2343,11 @@ function DecisionDrawer({
 
 function SummaryChip({
   tone,
+  title,
   children,
 }: {
   tone: "emerald" | "slate";
+  title?: string;
   children: ReactNode;
 }) {
   const cls =
@@ -1784,7 +2355,10 @@ function SummaryChip({
       ? "bg-emerald-50 text-emerald-800 ring-emerald-100"
       : "bg-slate-50 text-slate-600 ring-slate-200";
   return (
-    <span className={`rounded-md px-2 py-0.5 text-xs font-medium ring-1 ${cls}`}>
+    <span
+      className={`rounded-md px-2 py-0.5 text-xs font-medium ring-1 ${cls}`}
+      title={title}
+    >
       {children}
     </span>
   );
@@ -1883,6 +2457,25 @@ function confidenceTone(score: number): string {
     return "bg-amber-50 text-amber-800 ring-amber-100";
   }
   return "bg-rose-50 text-rose-800 ring-rose-100";
+}
+
+function parseConfidenceScore(confidence: string | number | null | undefined): number | null {
+  if (confidence === null || confidence === undefined || confidence === "") {
+    return null;
+  }
+  const score = Number(confidence);
+  return Number.isFinite(score) ? score : null;
+}
+
+function confidenceTitle(calibrated: boolean): string {
+  return calibrated
+    ? "Calibrated decision confidence."
+    : "Uncalibrated evidence score; not calibrated decision accuracy.";
+}
+
+function confidenceText(score: number, calibrated: boolean): string {
+  const pct = `${Math.round(score * 100)}%`;
+  return calibrated ? `${pct} confidence` : `${pct} evidence score`;
 }
 
 function ExpertLane({
@@ -2123,6 +2716,9 @@ function AgentDecisionSummary({
   const drafts = selectedEntry?.drafts ?? [];
   const reviewerDraft =
     drafts.find((draft) => draft.draft_type === "approval_summary") ?? drafts[0] ?? null;
+  const recommendationConfidence = parseConfidenceScore(recommendation?.confidence);
+  const recommendationConfidenceCalibrated =
+    recommendation?.metadata.confidence_calibrated === true;
 
   return (
     <section className="rounded-md border border-blue-100 bg-blue-50/40 p-3">
@@ -2139,9 +2735,21 @@ function AgentDecisionSummary({
             <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100">
               {formatAgentMoney(recommendation.money_at_risk)} at risk
             </span>
-            <span className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs font-medium text-slate-600">
-              {Math.round(Number(recommendation.confidence) * 100)}% confidence
-            </span>
+            {recommendationConfidence !== null ? (
+              <span
+                className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs font-medium text-slate-600"
+                title={confidenceTitle(recommendationConfidenceCalibrated)}
+              >
+                {confidenceText(
+                  recommendationConfidence,
+                  recommendationConfidenceCalibrated,
+                )}
+              </span>
+            ) : (
+              <span className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs font-medium text-slate-600">
+                Confidence not available
+              </span>
+            )}
           </>
         ) : null}
       </div>
@@ -2466,6 +3074,14 @@ function DecisionPill({ decision }: { decision: string }) {
       </span>
     );
   }
+  if (decision === "Not run") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+        <span className="h-2 w-2 rounded-full bg-slate-400" aria-hidden="true" />
+        Not run
+      </span>
+    );
+  }
   const className =
     decision === "Escalate"
       ? "bg-rose-50 text-rose-800"
@@ -2491,17 +3107,43 @@ function DecisionPill({ decision }: { decision: string }) {
   );
 }
 
-function ConfidenceBadge({ confidence }: { confidence: string | null }) {
-  if (confidence === null || confidence === "") {
+function ConfidenceBadge({
+  confidence,
+  calibrated,
+  hasDecision,
+}: {
+  confidence: string | null;
+  calibrated: boolean;
+  hasDecision: boolean;
+}) {
+  const score = parseConfidenceScore(confidence);
+  if (score === null) {
+    if (hasDecision && !calibrated) {
+      return (
+        <span
+          className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600 ring-1 ring-slate-200"
+          title={confidenceTitle(false)}
+        >
+          Not calibrated
+        </span>
+      );
+    }
     return <span className="text-xs text-slate-400">—</span>;
   }
-  const score = Number(confidence);
-  if (!Number.isFinite(score)) {
-    return <span className="text-xs text-slate-400">—</span>;
+  if (!calibrated) {
+    return (
+      <span
+        className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600 ring-1 ring-slate-200"
+        title={confidenceTitle(false)}
+      >
+        {Math.round(score * 100)}%
+      </span>
+    );
   }
   return (
     <span
       className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ${confidenceTone(score)}`}
+      title={confidenceTitle(true)}
     >
       {Math.round(score * 100)}%
     </span>
@@ -2911,6 +3553,18 @@ function MetadataPreview({ metadata }: { metadata: Record<string, unknown> }) {
 }
 
 function decisionTrail(decision: InvoiceDecision, detail: InvoiceDetail | null) {
+  if (!decision.has_agent_decision) {
+    return [
+      {
+        title: "Assurance",
+        detail: "No governed decision has been recorded for this invoice yet.",
+      },
+      {
+        title: "Ingest",
+        detail: `${detail?.lines.length ?? decision.metadata.line_count ?? 0} invoice lines imported through Waypoint.`,
+      },
+    ];
+  }
   return [
     {
       title: "Decision",

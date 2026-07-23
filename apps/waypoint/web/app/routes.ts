@@ -11,6 +11,6 @@ export default [
   route("client-telemetry", "routes/client-telemetry.tsx"),
   route("agent", "routes/agent.tsx"),
   route("activity", "routes/activity.tsx"),
+  route("quality", "routes/quality.tsx"),
   route("invoices", "routes/invoices.tsx"),
-  route("items", "routes/items.tsx"),
 ] satisfies RouteConfig;

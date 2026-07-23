@@ -11,41 +11,32 @@ param environmentName string
 @description('Name of the resource group to use or create')
 param resourceGroupName string = 'rg-${environmentName}'
 
-// Restricted locations to match list from
-// https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/responses?tabs=python-key#region-availability
+@description('Location of the resource group container. This may differ from the Foundry resource location.')
+param resourceGroupLocation string = location
+
+// This launch requires both Hosted Agents and Content Understanding GA.
+// Keep this list to the documented intersection of their supported regions.
 @minLength(1)
 @description('Primary location for all resources')
 @allowed([
   'australiaeast'
-  'brazilsouth'
-  'canadacentral'
-  'canadaeast'
   'eastus'
   'eastus2'
-  'francecentral'
-  'germanywestcentral'
-  'italynorth'
   'japaneast'
-  'koreacentral'
-  'northcentralus'
-  'norwayeast'
-  'polandcentral'
-  'southafricanorth'
   'southcentralus'
   'southeastasia'
-  'southindia'
-  'spaincentral'
   'swedencentral'
-  'switzerlandnorth'
-  'uaenorth'
   'uksouth'
+  'westeurope'
   'westus'
-  'westus2'
   'westus3'
 ])
 param location string
 
 param aiDeploymentsLocation string
+
+@description('Location for Azure AI Search. Defaults to the Foundry deployment location but may differ when regional Search capacity is unavailable.')
+param searchLocation string = aiDeploymentsLocation
 
 @description('Id of the user or app to assign application roles')
 param principalId string
@@ -92,7 +83,7 @@ param aiProjectDeploymentsJson string = '[]'
 // ignored entirely.
 // ---------------------------------------------------------------------------
 @description('Name of the default chat model deployment exposed to agents as AZURE_AI_MODEL_DEPLOYMENT_NAME. Conventionally equal to modelName.')
-param modelDeploymentName string = 'gpt-5-mini'
+param modelDeploymentName string = 'gpt-5.5'
 
 @description('Catalog name of the default chat model (e.g. gpt-5-mini).')
 param modelName string = 'gpt-5.5'
@@ -108,6 +99,24 @@ param modelSkuName string = 'GlobalStandard'
 
 @description('TPM capacity for the model deployment, in the SKUs native unit. Passed as a string for azd-param-file compatibility; coerced to int when used.')
 param modelCapacity string = '200'
+
+@description('Name of the KB answer-synthesis chat model deployment used by contracts-kb. Kept separate from hosted-agent gpt-5.5 because the Search KB MCP path uses chat completions semantics.')
+param kbChatDeploymentName string = 'gpt-5-mini'
+
+@description('Catalog name of the KB answer-synthesis chat model.')
+param kbChatModelName string = 'gpt-5-mini'
+
+@description('Model version for the KB answer-synthesis chat model.')
+param kbChatModelVersion string = '2025-08-07'
+
+@description('Model format for the KB answer-synthesis chat model.')
+param kbChatModelFormat string = 'OpenAI'
+
+@description('SKU name for the KB answer-synthesis chat model deployment.')
+param kbChatModelSkuName string = 'GlobalStandard'
+
+@description('TPM capacity for the KB answer-synthesis chat model deployment, in the SKUs native unit. Passed as a string for azd-param-file compatibility; coerced to int when used.')
+param kbChatModelCapacity string = '200'
 
 @description('Name of the embedding model deployment used by contracts-kb knowledge-base initialization.')
 param embeddingDeploymentName string = 'text-embedding-3-large'
@@ -126,21 +135,6 @@ param embeddingModelSkuName string = 'Standard'
 
 @description('TPM capacity for the embedding deployment, in the SKUs native unit. Passed as a string for azd-param-file compatibility; coerced to int when used.')
 param embeddingModelCapacity string = '50'
-
-@description('Name of the Content Understanding completion deployment used by prebuilt invoice analysis.')
-param contentUnderstandingCompletionDeploymentName string = 'gpt-4.1'
-
-@description('Catalog name of the Content Understanding completion model. prebuilt-invoice supports gpt-4.1 or gpt-5.2; default to the smaller supported model.')
-param contentUnderstandingCompletionModelName string = 'gpt-4.1'
-
-@description('Model version for the Content Understanding completion deployment.')
-param contentUnderstandingCompletionModelVersion string = '2025-04-14'
-
-@description('SKU name for the Content Understanding completion deployment.')
-param contentUnderstandingCompletionModelSkuName string = 'GlobalStandard'
-
-@description('TPM capacity for the Content Understanding completion deployment, in the SKU native unit. Passed as a string for azd-param-file compatibility; coerced to int when used.')
-param contentUnderstandingCompletionModelCapacity string = '50'
 
 @description('List of connections')
 param aiProjectConnectionsJson string = '[]'
@@ -184,8 +178,12 @@ param workiqMcpServerUrl string = ''
 @description('Microsoft 365 Agents (agent365) token audience for the WorkIQ UserEntraToken connections.')
 param workiqAgent365Audience string = 'ea9ffc3e-8a23-4a7d-836d-234d7c7565c1'
 
+@description('Provision the three WorkIQ project connections. Standalone deployments retain the full-fleet default; the simplified root deployment disables them.')
+param enableWorkiqConnections bool = true
+
 var aiProjectDeploymentsOverride = json(aiProjectDeploymentsJson)
-var defaultDeployments = [
+var kbChatUsesPrimaryDeployment = kbChatDeploymentName == modelDeploymentName
+var defaultDeployments = concat([
   {
     name: modelDeploymentName
     model: {
@@ -210,19 +208,20 @@ var defaultDeployments = [
       capacity: int(embeddingModelCapacity)
     }
   }
+], kbChatUsesPrimaryDeployment ? [] : [
   {
-    name: contentUnderstandingCompletionDeploymentName
+    name: kbChatDeploymentName
     model: {
-      name: contentUnderstandingCompletionModelName
-      format: modelFormat
-      version: contentUnderstandingCompletionModelVersion
+      name: kbChatModelName
+      format: kbChatModelFormat
+      version: kbChatModelVersion
     }
     sku: {
-      name: contentUnderstandingCompletionModelSkuName
-      capacity: int(contentUnderstandingCompletionModelCapacity)
+      name: kbChatModelSkuName
+      capacity: int(kbChatModelCapacity)
     }
   }
-]
+])
 // When AI_PROJECT_DEPLOYMENTS is set (non-empty JSON array), honour it verbatim;
 // otherwise build chat + embedding deployments from the scalar defaults above.
 var aiProjectDeployments = empty(aiProjectDeploymentsOverride) ? defaultDeployments : aiProjectDeploymentsOverride
@@ -275,7 +274,7 @@ var tags = {
 // Check if resource group exists and create it if it doesn't
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: resourceGroupName
-  location: location
+  location: resourceGroupLocation
   tags: tags
 }
 
@@ -382,7 +381,10 @@ var expertMcpConnections = [
     }
   }
 ]
-var allAiProjectConnections = concat(aiProjectConnections, expertMcpConnections)
+var allAiProjectConnections = concat(
+  aiProjectConnections,
+  enableWorkiqConnections ? expertMcpConnections : []
+)
 var allAiProjectConnectionCreds = aiProjectConnectionCreds
 
 // AI Project module — only when creating new resources
@@ -392,12 +394,12 @@ module aiProject 'core/ai/ai-project.bicep' = if (!useExistingAiProject) {
   params: {
     tags: tags
     location: aiDeploymentsLocation
+    searchLocation: searchLocation
     aiFoundryProjectName: aiFoundryProjectName
     principalId: principalId
     principalType: principalType
     additionalAdmins: additionalAdmins
     existingAiAccountName: aiFoundryResourceName
-    deployments: aiProjectDeployments
     connections: allAiProjectConnections
     connectionCredentials: allAiProjectConnectionCreds
     additionalDependentResources: dependentResourcesWithBing
@@ -422,6 +424,7 @@ module existingAiProject 'core/ai/existing-ai-project.bicep' = if (useExistingAi
     aiFoundryProjectName: aiFoundryProjectName
     existingAcrConnectionName: existingAcrConnectionName
     existingContainerRegistryEndpoint: existingContainerRegistryEndpoint
+    existingContainerRegistryResourceId: existingContainerRegistryResourceId
     existingApplicationInsightsConnectionString: existingApplicationInsightsConnectionString
     existingApplicationInsightsResourceId: existingApplicationInsightsResourceId
   }
@@ -459,12 +462,14 @@ output AZURE_RESOURCE_GROUP string = resourceGroupName
 output AZURE_AI_MODEL_DEPLOYMENT_NAME string = aiProjectDeployments[0].name
 output AZURE_AI_EMBEDDING_DEPLOYMENT_NAME string = embeddingDeploymentName
 output AZURE_AI_EMBEDDING_MODEL_NAME string = embeddingModelName
+output AZURE_AI_SEARCH_KB_CHAT_DEPLOYMENT_NAME string = kbChatUsesPrimaryDeployment ? modelDeploymentName : kbChatDeploymentName
+output AZURE_AI_SEARCH_KB_CHAT_MODEL_NAME string = kbChatUsesPrimaryDeployment ? modelName : kbChatModelName
 output CONTENT_UNDERSTANDING_ENDPOINT string = 'https://${useExistingAiProject ? existingAiProject.outputs.aiServicesAccountName : aiProject.outputs.aiServicesAccountName}.services.ai.azure.com'
 output CONTENT_UNDERSTANDING_API_VERSION string = '2025-11-01'
 output CONTENT_UNDERSTANDING_ANALYZER_ID string = 'prebuilt-invoice'
 output CONTENT_UNDERSTANDING_SCOPE string = 'https://cognitiveservices.azure.com/.default'
-output CONTENT_UNDERSTANDING_COMPLETION_DEPLOYMENT_NAME string = contentUnderstandingCompletionDeploymentName
-output CONTENT_UNDERSTANDING_COMPLETION_MODEL_NAME string = contentUnderstandingCompletionModelName
+output CONTENT_UNDERSTANDING_COMPLETION_DEPLOYMENT_NAME string = modelDeploymentName
+output CONTENT_UNDERSTANDING_COMPLETION_MODEL_NAME string = modelName
 
 output AZURE_AI_ACCOUNT_ID string = useExistingAiProject
   ? existingAiProject.outputs.accountId
@@ -509,6 +514,11 @@ output AZURE_CONTAINER_REGISTRY_ENDPOINT string = shouldCreateAcrForExistingProj
   : (useExistingAiProject
       ? existingAiProject.outputs.dependentResources.registry.loginServer
       : aiProject.outputs.dependentResources.registry.loginServer)
+output AZURE_CONTAINER_REGISTRY_RESOURCE_ID string = shouldCreateAcrForExistingProject
+  ? acrForExistingProject.outputs.containerRegistryResourceId
+  : (useExistingAiProject
+      ? existingAiProject.outputs.dependentResources.registry.resourceId
+      : aiProject.outputs.dependentResources.registry.resourceId)
 
 // Bing Search
 output BING_GROUNDING_CONNECTION_NAME string = useExistingAiProject

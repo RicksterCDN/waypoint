@@ -17,9 +17,9 @@ from waypoint_write_tools import (
     _derive_decision,
     _govern_decision,
     _lane_is_grounded,
+    _normalize_fanout,
     _normalize_result_contract,
     _recover_invoice_ref,
-    _synthesize_fanout,
     _waypoint_fail_run_inner,
     _waypoint_open_run_inner,
     _waypoint_record_assurance_inner,
@@ -145,6 +145,8 @@ def test_assurance_orchestrator_future_payload_normalizes_to_waypoint_recorder_c
                     "evidence_ids": ["evidence-001"],
                     "proposed_next_actions": ["request_supplier_credit"],
                     "metadata": {
+                        "confidence_basis": "expert_evidence_mean",
+                        "confidence_calibrated": False,
                         "expert_evidence": [
                             {
                                 "agent": "operations-data-expert",
@@ -177,6 +179,8 @@ def test_assurance_orchestrator_future_payload_normalizes_to_waypoint_recorder_c
     assert normalized["money_at_risk"] == "25.00"
     assert normalized["evidence_ids"] == ["evidence-001"]
     assert normalized["proposed_next_actions"] == ["request_supplier_credit"]
+    assert normalized["confidence_basis"] == "expert_evidence_mean"
+    assert normalized["confidence_calibrated"] is False
     assert normalized["fanout"][0]["plane"] == "fabriciq"
     assert normalized["fanout"][0]["output_quality"] == "valid"
 
@@ -501,28 +505,40 @@ def test_final_write_reuses_bundle_operation_id_for_shared_keys() -> None:
     assert calls["open_run"]["idempotency_key"] == "assurance:INV-2026-08034:op-xyz"
 
 
-def test_synthesized_fabriciq_lane_is_explicitly_stubbed() -> None:
-    fanout = _synthesize_fanout(
-        {
-            "findings": [
-                {
-                    "id": "finding-inv-2026-08034",
-                    "category": "surge_capacity",
-                    "summary": "Unauthorized surge capacity premium.",
-                    "overpayment_amount": "25000.00",
-                    "contract_document_ids": ["contract-001"],
-                    "policy_ids": ["policy-001"],
-                }
-            ],
-            "evidence": [],
-        }
+def test_missing_fanout_does_not_synthesize_expert_participation() -> None:
+    grounding = {
+        "findings": [{"contract_document_ids": ["contract-001"], "policy_ids": ["policy-001"]}],
+        "evidence": [{"id": "email-001", "evidence_type": "email"}],
+    }
+
+    assert _normalize_fanout(None, grounding) == []
+
+
+def test_normalize_fanout_rejects_pipeline_agent_masquerading_as_expert() -> None:
+    fanout = _normalize_fanout(
+        [
+            {
+                "agent": "contract-policy-expert",
+                "plane": "foundryiq",
+                "summary": "Contract clause governs the charge.",
+                "evidence": [{"claim": "Clause 4.2 applies", "source_ref": "contract-001"}],
+            },
+            {
+                "agent": "assurance-orchestrator",
+                "plane": "workiq",
+                "summary": "Deterministic line-math checks.",
+                "evidence": [
+                    {
+                        "claim": "Line math matched.",
+                        "source_ref": "deterministic_checks:INV-2026-08411:line_math",
+                    }
+                ],
+            },
+        ],
+        {},
     )
 
-    lanes = {lane["plane"]: lane for lane in fanout}
-    assert lanes["fabriciq"]["agent"] == "operations-data-expert"
-    assert "temporarily stubbed" in lanes["fabriciq"]["summary"]
-    assert lanes["fabriciq"]["evidence"] == []
-    assert lanes["foundryiq"]["evidence"]
+    assert [lane["agent"] for lane in fanout] == ["contract-policy-expert"]
 
 
 # ── deterministic policy-check (decision governance) ─────────────────────────
@@ -731,6 +747,72 @@ def test_experts_consulted_excludes_ungrounded_web_lane() -> None:
     run_metadata = fake_writer.calls[1][1]["metadata"]
     assert len(run_metadata["fanout"]) == 2
     assert run_metadata["experts_consulted"] == ["contract-policy-expert"]
+    assert run_metadata["confidence_basis"] == "not_provided"
+    assert run_metadata["confidence_calibrated"] is False
+    recommendation_metadata = next(
+        kwargs["metadata"] for name, kwargs in fake_writer.calls if name == "create_recommendation"
+    )
+    assert recommendation_metadata["confidence_calibrated"] is False
+
+
+def test_confidence_calibration_requires_provenance() -> None:
+    fake_writer = FakeWaypointWriteClient()
+    payload = {
+        "invoice_id": "INV-2026-08034",
+        "decision": "review",
+        "reasoning": "Model claimed calibrated confidence without proof.",
+        "confidence": 0.93,
+        "confidence_calibrated": True,
+    }
+
+    with patch("waypoint_write_tools.is_waypoint_configured", return_value=True), patch(
+        "waypoint_write_tools.WaypointReadClient",
+        return_value=FakeWaypointReadClient(),
+    ), patch("waypoint_write_tools.WaypointWriteClient", return_value=fake_writer):
+        result = json.loads(_waypoint_record_assurance_inner(json.dumps(payload)))
+
+    assert result["ok"] is True
+    run_metadata = fake_writer.calls[1][1]["metadata"]
+    assert run_metadata["confidence_basis"] == "model_supplied"
+    assert run_metadata["confidence_calibrated"] is False
+    recommendation_metadata = next(
+        kwargs["metadata"] for name, kwargs in fake_writer.calls if name == "create_recommendation"
+    )
+    assert recommendation_metadata["confidence_calibrated"] is False
+
+
+def test_confidence_calibration_provenance_is_preserved() -> None:
+    fake_writer = FakeWaypointWriteClient()
+    payload = {
+        "invoice_id": "INV-2026-08034",
+        "decision": "review",
+        "reasoning": "Reviewed calibration artifact produced this probability.",
+        "confidence": 0.74,
+        "confidence_basis": "calibration_artifact",
+        "confidence_calibrated": True,
+        "confidence_calibration_id": "cal-2026-07-validated",
+        "confidence_calibration_version": "v3",
+    }
+
+    with patch("waypoint_write_tools.is_waypoint_configured", return_value=True), patch(
+        "waypoint_write_tools.WaypointReadClient",
+        return_value=FakeWaypointReadClient(),
+    ), patch("waypoint_write_tools.WaypointWriteClient", return_value=fake_writer):
+        result = json.loads(_waypoint_record_assurance_inner(json.dumps(payload)))
+
+    assert result["ok"] is True
+    run_metadata = fake_writer.calls[1][1]["metadata"]
+    assert run_metadata["confidence_basis"] == "calibration_artifact"
+    assert run_metadata["confidence_calibrated"] is True
+    assert run_metadata["confidence_calibration_id"] == "cal-2026-07-validated"
+    assert run_metadata["confidence_calibration_version"] == "v3"
+    recommendation_metadata = next(
+        kwargs["metadata"] for name, kwargs in fake_writer.calls if name == "create_recommendation"
+    )
+    assert recommendation_metadata["confidence_basis"] == "calibration_artifact"
+    assert recommendation_metadata["confidence_calibrated"] is True
+    assert recommendation_metadata["confidence_calibration_id"] == "cal-2026-07-validated"
+    assert recommendation_metadata["confidence_calibration_version"] == "v3"
 
 
 
@@ -757,7 +839,8 @@ def test_experts_consulted_excludes_ungrounded_web_lane() -> None:
     test_open_assurance_run_falls_back_to_env_operation_id()
     test_enroll_batch_opens_each_invoice_pending()
     test_final_write_reuses_bundle_operation_id_for_shared_keys()
-    test_synthesized_fabriciq_lane_is_explicitly_stubbed()
+    test_missing_fanout_does_not_synthesize_expert_participation()
+    test_normalize_fanout_rejects_pipeline_agent_masquerading_as_expert()
     test_derive_decision_high_severity_escalates()
     test_derive_decision_overpayment_recovers()
     test_derive_decision_review_status_holds_over_recover()
