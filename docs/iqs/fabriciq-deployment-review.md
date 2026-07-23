@@ -163,6 +163,12 @@ Checked against Microsoft Learn/Fabric documentation on 2026-07-23:
   to take effect. Microsoft warns that use from Foundry, Copilot Studio, M365
   Copilot, MCP, or other non-Fabric services can move responses outside the
   Fabric compliance/geographic boundary.
+- Fabric workload availability is regional. Some Azure regions are Power BI
+  only, and Microsoft notes that some Fabric workloads might not be immediately
+  available in new or capacity-constrained regions.
+- Fabric Copilot capacity is supported only in the Fabric tenant's home region.
+  That matters if we try to centralize Copilot/Data Agent billing while deploying
+  Waypoint resources into a different target region.
 - OneLake supports ADLS/Blob-compatible APIs, but permissions and item
   management remain Fabric experiences. Direct API callers need the Storage
   token audience. Some tools reject the OneLake DFS endpoint because it is not
@@ -365,6 +371,28 @@ repeatable and one-click:
 | OneLake corpus path is still easy to confuse with FabricIQ | Uploading seed/corpus tables to OneLake should not be treated as independent FabricIQ evidence. |
 | Headless versus interactive Fabric path must stay split | OBO Data Agent is user-scoped; headless orchestrator fan-out needs deterministic managed-identity SQL reads. Mixing them recreates the prior failure. |
 
+### Product gaps and constraints that would block or complicate one-click E2E
+
+Several blockers are not just repo wiring. They are current Microsoft Fabric
+product constraints that either block one-click deployment outright in some
+tenants/regions or force us to add preflight gates and manual escape hatches.
+
+| Product gap / constraint | Impact on a one-click FabricIQ demo | Required mitigation |
+| --- | --- | --- |
+| Regional workload availability is uneven | A requested Azure region can be Power BI-only or missing specific Fabric features. A "successful" Azure deployment could still be unable to create the Fabric items the IQ needs. | Preflight the tenant home region, target region, Fabric workload availability, and requested feature set before provisioning anything. |
+| Fabric Copilot capacity is home-region scoped | If we use a centralized Fabric Copilot capacity for Data Agent/Copilot billing, it must live in the tenant home region, which can conflict with a demo target region or data-residency choice. | Treat Copilot capacity as a separate topology decision; do not assume arbitrary-region placement. |
+| Cross-geo AI processing/storage settings are tenant-admin switches | Outside the EU data boundary and US, Fabric Data Agent/Copilot may require settings that are disabled by default and can take up to an hour to apply. A repo workflow should not silently flip org-wide AI/data-residency policy. | Add an admin-readiness preflight and explicit human approval for tenant AI settings; fail with instructions if policy disallows it. |
+| Product does not let admins enable only a single Copilot experience | Microsoft documents workload-level Copilot controls, not a precise "Data Agent only for this demo" toggle. Enabling the required switch can broaden tenant/capacity exposure beyond Waypoint. | Scope to security groups and dedicated capacities; document the blast radius. |
+| Capacity SKU and regional stock are external dependencies | F2+ is the Data Agent minimum, but capacity creation, SKU scale-up, and regional availability can fail because of subscription, quota, or regional constraints. | Preflight `Microsoft.Fabric/capacities`, SKU availability, subscription permissions, and failure modes; avoid defaulting to F64. |
+| Capacity throttling is product-managed and can reject requests | F2 may be enough for a proof, but sustained mirror/model/Data Agent usage can trigger delays or rejections. Throttling state is per capacity and can persist through smoothing/carryforward. | Include capacity metrics/throttling checks in acceptance; provide scale-up or pause/resume runbooks. |
+| Pause/resume is available only for F SKUs and makes content unavailable | Pause/resume is useful for cost control, but it is not transparent to users or background jobs. It also requires Azure RBAC actions on the capacity. | Automate only for demo/non-prod windows; record the paused/resumed state and never pause during validation. |
+| Mirrored PostgreSQL has source-shape limits | Burstable Postgres, unsupported data types (`json/jsonb`), DDL on mirrored tables, partitioned/views/external tables, PITR/MVU, and older HA failover paths can require reseed or manual reconfiguration. | Keep the mirrored schema intentionally tiny and migration-stable; add fail-fast schema/type checks before enabling FabricIQ. |
+| Mirroring supports one Fabric mirror target per source database | A source Waypoint database cannot be mirrored simultaneously to multiple Fabric items/workspaces. Parallel demo environments can collide if they share a source. | Use one database per demo environment or one shared mirror with explicit environment isolation. |
+| Private networking adds gateway requirements | If the PostgreSQL server is private and does not allow Azure service access, Fabric mirroring needs a virtual network data gateway path that is not part of our current one-click path. | Decide whether demo allows controlled public/Azure-service access or add gateway provisioning/operations to scope. |
+| Fabric source permissions do not propagate | PostgreSQL grants do not carry into Fabric. We must separately grant Fabric workspace/item access to the actual consuming identity. | Make Fabric RBAC/idempotent item grants first-class and discover rotating agent identities automatically. |
+| Data Agent is bounded and user-permissioned | Five-source limit, 25-row/25-column response caps, read-only behavior, Purview policy enforcement, and user credential semantics make it a poor headless pipeline primitive. | Use deterministic SQL for headless evidence; reserve Data Agent for interactive analyst experiences. |
+| First-class IaC coverage is still incomplete for this scenario | ARM/Bicep can help with Azure-side capacity/resource provisioning, but workspace/lakehouse/mirror/model/Data Agent item lifecycle still requires Fabric REST/SDK scripting. | Keep scripts idempotent, version item definitions, and treat "no Bicep support" as an accepted product gap until coverage improves. |
+
 ### Implementation time estimate
 
 | Target | Estimated effort | Notes |
@@ -412,6 +440,16 @@ proves live mirrored-table grounding from `operations-data-expert`.
   <https://learn.microsoft.com/en-us/fabric/data-science/concept-data-agent>
 - Fabric Data Agent tenant settings:
   <https://learn.microsoft.com/en-us/fabric/data-science/data-agent-tenant-settings>
+- Fabric region availability:
+  <https://learn.microsoft.com/en-us/fabric/admin/region-availability>
+- Copilot and Agent admin settings:
+  <https://learn.microsoft.com/en-us/fabric/admin/service-admin-portal-copilot>
+- Fabric Copilot capacity:
+  <https://learn.microsoft.com/en-us/fabric/enterprise/fabric-copilot-capacity>
+- Fabric capacity throttling:
+  <https://learn.microsoft.com/en-us/fabric/enterprise/throttling>
+- Fabric capacity pause/resume:
+  <https://learn.microsoft.com/en-us/fabric/enterprise/pause-resume>
 - OneLake ADLS/Blob API access:
   <https://learn.microsoft.com/en-us/fabric/onelake/onelake-access-api>
 - OneLake table APIs:
