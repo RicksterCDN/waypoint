@@ -182,6 +182,69 @@ Checked against Microsoft Learn/Fabric documentation on 2026-07-23:
   Bicep coverage for workspace/lakehouse/mirrored database/semantic model/Data
   Agent remains a gap for this scenario.
 
+## Cost and SKU posture
+
+The earlier FabricIQ work used F64 as a safe demo hammer. Current Microsoft Learn
+docs say Fabric Data Agent requires a paid **F2 or higher** Fabric capacity, or a
+Power BI Premium capacity with Fabric enabled. F64 is therefore not the documented
+minimum for Data Agent itself. It is still a meaningful cost and licensing
+threshold: Microsoft lists some viewer/license behaviors as F64-or-higher, and
+larger capacities may be needed for concurrency, model refresh, warehouse/mirror
+throughput, or predictable production workloads.
+
+Pricing changes by region, contract, reservation, and pause/resume behavior. As
+a planning estimate, a continuously running F64 is roughly a **$5k-$8.5k/month**
+capacity-class decision depending on reserved versus pay-as-you-go pricing. The
+user-facing shorthand "$6k/month" is a reasonable reserved/enterprise planning
+number. F2 is closer to a few hundred dollars per always-on month and can be
+paused/resumed like other F SKUs.
+
+| Capability | Minimum documented / practical SKU posture | Notes |
+| --- | --- | --- |
+| FoundryIQ contract/policy expert | No Fabric SKU | Uses Foundry, Search, model, and storage costs, not Fabric capacity. |
+| WorkIQ and WebIQ lanes | No Fabric SKU | Costs and constraints live in M365/Graph/WebIQ/Foundry, not Fabric capacity. |
+| OneLake corpus lakehouse | Any paid Fabric capacity is enough for small demos; F2 can be viable | Storage and operations are separate from compute; not proof of FabricIQ grounding. |
+| Fabric mirrored PostgreSQL | Requires a Fabric workspace/capacity and a non-Burstable PostgreSQL source | The source Postgres tier/cost is separate. F2 may be enough for a tiny pilot, but throughput and refresh lag need load validation. |
+| Direct Lake semantic model over four small tables | F2+ should be enough for proof-of-life | The model is tiny in the demo; F64 is not justified for this alone. |
+| Fabric Data Agent | Microsoft Learn: paid F2+ or Power BI Premium capacity | F64 is not the documented minimum as of this review. Tenant AI settings and region compatibility still apply. |
+| Headless `operations-data-expert` SQL path | Needs mirrored SQL endpoint capacity, ODBC, and Fabric RBAC; does not require the Data Agent OBO tool | This is the path used by orchestrator fan-out. It can avoid Data Agent runtime dependency if interactive Q&A is not required. |
+| Interactive/OBO Fabric Data Agent path | Paid F2+ plus signed-in user access | Useful for Copilot/Teammate/Playground-style experiences; not suitable for headless fan-out. |
+| Power BI-style broad viewer distribution | F64+ may become relevant | Microsoft documents F64-or-higher for some free-viewer behaviors. Seller-scale BI consumption should be priced separately from agent grounding. |
+| Caliber evals/RFT | No Fabric SKU unless FabricIQ evals query Fabric | Caliber costs are Foundry/eval/training costs; keep separate from Fabric capacity. |
+
+### Seller-scale cost implication
+
+Do **not** model FabricIQ as "one F64 per seller." At the user's $6k/month
+planning number, 20,000 sellers would imply about **$120M/month** and
+**$1.44B/year** in Fabric capacity alone. At public pay-as-you-go F64 rates, the
+number can be even higher. That is not a viable architecture.
+
+A seller-scale architecture would need pooled, multi-tenant capacity with strong
+logical isolation, workload shaping, chargeback, and capacity autoscale/pause
+discipline. It would also need a clear reason FabricIQ requires conversational
+Data Agent capacity at seller granularity. For the current headless evidence
+lane, a cheaper pattern may be:
+
+1. Share Fabric capacities across many sellers by workload class.
+2. Mirror only the operational facts needed for evidence, not the whole corpus.
+3. Use deterministic SQL reads for batch/headless assurance.
+4. Reserve Data Agent/OBO surfaces for interactive analyst experiences.
+5. Add per-seller throttles, queues, and evidence caching before buying larger
+   SKUs.
+
+### Cost controls required before any default FabricIQ path
+
+- Default FabricIQ off unless an environment explicitly opts in.
+- Select the smallest SKU that passes the known-positive FabricIQ acceptance
+  gate; do not default to F64 for a four-table pilot.
+- Add capacity pause/resume or scheduled scale-down for demo environments.
+- Keep GeneralPurpose Postgres upgrades explicit because the mirror source tier
+  is a separate cost increase from Fabric.
+- Record Fabric capacity SKU, Postgres SKU, and expected monthly burn in
+  deployment evidence.
+- Fail preflight if the requested SKU/capacity cannot support the selected IQ
+  features instead of silently upgrading to F64.
+
 ## What a validated current E2E with FabricIQ would require
 
 The current implementation can be made to prove FabricIQ again, but it is not
@@ -283,6 +346,36 @@ honest path is:
 
 Anything less proves that Fabric resources can exist, not that FabricIQ is a
 validated, repeatable evidence lane.
+
+### Current blockers to idempotent one-click E2E
+
+These are the actual blockers before a current-repo FabricIQ E2E can be called
+repeatable and one-click:
+
+| Blocker | Why it blocks one-click repeatability |
+| --- | --- |
+| Root launch workflow excludes FabricIQ | The current canonical deployment intentionally has no FabricIQ inputs, stages, resources, or default agent wiring. |
+| FabricIQ code/docs posture is inconsistent | Root docs say future/opt-in; agent-local docs still say stub; code contains live dual-path logic. Acceptance criteria cannot be trusted until this is reconciled. |
+| Fabric mirror source preparation may still require portal action | If there is no public API for the source-server "Prepare / Restart / ready for mirroring" step, a clean tenant cannot be fully one-click. |
+| Consumer identity discovery is not first-class | The successful fix required granting the actual per-agent AgentIdentity, which can rotate. Manual `WAYPOINT_FABRIC_CONSUMER_MEMBERS` is not enough for fresh environments. |
+| Fabric Data Agent provisioning path needs modernization | Raw item-definition REST worked, but current public Data Agent SDK/API should be evaluated before re-shipping hand-authored multipart definitions. |
+| No FabricIQ acceptance gate | The current acceptance proves FoundryIQ KB retrieval, not Fabric mirror health, Data Agent health, direct SQL grounding, or FabricIQ evidence in recorder output. |
+| Cost/SKU preflight is missing | The workflow does not currently choose or reject Fabric SKUs based on selected IQ features and expected monthly burn. |
+| Postgres tier guard must be enforced in the active path | Mirroring cannot run on Burstable. The deploy must fail or coerce before reaching a greyed-out portal/control-plane state. |
+| OneLake corpus path is still easy to confuse with FabricIQ | Uploading seed/corpus tables to OneLake should not be treated as independent FabricIQ evidence. |
+| Headless versus interactive Fabric path must stay split | OBO Data Agent is user-scoped; headless orchestrator fan-out needs deterministic managed-identity SQL reads. Mixing them recreates the prior failure. |
+
+### Implementation time estimate
+
+| Target | Estimated effort | Notes |
+| --- | --- | --- |
+| One-off demo proof with explicit manual steps | 2-5 engineering days after environment access | Assumes portal mirror prep and manual AgentIdentity grant are acceptable and clearly documented as hacks. |
+| Repeatable repo-level FabricIQ E2E on an existing tenant | 2-4 engineering weeks | Requires workflow/stage wiring, identity discovery or codified grant flow, cost preflight, acceptance gates, and unchanged-rerun proof. |
+| Production-aligned seller-scale design | 6-12+ weeks before implementation confidence | Requires capacity modeling, tenancy/isolation design, load tests, operational runbooks, security review, and cost controls. |
+
+The blocker is not only code volume. The risky parts are tenant admin settings,
+Fabric capacity/cost decisions, source PostgreSQL mirroring readiness, and
+identity/RBAC automation across Foundry-hosted agents and Fabric workspaces.
 
 ## What could have been better
 
