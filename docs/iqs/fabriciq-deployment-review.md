@@ -182,6 +182,108 @@ Checked against Microsoft Learn/Fabric documentation on 2026-07-23:
   Bicep coverage for workspace/lakehouse/mirrored database/semantic model/Data
   Agent remains a gap for this scenario.
 
+## What a validated current E2E with FabricIQ would require
+
+The current implementation can be made to prove FabricIQ again, but it is not
+only a flag flip from the launch deployment. A trustworthy E2E would need to
+restore FabricIQ as a first-class deployment lane, prove the data path, and prove
+the hosted-agent path in the same acceptance envelope.
+
+### Success criteria
+
+A successful FabricIQ-added E2E should prove all of these in one run:
+
+1. Clean deploy creates or reuses the Waypoint app, Foundry resources, corpus
+   seed, and the default launch agents.
+2. Fabric capacity, workspace, lakehouse, mirrored PostgreSQL item, Direct Lake
+   semantic model, and Fabric Data Agent are created or reconciled idempotently.
+3. PostgreSQL mirroring is running against a non-Burstable source server and the
+   mirrored SQL endpoint exposes `_public.suppliers`, `_public.invoices`,
+   `_public.invoice_lines`, and `_public.reconciliation_findings`.
+4. `operations-data-expert` is deployed and wired into the orchestrator fan-out
+   with the headless SQL path configured.
+5. A known-positive invoice, for example `INV-2026-08034`, returns non-empty
+   `fabric://_public.*` evidence from all four operational tables.
+6. The orchestrator includes FabricIQ evidence in the final synthesis and the
+   recorder persists the terminal Waypoint run.
+7. Acceptance fails closed on FabricIQ fallback, empty Fabric evidence, missing
+   role grants, or a non-terminal run.
+8. An unchanged rerun reuses existing resources, secrets, and Fabric items rather
+   than creating duplicates or requiring manual cleanup.
+
+### Required repo work
+
+| Area | Needed for E2E |
+| --- | --- |
+| Root deploy workflow | Reintroduce FabricIQ as an explicit selected lane: Fabric provisioning, mirror provisioning, IQ provisioning, operations-data-expert deploy, orchestrator endpoint wiring, and FabricIQ acceptance. |
+| Deployment state | Persist Fabric workspace, lakehouse, mirrored DB, semantic model, Data Agent, SQL endpoint, and consumer grants as non-secret state, with secrets in Key Vault only. |
+| Waypoint app deploy | Pass `fabric_provision_enabled`, `fabric_mirror_enabled`, `fabric_iq_enabled`, Fabric names, mirror names, and consumer-member grants through the app deployment. |
+| Postgres | Enforce GeneralPurpose or MemoryOptimized when mirroring is enabled; reject or coerce Burstable cost overrides. |
+| Fabric mirror | Ensure source-server SAMI, `fabric_user`, table ownership, Fabric connection, mirrored DB item, and start/poll logic are idempotent. |
+| Fabric IQ | Build/update the Direct Lake semantic model and published Data Agent from item definitions or the current supported SDK/API. |
+| Forge agents | Include `operations-data-expert` in the selected agent matrix, set `FABRIC_MIRRORED_SQL_ENDPOINT`, `FABRIC_MIRRORED_DATABASE`, `FABRIC_MIRRORED_SCHEMA`, and keep the ODBC image dependency validated. |
+| Fabric RBAC | Grant the actual presented hosted-agent identity Viewer on the Fabric workspace or item. Do not assume the project managed identity is the reader without token-claim proof. |
+| Ledgerfield | Keep OneLake corpus upload as storage/context only, not the FabricIQ source of operational truth. |
+| Caliber | Add a FabricIQ known-positive eval only after the deployment lane is real; keep it separate from contract-policy RFT workflows. |
+
+### Validation sequence
+
+1. **Preflight**: confirm Fabric tenant Copilot/Data Agent settings, paid capacity
+   availability, region compatibility, PostgreSQL tier, Key Vault access, Fabric
+   API access, and expected role-assignment rights.
+2. **App and data deploy**: deploy Waypoint with Fabric mirror and IQ enabled;
+   import seed data; verify the API remains healthy after role bootstrap.
+3. **Mirror proof**: poll mirroring status, then query the SQL analytics endpoint
+   for table existence and row counts in the four `_public` tables.
+4. **Fabric item proof**: verify the semantic model and Data Agent exist, are
+   updated in place on rerun, and bind to the intended mirrored source.
+5. **Agent proof**: invoke `operations-data-expert` directly for the known
+   invoice and require real `fabric://_public.*` refs.
+6. **Pipeline proof**: invoke `assurance-orchestrator`; require the run to
+   finalize through `waypoint-recorder` and include FabricIQ evidence in the
+   recorded payload.
+7. **Server-side proof**: capture the mirrored endpoint query history or
+   equivalent logs showing the expected identity reading `_public.*` with
+   non-zero row counts.
+8. **Idempotency proof**: rerun the same deployment unchanged and verify no
+   duplicate Fabric items, no reset secrets, no duplicate mirrored DB, and no
+   replacement hosted-agent versions unless inputs changed.
+
+### Explicit demo unblocks that would be hacky
+
+These are acceptable only as short-lived validation unblocks. They should not be
+described as the desired production posture.
+
+| Hack | Why it might unblock a demo | Why it is not a best practice |
+| --- | --- | --- |
+| Portal-enable PostgreSQL Fabric mirroring manually | Clears the source-server "Prepare / Restart / ready for mirroring" blocker when no public API path is available | Not one-click, not auditable in repo state, and easy to miss in a fresh tenant. |
+| Manually scale Postgres from Burstable to GeneralPurpose | Makes the portal mirroring button available immediately | Cost and downtime are outside the reviewed deployment plan unless codified. |
+| Manually grant Fabric workspace Viewer to a discovered AgentIdentity | Fastest fix for the wrong-presented-identity `18456` failure | Per-agent identities can rotate; manual grants are invisible to a clean deploy. |
+| Put Fabric workspace IDs, Data Agent IDs, SQL endpoints, or consumer IDs in repo variables by hand | Gets wiring unstuck without building discovery | Creates tenant-specific drift and makes reruns depend on tribal knowledge. |
+| Run `psql` from a CI runner with an admin connection to create `fabric_user` | Can bootstrap the mirroring role without changing app startup code | Exposes admin connectivity to CI, adds firewall fragility, and expands blast radius. |
+| Use a broad workspace Admin/Contributor grant for all deploy and agent identities | Avoids fine-grained RBAC troubleshooting | Over-privileges read-only agents and makes least-privilege review impossible. |
+| Use a developer/user token for Fabric API or Data Agent testing | Quickly proves the Fabric item works interactively | Does not prove the hosted headless path and may bypass the actual production identity boundary. |
+| Attach the Fabric Data Agent OBO tool to headless Responses runs | Looks like the most "native" FabricIQ path | It fails without a signed-in user token; headless must use a deterministic managed-identity read path. |
+| Treat OneLake seed/corpus Delta tables as FabricIQ evidence | Produces easy positive answers | Duplicates expected outcomes and weakens FabricIQ as an independent operational evidence plane. |
+| Allow empty FabricIQ evidence but still mark the run successful | Keeps the demo moving when Fabric is unhealthy | Masks the exact capability being validated and recreates the earlier "consulted expert" but no grounding problem. |
+
+### Minimum acceptable temporary E2E
+
+If the only goal is to prove the current implementation once, the smallest
+honest path is:
+
+1. Keep FabricIQ off by default.
+2. Run a dedicated FabricIQ-enabled deployment in an isolated environment.
+3. Allow the portal-only mirroring preparation step if the product still has no
+   public API for it, but record it explicitly in the deployment evidence.
+4. Codify every post-portal value before rerun: workspace id, mirrored DB name,
+   SQL endpoint, Data Agent id, and actual agent identity grant.
+5. Require the direct expert invoke, orchestrator run, recorder finalization, and
+   unchanged rerun before calling the E2E successful.
+
+Anything less proves that Fabric resources can exist, not that FabricIQ is a
+validated, repeatable evidence lane.
+
 ## What could have been better
 
 1. **Pick one FabricIQ source earlier.** The lakehouse-source path duplicated
