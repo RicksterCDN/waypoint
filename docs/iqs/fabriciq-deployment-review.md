@@ -4,12 +4,16 @@ Date: 2026-07-23
 
 ## TL;DR
 
-To implement FabricIQ correctly in this consolidated Waypoint repo, it needs to
-be a **first-class, opt-in, one-click deployment lane** that mirrors Waypoint's
-operational Postgres data into Fabric and proves `operations-data-expert` reads
-that mirror as read-only evidence. It should not depend on OneLake copies of
-Ledgerfield seed data, hand-entered tenant IDs, broad workspace grants, or manual
-portal repair steps.
+The gold standard is the consolidated **Caldova/Waypoint demo deployment**, not
+a standalone Fabric deployment. FabricIQ should become one optional evidence lane
+inside that demo only if it can meet the same one-click, idempotent, repeatable,
+security-backed bar as the default FoundryIQ launch path.
+
+To implement FabricIQ correctly in this repo, it needs to be a first-class,
+opt-in deployment lane that mirrors Waypoint's operational Postgres data into
+Fabric and proves `operations-data-expert` reads that mirror as read-only
+evidence. It should not depend on OneLake copies of Ledgerfield seed data,
+hand-entered tenant IDs, broad workspace grants, or manual portal repair steps.
 
 The gold-standard path is:
 
@@ -17,10 +21,11 @@ The gold-standard path is:
    operational core (`suppliers`, `invoices`, `invoice_lines`,
    `reconciliation_findings`). OneLake corpus upload can remain storage/context,
    but it must not become the FabricIQ evidence source.
-2. **Repo-owned one-click deploy:** this repo's deployment entrypoint creates or
+2. **Repo-owned optional lane:** this repo's deployment entrypoint creates or
    reconciles Fabric capacity/workspace/lakehouse, mirrored PostgreSQL, semantic
    model, Data Agent, `operations-data-expert` wiring, Fabric RBAC, and
-   acceptance gates without relying on Keystone or external hand steps.
+   acceptance gates without relying on Keystone or external hand steps. The base
+   Caldova/Waypoint demo must still deploy cleanly when FabricIQ is disabled.
 3. **Security-backed headless path:** headless orchestration uses deterministic
    managed-identity SQL reads against the mirrored endpoint. Fabric Data Agent
    remains for interactive/OBO analyst scenarios, not the headless assurance
@@ -46,10 +51,10 @@ cost/capacity controls, and acceptance tests in this repo.
 ## Scope
 
 This review focuses on the current `caldova/waypoint` repository as the desired
-one-click, idempotent, repeatable, security-backed implementation surface.
-Keystone is referenced only as historical context for how the prior FabricIQ
-deployment was made to work. It should not be the future dependency for a
-gold-standard FabricIQ path in this consolidated project.
+one-click, idempotent, repeatable, security-backed implementation surface for
+the whole Caldova/Waypoint demo. Keystone is referenced only as historical
+context for how the prior FabricIQ deployment was made to work. It should not be
+the future dependency for FabricIQ in this consolidated project.
 
 ## Executive readout
 
