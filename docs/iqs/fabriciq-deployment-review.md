@@ -273,27 +273,49 @@ The practical conclusion is:
    validate every answer against known-positive SQL/semantic-model results, and
    avoid presenting ontology-only answers as production-grade evidence.
 
-### Seller-scale cost implication
+### Capacity topology at tenant and user scale
 
-The important point is not a dramatic "F64 per seller" extrapolation. We have
-confirmed F64 should not be needed for this FabricIQ implementation, and the
-current scope should start at F2. The cost concern is more practical: Fabric is a
-provisioned capacity service, so scale depends on how many sellers, analysts,
-mirrors, refreshes, and agent questions share the same capacity at the same time.
+The bigger production question is not "F2 versus F64 for this demo." We have
+confirmed F64 should not be needed for the current FabricIQ implementation, and
+F2 should be the starting SKU for the four-table pilot. The harder question is
+whether a Fabric capacity per tenant, seller, or single user is a recommended
+way to scale FabricIQ.
 
-A seller-scale architecture should therefore pool capacity across many sellers
-instead of assigning dedicated Fabric capacity per seller. It needs logical
-isolation, workload shaping, chargeback, and capacity autoscale/pause discipline,
-but the starting point should be a shared F2-backed validation path that scales up
-only when acceptance or load tests show real pressure. For the current headless
-evidence lane, the preferred pattern is:
+Microsoft's model is capacity as a **tenant-scoped resource pool**. A tenant can
+have multiple capacities, and workspaces are assigned to those capacities for
+billing and sizing. That points toward capacity pools aligned to environment,
+region, workload class, business unit, or large customer boundary--not a capacity
+for every seller or every agent user. Fabric Copilot capacity is also a billing
+and monitoring construct for groups of users; it is home-region scoped and only
+one Copilot capacity applies per user. It should not be treated as a fine-grained
+per-user production isolation primitive.
 
-1. Share Fabric capacities across many sellers by workload class.
-2. Mirror only the operational facts needed for evidence, not the whole corpus.
-3. Use deterministic SQL reads for batch/headless assurance.
-4. Reserve Data Agent/OBO surfaces for interactive analyst experiences.
-5. Add per-seller throttles, queues, and evidence caching before buying larger
-   SKUs.
+For Waypoint, the recommended production shape would be:
+
+| Pattern | Production fit | Why |
+| --- | --- | --- |
+| One shared F2-backed FabricIQ pilot capacity | Good starting point | Matches current scope and keeps FabricIQ opt-in while proving mirror/Data Agent/SQL evidence. |
+| Pooled capacities by tenant, region, environment, or workload tier | Recommended scale direction | Aligns with Fabric's workspace-to-capacity model and lets noisy workloads be isolated without multiplying capacities per seller. |
+| Dedicated capacity for a large regulated customer or high-volume tenant | Sometimes appropriate | Useful when data residency, billing, throttling isolation, or enterprise governance requires a hard boundary. |
+| Dedicated capacity per seller | Not recommended | Sellers are a business dimension, not a compute isolation boundary; this creates cost, quota, admin, and runbook sprawl. |
+| Dedicated capacity per analyst/user/agent identity | Not recommended | Fabric capacity is not a per-user runtime container; Copilot capacity is for billing/monitoring user groups, not isolated single-user production execution. |
+
+That means a scaled FabricIQ design should isolate sellers with workspace/data
+partitioning, RBAC, tenant boundaries where required, throttles, queues, and
+evidence caching--then scale a shared capacity up or out only when capacity
+metrics and acceptance tests show pressure. If a customer requires all Fabric
+items to live in its own Entra tenant, that is a customer-owned deployment model,
+not a seller-by-seller capacity strategy.
+
+For the current headless evidence lane, the preferred pattern is still:
+
+1. Mirror only the operational facts needed for evidence, not the whole corpus.
+2. Use deterministic SQL reads for batch/headless assurance.
+3. Reserve Data Agent/OBO surfaces for interactive analyst experiences.
+4. Add seller/workload throttles, queues, and evidence caching before buying
+   larger SKUs.
+5. Use dedicated capacities only for real isolation requirements, not as the
+   default unit of scale.
 
 ### Cost controls required before any default FabricIQ path
 
@@ -305,6 +327,9 @@ evidence lane, the preferred pattern is:
   is a separate cost increase from Fabric.
 - Record Fabric capacity SKU, Postgres SKU, and expected monthly burn in
   deployment evidence.
+- Record the intended capacity topology: shared pilot, pooled production,
+  customer-dedicated, or other. Do not leave capacity-per-seller/user as an
+  implicit default.
 - Fail preflight if the requested SKU/capacity cannot support the selected IQ
   features instead of silently upgrading to F64.
 
