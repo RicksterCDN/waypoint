@@ -204,29 +204,31 @@ Checked against Microsoft Learn/Fabric documentation on 2026-07-23:
 
 ## Cost and SKU posture
 
-The earlier FabricIQ work used F64 as a safe demo hammer. Current Microsoft Learn
-docs say Fabric Data Agent requires a paid **F2 or higher** Fabric capacity, or a
-Power BI Premium capacity with Fabric enabled. F64 is therefore not the documented
-minimum for Data Agent itself. It is still a meaningful cost and licensing
-threshold: Microsoft lists some viewer/license behaviors as F64-or-higher, and
-larger capacities may be needed for concurrency, model refresh, warehouse/mirror
-throughput, or predictable production workloads.
+The earlier FabricIQ work used F64 as a safe demo hammer, but F64 should not be
+needed for the current implementation. Current Microsoft Learn docs say Fabric
+Data Agent requires a paid **F2 or higher** Fabric capacity, or a Power BI
+Premium capacity with Fabric enabled. For the current four-table mirrored
+PostgreSQL path, small Direct Lake semantic model, and Fabric Data Agent
+proof-of-life, **F2 should be sufficient** unless load testing proves otherwise.
+F64 is still a meaningful cost and licensing threshold for broader Fabric/Power
+BI scenarios, high concurrency, or larger production Fabric estates, but it
+should not be treated as a FabricIQ correctness requirement.
 
 Pricing changes by region, contract, reservation, and pause/resume behavior. As
-a planning estimate, a continuously running F64 is roughly a **$5k-$8.5k/month**
-capacity-class decision depending on reserved versus pay-as-you-go pricing. The
-user-facing shorthand "$6k/month" is a reasonable reserved/enterprise planning
-number. F2 is closer to a few hundred dollars per always-on month and can be
-paused/resumed like other F SKUs.
+a planning estimate, F2 is closer to a few hundred dollars per always-on month
+and can be paused/resumed like other F SKUs. A continuously running F64 is a
+multi-thousand-dollar monthly capacity decision, but that should be framed as an
+unnecessary default for this FabricIQ scope rather than the expected deployment
+shape.
 
 | Capability | Minimum documented / practical SKU posture | Notes |
 | --- | --- | --- |
 | FoundryIQ contract/policy expert | No Fabric SKU | Uses Foundry, Search, model, and storage costs, not Fabric capacity. |
 | WorkIQ and WebIQ lanes | No Fabric SKU | Costs and constraints live in M365/Graph/WebIQ/Foundry, not Fabric capacity. |
-| OneLake corpus lakehouse | Any paid Fabric capacity is enough for small demos; F2 can be viable | Storage and operations are separate from compute; not proof of FabricIQ grounding. |
-| Fabric mirrored PostgreSQL | Requires a Fabric workspace/capacity and a non-Burstable PostgreSQL source | The source Postgres tier/cost is separate. F2 may be enough for a tiny pilot, but throughput and refresh lag need load validation. |
-| Direct Lake semantic model over four small tables | F2+ should be enough for proof-of-life | The model is tiny in the demo; F64 is not justified for this alone. |
-| Fabric Data Agent | Microsoft Learn: paid F2+ or Power BI Premium capacity | F64 is not the documented minimum as of this review. Tenant AI settings and region compatibility still apply. |
+| OneLake corpus lakehouse | F2 should be sufficient for small demos | Storage and operations are separate from compute; not proof of FabricIQ grounding. |
+| Fabric mirrored PostgreSQL | F2 should be sufficient for the current four-table pilot plus a non-Burstable PostgreSQL source | The source Postgres tier/cost is separate. Throughput and refresh lag still need load validation. |
+| Direct Lake semantic model over four small tables | F2 should be sufficient for proof-of-life | The model is tiny in the demo; F64 is not justified for this alone. |
+| Fabric Data Agent | Microsoft Learn: paid F2+ or Power BI Premium capacity; F2 should be sufficient for current scope | F64 is not the documented minimum as of this review. Tenant AI settings and region compatibility still apply. |
 | Headless `operations-data-expert` SQL path | Needs mirrored SQL endpoint capacity, ODBC, and Fabric RBAC; does not require the Data Agent OBO tool | This is the path used by orchestrator fan-out. It can avoid Data Agent runtime dependency if interactive Q&A is not required. |
 | Interactive/OBO Fabric Data Agent path | Paid F2+ plus signed-in user access | Useful for Copilot/Teammate/Playground-style experiences; not suitable for headless fan-out. |
 | Power BI-style broad viewer distribution | F64+ may become relevant | Microsoft documents F64-or-higher for some free-viewer behaviors. Seller-scale BI consumption should be priced separately from agent grounding. |
@@ -273,16 +275,18 @@ The practical conclusion is:
 
 ### Seller-scale cost implication
 
-Do **not** model FabricIQ as "one F64 per seller." At the user's $6k/month
-planning number, 20,000 sellers would imply about **$120M/month** and
-**$1.44B/year** in Fabric capacity alone. At public pay-as-you-go F64 rates, the
-number can be even higher. That is not a viable architecture.
+The important point is not a dramatic "F64 per seller" extrapolation. We have
+confirmed F64 should not be needed for this FabricIQ implementation, and the
+current scope should start at F2. The cost concern is more practical: Fabric is a
+provisioned capacity service, so scale depends on how many sellers, analysts,
+mirrors, refreshes, and agent questions share the same capacity at the same time.
 
-A seller-scale architecture would need pooled, multi-tenant capacity with strong
-logical isolation, workload shaping, chargeback, and capacity autoscale/pause
-discipline. It would also need a clear reason FabricIQ requires conversational
-Data Agent capacity at seller granularity. For the current headless evidence
-lane, a cheaper pattern may be:
+A seller-scale architecture should therefore pool capacity across many sellers
+instead of assigning dedicated Fabric capacity per seller. It needs logical
+isolation, workload shaping, chargeback, and capacity autoscale/pause discipline,
+but the starting point should be a shared F2-backed validation path that scales up
+only when acceptance or load tests show real pressure. For the current headless
+evidence lane, the preferred pattern is:
 
 1. Share Fabric capacities across many sellers by workload class.
 2. Mirror only the operational facts needed for evidence, not the whole corpus.
@@ -294,8 +298,8 @@ lane, a cheaper pattern may be:
 ### Cost controls required before any default FabricIQ path
 
 - Default FabricIQ off unless an environment explicitly opts in.
-- Select the smallest SKU that passes the known-positive FabricIQ acceptance
-  gate; do not default to F64 for a four-table pilot.
+- Start with F2 for the current four-table FabricIQ pilot and scale only if the
+  known-positive acceptance gate or load test proves F2 is insufficient.
 - Add capacity pause/resume or scheduled scale-down for demo environments.
 - Keep GeneralPurpose Postgres upgrades explicit because the mirror source tier
   is a separate cost increase from Fabric.
@@ -474,9 +478,9 @@ current gap stack works against that bar:
   Data Agent answers are less accurate than direct SQL/DAX over the same facts,
   the agent must cite deterministic fallback evidence or the assurance decision
   is not defensible.
-- **Cost risk:** the cheapest SKU that proves a demo may not survive concurrency,
-  while defaulting to F64 creates an expensive feature tax that does not map to a
-  seller-scale architecture.
+- **Cost risk:** F2 should be sufficient for the current scope, but idle
+  always-on capacity, non-Burstable Postgres, and concurrency-driven scale-up
+  still need controls. Defaulting to F64 would create an unnecessary feature tax.
 
 Until these are solved, FabricIQ should be described as a powerful preview/opt-in
 evidence lane with production potential, not as a production-ready default
