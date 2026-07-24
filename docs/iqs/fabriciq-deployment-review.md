@@ -2,9 +2,54 @@
 
 Date: 2026-07-23
 
-This review cross-checks the current Waypoint monorepo against the earlier
-multi-repo deployment across Keystone, Waypoint, Forge, Ledgerfield, and Caliber,
-with a focus on how Fabric was used to implement the FabricIQ hosted agent.
+## TL;DR
+
+To implement FabricIQ correctly in this consolidated Waypoint repo, it needs to
+be a **first-class, opt-in, one-click deployment lane** that mirrors Waypoint's
+operational Postgres data into Fabric and proves `operations-data-expert` reads
+that mirror as read-only evidence. It should not depend on OneLake copies of
+Ledgerfield seed data, hand-entered tenant IDs, broad workspace grants, or manual
+portal repair steps.
+
+The gold-standard path is:
+
+1. **Non-duplicative source:** FabricIQ reads only the mirrored Waypoint
+   operational core (`suppliers`, `invoices`, `invoice_lines`,
+   `reconciliation_findings`). OneLake corpus upload can remain storage/context,
+   but it must not become the FabricIQ evidence source.
+2. **Repo-owned one-click deploy:** this repo's deployment entrypoint creates or
+   reconciles Fabric capacity/workspace/lakehouse, mirrored PostgreSQL, semantic
+   model, Data Agent, `operations-data-expert` wiring, Fabric RBAC, and
+   acceptance gates without relying on Keystone or external hand steps.
+3. **Security-backed headless path:** headless orchestration uses deterministic
+   managed-identity SQL reads against the mirrored endpoint. Fabric Data Agent
+   remains for interactive/OBO analyst scenarios, not the headless assurance
+   pipeline.
+4. **Idempotent and repeatable:** unchanged reruns reuse existing Fabric items,
+   secrets, mirror configuration, and agent wiring; they do not create duplicate
+   lakehouses, mirrored DBs, Data Agents, or identity grants.
+5. **Fail-closed validation:** a successful run must show non-empty
+   `fabric://_public.*` evidence, server-side proof of mirrored-table reads, a
+   terminal Waypoint run, and an unchanged rerun. Empty Fabric evidence,
+   fallback-only answers, missing RBAC, or a non-terminal run should fail the
+   FabricIQ gate.
+
+Product gaps still make this hard: Fabric SaaS item lifecycle is not fully
+covered by Bicep, PostgreSQL mirroring has source/tier/schema limits, Fabric
+tenant/region/capacity settings can block Data Agent/Copilot, new tenants
+require admin setup that is not safe to silently perform from app deployment,
+Ontology remains preview, and Data Agent is not a reliable headless primitive.
+Those gaps do not prevent a clean implementation, but they require explicit
+preflight checks, scripted reconciliation, least-privilege identity automation,
+cost/capacity controls, and acceptance tests in this repo.
+
+## Scope
+
+This review focuses on the current `caldova/waypoint` repository as the desired
+one-click, idempotent, repeatable, security-backed implementation surface.
+Keystone is referenced only as historical context for how the prior FabricIQ
+deployment was made to work. It should not be the future dependency for a
+gold-standard FabricIQ path in this consolidated project.
 
 ## Executive readout
 
@@ -122,7 +167,7 @@ contract/policy interpretation belongs to FoundryIQ.
 | --- | --- | --- |
 | Data Agent OBO on headless runs | The Foundry Fabric Data Agent tool failed on headless Responses turns because no signed-in user token existed | Required a two-path design: OBO only for interactive/Teammate, direct SQL for headless. |
 | Wrong identity presented to Fabric SQL | The hosted container presented a per-agent AgentIdentity, not the project managed identity initially granted in Fabric | Required token-claim logging and an explicit Fabric Viewer grant for the actual AgentIdentity. |
-| AgentIdentity rotation | Per-agent identities can rotate if an agent/environment is recreated | Keystone/Waypoint need a repeatable way to inject the current consumer identity into Fabric workspace grants. |
+| AgentIdentity rotation | Per-agent identities can rotate if an agent/environment is recreated | This repo's deploy needs a repeatable way to discover and grant the current consumer identity. |
 | ODBC packaging | The headless TDS path needed `msodbcsql18` present in the hosted-agent image | This was fixed, but it is a platform-specific dependency outside Python package management. |
 | `_public` schema | Mirrored Postgres `public` surfaced as `_public` in Fabric SQL analytics | Easy to miss; a wrong schema broke Direct Lake and SQL reads. |
 | Portal-only mirror enablement | PostgreSQL Fabric mirroring required a source-server enable/prepare/restart step | The repo could set Bicep prerequisites, but the final server preparation was not fully API/IaC at the time. |
@@ -171,6 +216,10 @@ translates the highest-impact items into blocker/mitigation tables.
   to take effect. Microsoft warns that use from Foundry, Copilot Studio, M365
   Copilot, MCP, or other non-Fabric services can move responses outside the
   Fabric compliance/geographic boundary.
+- New tenants need Fabric tenant/capacity enablement before this repo can create
+  and use Fabric items. Microsoft documents Fabric admin switches, security-group
+  scoping, capacity-level overrides, and paid capacity purchase/assignment as
+  administrator-controlled setup.
 - Fabric workload availability is regional. Some Azure regions are Power BI
   only, and Microsoft notes that some Fabric workloads might not be immediately
   available in new or capacity-constrained regions.
@@ -371,15 +420,15 @@ A successful FabricIQ-added E2E should prove all of these in one run:
 
 | Area | Needed for E2E |
 | --- | --- |
-| Root deploy workflow | Reintroduce FabricIQ as an explicit selected lane: Fabric provisioning, mirror provisioning, IQ provisioning, operations-data-expert deploy, orchestrator endpoint wiring, and FabricIQ acceptance. |
-| Deployment state | Persist Fabric workspace, lakehouse, mirrored DB, semantic model, Data Agent, SQL endpoint, and consumer grants as non-secret state, with secrets in Key Vault only. |
-| Waypoint app deploy | Pass `fabric_provision_enabled`, `fabric_mirror_enabled`, `fabric_iq_enabled`, Fabric names, mirror names, and consumer-member grants through the app deployment. |
+| Waypoint repo deployment entrypoint | Reintroduce FabricIQ as an explicit selected lane: Fabric provisioning, mirror provisioning, IQ provisioning, operations-data-expert deploy, orchestrator endpoint wiring, and FabricIQ acceptance. |
+| Repo-owned deployment state | Persist Fabric workspace, lakehouse, mirrored DB, semantic model, Data Agent, SQL endpoint, and consumer grants as non-secret state, with secrets in Key Vault only. |
+| App deploy wiring | Pass `fabric_provision_enabled`, `fabric_mirror_enabled`, `fabric_iq_enabled`, Fabric names, mirror names, and consumer-member grants through the app deployment. |
 | Postgres | Enforce GeneralPurpose or MemoryOptimized when mirroring is enabled; reject or coerce Burstable cost overrides. |
 | Fabric mirror | Ensure source-server SAMI, `fabric_user`, table ownership, Fabric connection, mirrored DB item, and start/poll logic are idempotent. |
 | Fabric IQ | Build/update the Direct Lake semantic model and published Data Agent from item definitions or the current supported SDK/API. |
-| Forge agents | Include `operations-data-expert` in the selected agent matrix, set `FABRIC_MIRRORED_SQL_ENDPOINT`, `FABRIC_MIRRORED_DATABASE`, `FABRIC_MIRRORED_SCHEMA`, and keep the ODBC image dependency validated. |
+| Agent deployment | Include `operations-data-expert` in the selected agent matrix, set `FABRIC_MIRRORED_SQL_ENDPOINT`, `FABRIC_MIRRORED_DATABASE`, `FABRIC_MIRRORED_SCHEMA`, and keep the ODBC image dependency validated. |
 | Fabric RBAC | Grant the actual presented hosted-agent identity Viewer on the Fabric workspace or item. Do not assume the project managed identity is the reader without token-claim proof. |
-| Ledgerfield | Keep OneLake corpus upload as storage/context only, not the FabricIQ source of operational truth. |
+| Corpus lane | Keep OneLake corpus upload as storage/context only, not the FabricIQ source of operational truth. |
 | Caliber | Add a FabricIQ known-positive eval only after the deployment lane is real; keep it separate from contract-policy RFT workflows. |
 
 ### Validation sequence
@@ -449,8 +498,9 @@ repeatable and one-click:
 | --- | --- |
 | Root launch workflow excludes FabricIQ | The current canonical deployment intentionally has no FabricIQ inputs, stages, resources, or default agent wiring. |
 | FabricIQ code/docs posture is inconsistent | Root docs say future/opt-in; agent-local docs still say stub; code contains live dual-path logic. Acceptance criteria cannot be trusted until this is reconciled. |
+| New tenant Fabric admin readiness is manual/policy-gated | Fabric item creation, paid capacity, workspace assignment, Copilot/Data Agent settings, and cross-geo AI settings can all require tenant or capacity admin action before this repo can deploy. |
 | Fabric mirror source preparation may still require portal action | If there is no public API for the source-server "Prepare / Restart / ready for mirroring" step, a clean tenant cannot be fully one-click. |
-| Consumer identity discovery is not first-class | The successful fix required granting the actual per-agent AgentIdentity, which can rotate. Manual `WAYPOINT_FABRIC_CONSUMER_MEMBERS` is not enough for fresh environments. |
+| Consumer identity discovery is not first-class | The successful fix required granting the actual per-agent AgentIdentity, which can rotate. Hand-entered consumer grants are not enough for fresh environments. |
 | Fabric Data Agent provisioning path needs modernization | Raw item-definition REST worked, but current public Data Agent SDK/API should be evaluated before re-shipping hand-authored multipart definitions. |
 | No FabricIQ acceptance gate | The current acceptance proves FoundryIQ KB retrieval, not Fabric mirror health, Data Agent health, direct SQL grounding, or FabricIQ evidence in recorder output. |
 | Cost/SKU preflight is missing | The workflow does not currently choose or reject Fabric SKUs based on selected IQ features and expected monthly burn. |
@@ -483,6 +533,26 @@ tenants/regions or force us to add preflight gates and manual escape hatches.
 | Fabric source permissions do not propagate | PostgreSQL grants do not carry into Fabric. We must separately grant Fabric workspace/item access to the actual consuming identity. | Make Fabric RBAC/idempotent item grants first-class and discover rotating agent identities automatically. |
 | Data Agent is bounded and user-permissioned | Five-source limit, read-only behavior, Purview policy enforcement, user credential semantics, and interactive Q&A response shaping make it a poor headless pipeline primitive. | Use deterministic SQL for headless evidence; reserve Data Agent for interactive analyst experiences. |
 | First-class IaC coverage is still incomplete for this scenario | ARM/Bicep can help with Azure-side capacity/resource provisioning, but workspace/lakehouse/mirror/model/Data Agent item lifecycle still requires Fabric REST/SDK scripting. | Keep scripts idempotent, version item definitions, and treat "no Bicep support" as an accepted product gap until coverage improves. |
+
+### New-tenant manual setup blockers
+
+A fresh tenant is the clearest test of whether FabricIQ is truly one-click. Any
+step that requires a tenant admin to click through Fabric or Azure portals before
+this repo can deploy should be treated as a product gap, policy gate, or
+documented preflight blocker--not as a hidden prerequisite.
+
+| New-tenant step | Why it blocks the easy path | Gold-standard repo behavior |
+| --- | --- | --- |
+| Enable Microsoft Fabric for the tenant or scoped security group | Fabric item creation can be disabled by tenant policy. This is a Fabric admin decision, not an app deployment detail. | Preflight the setting and fail with a precise admin-readiness message if Fabric item creation is unavailable. |
+| Purchase or assign a paid F SKU/P capacity | Data Agent and Fabric workloads need paid capacity; buying capacity requires Azure subscription permissions and regional SKU availability. | Create/reuse capacity only when the deploy identity has explicit rights; otherwise fail before provisioning with required RBAC/SKU guidance. |
+| Assign the workspace to the intended capacity | Workspaces defaulting to shared/incorrect capacity can break Fabric item creation, billing, and throttling isolation. | Reconcile workspace-to-capacity assignment idempotently and record the selected capacity topology. |
+| Enable Copilot/Azure OpenAI and Data Agent tenant settings | Data Agent depends on tenant/capacity AI settings that may be disabled, scoped to groups, delegated, or delayed. | Preflight tenant and capacity settings; do not silently broaden tenant AI access from this repo. |
+| Approve cross-geo AI processing/storage settings where required | Some regions require explicit approval for AI processing or storage outside the capacity geography/compliance boundary. | Treat as human governance approval; block FabricIQ if policy disallows it. |
+| Create or identify security groups for Fabric/Data Agent users | Fabric and Copilot features are often scoped to specific groups. Without the right group membership, setup can appear successful but agent use fails. | Accept group IDs as declared inputs, verify membership/eligibility where possible, and report missing group access as preflight failure. |
+| Prepare PostgreSQL for Fabric mirroring | Mirroring requires a non-Burstable source, SAMI, privileged mirroring role, table ownership, and possibly source-server prepare/restart behavior. | Automate all database-side checks and bootstraps possible; if source-server prepare remains portal-only, mark it as a product gap and require explicit recorded evidence. |
+| Grant Fabric access to the actual agent identity | The consuming identity may be a per-agent AgentIdentity rather than the expected project identity, and it may rotate. | Discover the presented identity, grant least-privilege workspace/item access idempotently, and fail if the identity cannot be proven. |
+| Validate regional feature availability | Some regions are Power BI-only or missing specific Fabric/IQ features. | Preflight region support before creating Azure resources; do not deploy app resources into a region where FabricIQ cannot be completed. |
+| Register/authorize Fabric management actions for pause/resume/capacity operations | Capacity creation, suspend, resume, and assignment require Azure RBAC actions that a normal app deploy identity might not have. | Declare required Azure RBAC up front and fail preflight if the deploy identity cannot manage the selected capacity lifecycle. |
 
 ### Why this makes FabricIQ hard to productionize
 
@@ -534,8 +604,8 @@ identity/RBAC automation across Foundry-hosted agents and Fabric workspaces.
    seed answers. The mirrored operational core is the cleaner FabricIQ source.
 2. **Avoid raw REST once the Data Agent SDK is stable.** The hand-authored
    multi-part JSON definitions were effective but brittle.
-3. **Make agent identity discovery first-class.** Keystone should not depend on
-   manually captured per-agent object IDs for `WAYPOINT_FABRIC_CONSUMER_MEMBERS`.
+3. **Make agent identity discovery first-class.** This repo should not depend on
+   manually captured per-agent object IDs or hand-entered consumer grants.
 4. **Add a FabricIQ acceptance gate before default enablement.** A real gate
    should invoke `operations-data-expert` and verify non-empty `fabric://_public`
    evidence plus server-side/read-path proof.
@@ -575,6 +645,12 @@ proves live mirrored-table grounding from `operations-data-expert`.
   <https://learn.microsoft.com/en-us/fabric/iq/ontology/tutorial-4-create-data-agent>
 - Fabric region availability:
   <https://learn.microsoft.com/en-us/fabric/admin/region-availability>
+- Enable Microsoft Fabric for your organization:
+  <https://learn.microsoft.com/en-us/fabric/admin/fabric-switch>
+- Buy a Microsoft Fabric subscription:
+  <https://learn.microsoft.com/en-us/fabric/enterprise/buy-subscription>
+- Fabric tenant settings:
+  <https://learn.microsoft.com/en-us/fabric/admin/about-tenant-settings>
 - Copilot and Agent admin settings:
   <https://learn.microsoft.com/en-us/fabric/admin/service-admin-portal-copilot>
 - Fabric Copilot capacity:
