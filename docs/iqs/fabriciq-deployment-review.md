@@ -70,9 +70,9 @@ analytics endpoint as `_public.*` tables:
 - `_public.invoice_lines`
 - `_public.reconciliation_findings`
 
-The successful validation returned five real `fabric://_public.*` refs for
-`INV-2026-08034` and server-side `queryinsights` confirmed matching successful
-SELECTs and row counts.
+The successful validation returned five real `fabric://_public.*` refs from the
+four-table operational mirror for `INV-2026-08034`, and server-side
+`queryinsights` confirmed matching successful SELECTs and row counts.
 
 ## Was the Fabric data duplicative?
 
@@ -145,15 +145,18 @@ operations.
 | `modules/corpus/src/ledgerfield/onelake_upload.py` | Writes corpus documents through OneLake DFS/ADLS APIs and Delta tables through `deltalake` over `abfss://`. |
 | `modules/agents/scripts/initialize_fabric_data_agent.py` | Creates/updates the Foundry project connection to the Fabric Data Agent. |
 
-## Known Microsoft product gaps and constraints
+## Microsoft constraints checked
 
 Checked against Microsoft Learn/Fabric documentation on 2026-07-23:
+
+This section lists the source product constraints. The later E2E section
+translates the highest-impact items into blocker/mitigation tables.
 
 - Fabric Data Agent is GA, read-only, and requires paid Fabric capacity
   (`F2+` or Power BI Premium capacity with Fabric enabled). It supports governed
   sources such as lakehouses, warehouses, semantic models, KQL databases,
-  mirrored databases, and ontologies, but it does not support unstructured files
-  directly.
+  mirrored databases, ontologies, and Microsoft Graph, but it does not support
+  unstructured files directly.
 - Fabric Ontology is still **preview**, not GA. Microsoft positions it as the
   business vocabulary, relationship graph, and semantic context layer that
   grounds Fabric IQ agents across OneLake sources, but the item, bindings, and
@@ -161,9 +164,9 @@ Checked against Microsoft Learn/Fabric documentation on 2026-07-23:
   Waypoint evidence plane.
 - Fabric Data Agent uses user credentials/permissions for schema and query
   access. It is read-only and respects Purview/DLP/access restrictions.
-- A Data Agent can use up to five data sources. Responses are currently capped
-  at 25 rows and 25 columns, and data sources must be in the same capacity region
-  as the agent workspace.
+- A Data Agent can use up to five data sources. It is an interactive Q&A surface,
+  not a bulk extract API, and data sources must be in the same capacity region as
+  the agent workspace.
 - Tenant Copilot/Azure OpenAI settings are required and can take up to an hour
   to take effect. Microsoft warns that use from Foundry, Copilot Studio, M365
   Copilot, MCP, or other non-Fabric services can move responses outside the
@@ -219,67 +222,30 @@ a planning estimate, F2 is closer to a few hundred dollars per always-on month
 and can be paused/resumed like other F SKUs. A continuously running F64 is a
 multi-thousand-dollar monthly capacity decision, but that should be framed as an
 unnecessary default for this FabricIQ scope rather than the expected deployment
-shape.
+shape. F2 is a starting point, not a headroom guarantee: Data Agent, mirror,
+semantic-model, and ontology activity consume capacity and can still hit
+throttling under concurrency.
 
 | Capability | Minimum documented / practical SKU posture | Notes |
 | --- | --- | --- |
 | FoundryIQ contract/policy expert | No Fabric SKU | Uses Foundry, Search, model, and storage costs, not Fabric capacity. |
 | WorkIQ and WebIQ lanes | No Fabric SKU | Costs and constraints live in M365/Graph/WebIQ/Foundry, not Fabric capacity. |
-| OneLake corpus lakehouse | F2 should be sufficient for small demos | Storage and operations are separate from compute; not proof of FabricIQ grounding. |
-| Fabric mirrored PostgreSQL | F2 should be sufficient for the current four-table pilot plus a non-Burstable PostgreSQL source | The source Postgres tier/cost is separate. Throughput and refresh lag still need load validation. |
-| Direct Lake semantic model over four small tables | F2 should be sufficient for proof-of-life | The model is tiny in the demo; F64 is not justified for this alone. |
-| Fabric Data Agent | Microsoft Learn: paid F2+ or Power BI Premium capacity; F2 should be sufficient for current scope | F64 is not the documented minimum as of this review. Tenant AI settings and region compatibility still apply. |
+| OneLake corpus lakehouse | F2 | Storage and operations are separate from compute; not proof of FabricIQ grounding. |
+| Fabric mirrored PostgreSQL | F2 for current four-table pilot, plus a non-Burstable PostgreSQL source | The source Postgres tier/cost is separate. Throughput and refresh lag still need load validation. |
+| Direct Lake semantic model over four small tables | F2 | The model is tiny in the demo; F64 is not justified for this alone. |
+| Fabric Data Agent | Documented floor is F2+ or Power BI Premium capacity; F2 should fit current scope | F64 is not the documented minimum as of this review. Tenant AI settings and region compatibility still apply. |
 | Headless `operations-data-expert` SQL path | Needs mirrored SQL endpoint capacity, ODBC, and Fabric RBAC; does not require the Data Agent OBO tool | This is the path used by orchestrator fan-out. It can avoid Data Agent runtime dependency if interactive Q&A is not required. |
 | Interactive/OBO Fabric Data Agent path | Paid F2+ plus signed-in user access | Useful for Copilot/Teammate/Playground-style experiences; not suitable for headless fan-out. |
 | Power BI-style broad viewer distribution | F64+ may become relevant | Microsoft documents F64-or-higher for some free-viewer behaviors. Seller-scale BI consumption should be priced separately from agent grounding. |
 | Caliber evals/RFT | No Fabric SKU unless FabricIQ evals query Fabric | Caliber costs are Foundry/eval/training costs; keep separate from Fabric capacity. |
 
-## Why Ontologies matter to FabricIQ
-
-FabricIQ becomes much more compelling if it can answer in Caldova business
-language instead of only table language. An ontology would let us define
-first-class operational concepts such as supplier, invoice, purchase order,
-contracted rate, batch, plant, deviation, recovery amount, and assurance case;
-bind those concepts to operational facts in OneLake; and make relationships
-explicit for agents. That is the difference between "query `_public.invoices`"
-and "explain which supplier relationships, contract terms, and operational
-events make this invoice recoverable."
-
-For a production-grade FabricIQ lane, ontology should be the governed semantic
-backbone:
-
-| FabricIQ need | Why ontology helps |
-| --- | --- |
-| Consistent business terms | One definition of supplier, invoice, finding, charge category, and recovery reason can be reused across agents, semantic models, and dashboards. |
-| Cross-domain reasoning | Relationships become first-class instead of being hidden in SQL joins or prompt instructions. |
-| Explainability | Evidence can cite business entities and relationships, not just raw tables and columns. |
-| Agent portability | Foundry, Copilot Studio, Fabric Data Agent, and operations agents can share the same business model. |
-| Governance | Business constraints, lineage, and source bindings are centralized instead of duplicated in agent prompts and Python tools. |
-
-The problem is that ontology is also one of the largest current production
-risks. In testing and product exploration, ontology-backed questions have not
-returned results as consistently or accurately as equivalent questions against a
-lakehouse table or a mature semantic model. That gap matters because FabricIQ's
-value is grounded assurance: if the ontology layer can return vague, incomplete,
-or inconsistent answers for the same business question, we cannot rely on it as
-the deciding evidence source without an eval harness and deterministic fallback.
-
-The practical conclusion is:
-
-1. Ontology is strategically important for a real FabricIQ product.
-2. It should not be a default launch dependency while it remains preview and
-   answer quality is less reliable than lakehouse/semantic-model grounding.
-3. If we use it in a demo, the demo must label it as a preview semantic layer,
-   validate every answer against known-positive SQL/semantic-model results, and
-   avoid presenting ontology-only answers as production-grade evidence.
-
 ### Capacity topology at tenant and user scale
 
-The bigger production question is not "F2 versus F64 for this demo." We have
-confirmed F64 should not be needed for the current FabricIQ implementation, and
-F2 should be the starting SKU for the four-table pilot. The harder question is
-whether a Fabric capacity per tenant, seller, or single user is a recommended
-way to scale FabricIQ.
+The bigger production question is not "F2 versus F64 for this demo." Based on
+the current docs and implementation scope, F64 should not be required for
+FabricIQ, and F2 should be the starting SKU for the four-table pilot. The harder
+question is whether a Fabric capacity per tenant, seller, or single user is a
+recommended way to scale FabricIQ.
 
 Microsoft's model is capacity as a **tenant-scoped resource pool**. A tenant can
 have multiple capacities, and workspaces are assigned to those capacities for
@@ -332,6 +298,45 @@ For the current headless evidence lane, the preferred pattern is still:
   implicit default.
 - Fail preflight if the requested SKU/capacity cannot support the selected IQ
   features instead of silently upgrading to F64.
+
+## Why Ontologies matter to FabricIQ
+
+FabricIQ becomes much more compelling if it can answer in Caldova business
+language instead of only table language. An ontology would let us define
+first-class operational concepts such as supplier, invoice, purchase order,
+contracted rate, batch, plant, deviation, recovery amount, and assurance case;
+bind those concepts to operational facts in OneLake; and make relationships
+explicit for agents. That is the difference between "query `_public.invoices`"
+and "explain which supplier relationships, contract terms, and operational
+events make this invoice recoverable."
+
+For a production-grade FabricIQ lane, ontology should be the governed semantic
+backbone:
+
+| FabricIQ need | Why ontology helps |
+| --- | --- |
+| Consistent business terms | One definition of supplier, invoice, finding, charge category, and recovery reason can be reused across agents, semantic models, and dashboards. |
+| Cross-domain reasoning | Relationships become first-class instead of being hidden in SQL joins or prompt instructions. |
+| Explainability | Evidence can cite business entities and relationships, not just raw tables and columns. |
+| Agent portability | Foundry, Copilot Studio, Fabric Data Agent, and operations agents can share the same business model. |
+| Governance | Business constraints, lineage, and source bindings are centralized instead of duplicated in agent prompts and Python tools. |
+
+The problem is that ontology is also one of the largest current production
+risks. In testing and product exploration, ontology-backed questions have not
+returned results as consistently or accurately as equivalent questions against a
+lakehouse table or a mature semantic model. That gap matters because FabricIQ's
+value is grounded assurance: if the ontology layer can return vague, incomplete,
+or inconsistent answers for the same business question, we cannot rely on it as
+the deciding evidence source without an eval harness and deterministic fallback.
+
+The practical conclusion is:
+
+1. Ontology is strategically important for a real FabricIQ product.
+2. It should not be a default launch dependency while it remains preview and
+   answer quality is less reliable than lakehouse/semantic-model grounding.
+3. If we use it in a demo, the demo must label it as a preview semantic layer,
+   validate every answer against known-positive SQL/semantic-model results, and
+   avoid presenting ontology-only answers as production-grade evidence.
 
 ## What a validated current E2E with FabricIQ would require
 
@@ -476,7 +481,7 @@ tenants/regions or force us to add preflight gates and manual escape hatches.
 | Mirroring supports one Fabric mirror target per source database | A source Waypoint database cannot be mirrored simultaneously to multiple Fabric items/workspaces. Parallel demo environments can collide if they share a source. | Use one database per demo environment or one shared mirror with explicit environment isolation. |
 | Private networking adds gateway requirements | If the PostgreSQL server is private and does not allow Azure service access, Fabric mirroring needs a virtual network data gateway path that is not part of our current one-click path. | Decide whether demo allows controlled public/Azure-service access or add gateway provisioning/operations to scope. |
 | Fabric source permissions do not propagate | PostgreSQL grants do not carry into Fabric. We must separately grant Fabric workspace/item access to the actual consuming identity. | Make Fabric RBAC/idempotent item grants first-class and discover rotating agent identities automatically. |
-| Data Agent is bounded and user-permissioned | Five-source limit, 25-row/25-column response caps, read-only behavior, Purview policy enforcement, and user credential semantics make it a poor headless pipeline primitive. | Use deterministic SQL for headless evidence; reserve Data Agent for interactive analyst experiences. |
+| Data Agent is bounded and user-permissioned | Five-source limit, read-only behavior, Purview policy enforcement, user credential semantics, and interactive Q&A response shaping make it a poor headless pipeline primitive. | Use deterministic SQL for headless evidence; reserve Data Agent for interactive analyst experiences. |
 | First-class IaC coverage is still incomplete for this scenario | ARM/Bicep can help with Azure-side capacity/resource provisioning, but workspace/lakehouse/mirror/model/Data Agent item lifecycle still requires Fabric REST/SDK scripting. | Keep scripts idempotent, version item definitions, and treat "no Bicep support" as an accepted product gap until coverage improves. |
 
 ### Why this makes FabricIQ hard to productionize
