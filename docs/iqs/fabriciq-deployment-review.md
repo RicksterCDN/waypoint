@@ -154,6 +154,11 @@ Checked against Microsoft Learn/Fabric documentation on 2026-07-23:
   sources such as lakehouses, warehouses, semantic models, KQL databases,
   mirrored databases, and ontologies, but it does not support unstructured files
   directly.
+- Fabric Ontology is still **preview**, not GA. Microsoft positions it as the
+  business vocabulary, relationship graph, and semantic context layer that
+  grounds Fabric IQ agents across OneLake sources, but the item, bindings, and
+  agent consumption path are not production-stable enough to treat as a default
+  Waypoint evidence plane.
 - Fabric Data Agent uses user credentials/permissions for schema and query
   access. It is read-only and respects Purview/DLP/access restrictions.
 - A Data Agent can use up to five data sources. Responses are currently capped
@@ -169,6 +174,15 @@ Checked against Microsoft Learn/Fabric documentation on 2026-07-23:
 - Fabric Copilot capacity is supported only in the Fabric tenant's home region.
   That matters if we try to centralize Copilot/Data Agent billing while deploying
   Waypoint resources into a different target region.
+- Ontology bindings have important preview constraints: upstream data changes
+  require graph/model refresh before they are visible; lakehouse bindings require
+  managed tables without OneLake security or Delta column mapping; one static
+  binding is supported per entity type; and several source/model shapes either
+  fail generation or produce missing/null data.
+- Microsoft documents ontology Data Agent issues including first-query
+  initialization failures, vague/generic answers when ontology source or entity
+  names are weak, and an aggregation issue that currently requires adding
+  `Support group by in GQL` to the agent instructions.
 - OneLake supports ADLS/Blob-compatible APIs, but permissions and item
   management remain Fabric experiences. Direct API callers need the Storage
   token audience. Some tools reject the OneLake DFS endpoint because it is not
@@ -217,6 +231,45 @@ paused/resumed like other F SKUs.
 | Interactive/OBO Fabric Data Agent path | Paid F2+ plus signed-in user access | Useful for Copilot/Teammate/Playground-style experiences; not suitable for headless fan-out. |
 | Power BI-style broad viewer distribution | F64+ may become relevant | Microsoft documents F64-or-higher for some free-viewer behaviors. Seller-scale BI consumption should be priced separately from agent grounding. |
 | Caliber evals/RFT | No Fabric SKU unless FabricIQ evals query Fabric | Caliber costs are Foundry/eval/training costs; keep separate from Fabric capacity. |
+
+## Why Ontologies matter to FabricIQ
+
+FabricIQ becomes much more compelling if it can answer in Caldova business
+language instead of only table language. An ontology would let us define
+first-class operational concepts such as supplier, invoice, purchase order,
+contracted rate, batch, plant, deviation, recovery amount, and assurance case;
+bind those concepts to operational facts in OneLake; and make relationships
+explicit for agents. That is the difference between "query `_public.invoices`"
+and "explain which supplier relationships, contract terms, and operational
+events make this invoice recoverable."
+
+For a production-grade FabricIQ lane, ontology should be the governed semantic
+backbone:
+
+| FabricIQ need | Why ontology helps |
+| --- | --- |
+| Consistent business terms | One definition of supplier, invoice, finding, charge category, and recovery reason can be reused across agents, semantic models, and dashboards. |
+| Cross-domain reasoning | Relationships become first-class instead of being hidden in SQL joins or prompt instructions. |
+| Explainability | Evidence can cite business entities and relationships, not just raw tables and columns. |
+| Agent portability | Foundry, Copilot Studio, Fabric Data Agent, and operations agents can share the same business model. |
+| Governance | Business constraints, lineage, and source bindings are centralized instead of duplicated in agent prompts and Python tools. |
+
+The problem is that ontology is also one of the largest current production
+risks. In testing and product exploration, ontology-backed questions have not
+returned results as consistently or accurately as equivalent questions against a
+lakehouse table or a mature semantic model. That gap matters because FabricIQ's
+value is grounded assurance: if the ontology layer can return vague, incomplete,
+or inconsistent answers for the same business question, we cannot rely on it as
+the deciding evidence source without an eval harness and deterministic fallback.
+
+The practical conclusion is:
+
+1. Ontology is strategically important for a real FabricIQ product.
+2. It should not be a default launch dependency while it remains preview and
+   answer quality is less reliable than lakehouse/semantic-model grounding.
+3. If we use it in a demo, the demo must label it as a preview semantic layer,
+   validate every answer against known-positive SQL/semantic-model results, and
+   avoid presenting ontology-only answers as production-grade evidence.
 
 ### Seller-scale cost implication
 
@@ -380,6 +433,10 @@ tenants/regions or force us to add preflight gates and manual escape hatches.
 | Product gap / constraint | Impact on a one-click FabricIQ demo | Required mitigation |
 | --- | --- | --- |
 | Regional workload availability is uneven | A requested Azure region can be Power BI-only or missing specific Fabric features. A "successful" Azure deployment could still be unable to create the Fabric items the IQ needs. | Preflight the tenant home region, target region, Fabric workload availability, and requested feature set before provisioning anything. |
+| Ontology is preview, not GA | Ontology is the feature that most directly promises business-language grounding for FabricIQ, but preview status means no production stability bar, limited regional coverage, and changing APIs/behavior. | Treat ontology as optional/preview; require explicit opt-in, documented limitations, and deterministic lakehouse/semantic-model fallback. |
+| Ontology answer quality is not yet consistently comparable to lakehouse or semantic-model queries | If ontology-backed natural language answers disagree with direct lakehouse/semantic-model answers, FabricIQ cannot use ontology-only evidence for invoice assurance decisions. | Add ontology-specific evals in Caliber, compare every preview ontology answer to known-positive SQL/DAX results, and block production claims until parity is proven. |
+| Ontology binding and refresh constraints are operationally fragile | Manual graph refresh, managed-table-only lakehouse bindings, no OneLake security/column mapping on bound lakehouses, one static binding per entity type, and source-shape constraints make hands-free repeatability hard. | Keep ontology schema minimal; preflight table modes/security/column mapping; automate refresh checks; fail validation on stale or sparse graph data. |
+| Ontology Data Agent has known query issues | Microsoft documents first-query initialization failures, vague/generic answers when ontology context is weak, and an aggregation workaround requiring an explicit GQL instruction. | Warm the agent before demos, add required instructions, and verify answer shape/results before marking FabricIQ healthy. |
 | Fabric Copilot capacity is home-region scoped | If we use a centralized Fabric Copilot capacity for Data Agent/Copilot billing, it must live in the tenant home region, which can conflict with a demo target region or data-residency choice. | Treat Copilot capacity as a separate topology decision; do not assume arbitrary-region placement. |
 | Cross-geo AI processing/storage settings are tenant-admin switches | Outside the EU data boundary and US, Fabric Data Agent/Copilot may require settings that are disabled by default and can take up to an hour to apply. A repo workflow should not silently flip org-wide AI/data-residency policy. | Add an admin-readiness preflight and explicit human approval for tenant AI settings; fail with instructions if policy disallows it. |
 | Product does not let admins enable only a single Copilot experience | Microsoft documents workload-level Copilot controls, not a precise "Data Agent only for this demo" toggle. Enabling the required switch can broaden tenant/capacity exposure beyond Waypoint. | Scope to security groups and dedicated capacities; document the blast radius. |
@@ -392,6 +449,38 @@ tenants/regions or force us to add preflight gates and manual escape hatches.
 | Fabric source permissions do not propagate | PostgreSQL grants do not carry into Fabric. We must separately grant Fabric workspace/item access to the actual consuming identity. | Make Fabric RBAC/idempotent item grants first-class and discover rotating agent identities automatically. |
 | Data Agent is bounded and user-permissioned | Five-source limit, 25-row/25-column response caps, read-only behavior, Purview policy enforcement, and user credential semantics make it a poor headless pipeline primitive. | Use deterministic SQL for headless evidence; reserve Data Agent for interactive analyst experiences. |
 | First-class IaC coverage is still incomplete for this scenario | ARM/Bicep can help with Azure-side capacity/resource provisioning, but workspace/lakehouse/mirror/model/Data Agent item lifecycle still requires Fabric REST/SDK scripting. | Keep scripts idempotent, version item definitions, and treat "no Bicep support" as an accepted product gap until coverage improves. |
+
+### Why this makes FabricIQ hard to productionize
+
+The successful prior demo showed that FabricIQ can work, but not that it is a
+production implemented feature. Production means a customer can repeatedly
+deploy, upgrade, validate, monitor, and support FabricIQ across tenants and
+regions without hidden portal steps or "known good" human intervention. The
+current gap stack works against that bar:
+
+- **Determinism risk:** preview ontology behavior, Data Agent natural-language
+  variability, mirror refresh timing, and capacity throttling can change answers
+  or availability between runs.
+- **Automation risk:** Bicep does not cover the full Fabric item lifecycle, some
+  mirror readiness/tenant settings remain portal/admin driven, and identity
+  grants depend on discovered/rotating hosted-agent identities.
+- **Security and compliance risk:** cross-geo AI processing/storage settings,
+  non-Fabric consumption paths, broad workspace grants, and manual admin steps
+  create blast-radius and audit concerns.
+- **Operational risk:** F SKU capacity health, throttling, pause/resume,
+  Postgres mirror reseeds, ontology refresh, and Data Agent warm-up all need
+  runbooks and health gates before a customer can rely on the feature.
+- **Trust risk:** FabricIQ is supposed to be an evidence lane. If ontology or
+  Data Agent answers are less accurate than direct SQL/DAX over the same facts,
+  the agent must cite deterministic fallback evidence or the assurance decision
+  is not defensible.
+- **Cost risk:** the cheapest SKU that proves a demo may not survive concurrency,
+  while defaulting to F64 creates an expensive feature tax that does not map to a
+  seller-scale architecture.
+
+Until these are solved, FabricIQ should be described as a powerful preview/opt-in
+evidence lane with production potential, not as a production-ready default
+capability.
 
 ### Implementation time estimate
 
@@ -440,6 +529,16 @@ proves live mirrored-table grounding from `operations-data-expert`.
   <https://learn.microsoft.com/en-us/fabric/data-science/concept-data-agent>
 - Fabric Data Agent tenant settings:
   <https://learn.microsoft.com/en-us/fabric/data-science/data-agent-tenant-settings>
+- Fabric IQ overview:
+  <https://learn.microsoft.com/en-us/fabric/iq/overview>
+- Fabric Ontology overview:
+  <https://learn.microsoft.com/en-us/fabric/iq/ontology/overview>
+- Fabric Ontology data binding:
+  <https://learn.microsoft.com/en-us/fabric/iq/ontology/how-to-bind-data>
+- Fabric Ontology troubleshooting:
+  <https://learn.microsoft.com/en-us/fabric/iq/ontology/resources-troubleshooting>
+- Consume Ontology from Data Agents:
+  <https://learn.microsoft.com/en-us/fabric/iq/ontology/tutorial-4-create-data-agent>
 - Fabric region availability:
   <https://learn.microsoft.com/en-us/fabric/admin/region-availability>
 - Copilot and Agent admin settings:
