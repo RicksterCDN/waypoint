@@ -11,6 +11,24 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class AgentModelConfigurationTests(unittest.TestCase):
+    def test_deploy_credentials_support_secret_fallbacks(self) -> None:
+        workflow = (ROOT / ".github/workflows/deploy.yml").read_text()
+
+        for name in (
+            "AZURE_CLIENT_ID",
+            "AZURE_TENANT_ID",
+            "AZURE_SUBSCRIPTION_ID",
+        ):
+            self.assertIn(
+                f"{name}: ${{{{ vars.{name} || secrets.{name} }}}}",
+                workflow,
+            )
+        self.assertEqual(
+            workflow.count("client-id: ${{ env.AZURE_CLIENT_ID }}"),
+            workflow.count("uses: azure/login@v3.0.0"),
+        )
+        self.assertNotIn("needs.validate.outputs.azure_", workflow)
+
     def test_root_launch_deploys_only_foundryiq(self) -> None:
         workflow = (ROOT / ".github/workflows/deploy.yml").read_text()
         manifest = json.loads(
